@@ -1,0 +1,81 @@
+.box {
+  position: relative;
+  margin: 0;
+  min-width: 200px;
+  min-height: 300px;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.flex {
+  display: flex;
+}
+
+.box[layout][vertical] {
+  flex-direction: column;
+}
+
+.box[layout][horizontal] {
+  flex-direction: row;
+}
+
+.splitter {
+  position: relative;
+}
+
+.splitter[vertical] {
+  width: 8px;
+  min-width: 8px;
+  height: auto;
+  cursor: col-resize;
+}
+
+.splitter[horizontal] {
+  height: 8px;
+  min-height: 8px;
+  width: auto;
+  cursor: row-resize;
+}
+
+.inner {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+}
+
+.splitter[vertical] .inner {
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  border-left: 1px solid #cccccc;
+  border-right: 1px solid #cccccc;
+  flex-direction: column;
+}
+
+.splitter[horizontal] .inner {
+  left: 0;
+  right: 0;
+  height: 6px;
+  border-top: 1px solid #cccccc;
+  border-bottom: 1px solid #cccccc;
+  flex-direction: row;
+}
+
+.inner .dot {
+  height: 4px;
+  width: 4px;
+  background: #cccccc;
+  border-radius: 2px;
+}
+
+.splitter[vertical] .inner .dot {
+  margin: 2px 0;
+}
+
+.splitter[horizontal] .inner .dot {
+  margin: 0 2px;
+}

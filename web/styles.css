@@ -1,0 +1,180 @@
+html, body{
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+#main-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+}
+
+#vis-canvas {
+  height: 400px;
+}
+
+#sheets-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tab-container {
+  background: #eeeeee;
+}
+
+.tab-container input {
+  display: none;
+}
+
+.tab-container label {
+  display: inline-block;
+  margin: 0 0 -1px;
+  padding: 2px 12px;
+  font-weight: 600;
+  text-align: center;
+  color: #888;
+  border: 1px solid #bbbbbb;
+  border-radius: 3px 3px 0 0;
+}
+
+.tab-container label:hover {
+  color: #555;
+  cursor: pointer;
+}
+
+.tab-container input:checked + label {
+  color: #555;
+  border: 1px solid #aaaaaa;
+  background: #FFF;
+}
+
+.tab-container .add-sheet-btn {
+  display: inline-block;
+  padding: 0px 6px;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+  color: #888;
+}
+
+.tab-container .add-sheet-btn:hover {
+  color: #555;
+  cursor: pointer;
+}
+
+.sheetbook {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.sheet-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.scroll-container {
+  overflow-x: scroll;
+  overflow-y: scroll;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  bottom: 0;
+}
+
+table {
+  border-collapse: collapse;
+  display: block;
+}
+
+.corner,
+.table-header,
+.table-index {
+  position: absolute;
+  z-index: 30;
+}
+
+.table-data {
+  margin-top: 21px;
+  margin-left: 31px;
+}
+
+td {
+  min-width: 100px;
+  width: 100px;
+  padding: 0;
+  height: 20px;
+  border: 1px double #BBB;
+}
+
+td.index {
+  min-width: 30px;
+  width: 30px;
+}
+
+.header,
+.index {
+  text-align: center;
+  background: #eeeeee;
+}
+
+.corner {
+  width: 28px;
+  height: 18px;
+  border: 1px double #BBB;
+  border-right: 3px solid #BBB;
+  border-bottom: 3px solid #BBB;
+  background: #eeeeee;
+}
+
+.cell-selector {
+  position: absolute;
+  z-index: 20;
+  border: 2px solid dodgerblue;
+  height: 20px;
+  width: 100px;
+  visibility: hidden;
+}
+
+/**
+ * Cell input box
+ */
+.input-box {
+  position: absolute;
+  padding: 1px 2px;
+  margin: 0;
+  background-color: rgb(255, 255, 255);
+  border: 2px #5292f7 solid;
+  /* box-shadow: 0 2px 5px rgba(0,0,0,0.4); */
+  font-size: 13px;
+  display: inline-block;
+  overflow: hidden;
+  visibility: hidden;
+  word-wrap: break-word;
+  z-index: 50;
+}
+
+.cell-input {
+  background-color: rgb(255, 255, 255);
+  color: rgb(0, 0, 0);
+  font-size: 13px;
+  font-weight: 400;
+  font-family: Arial;
+  font-style: normal;
+  outline: none;
+}

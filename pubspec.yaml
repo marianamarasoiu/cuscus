@@ -1,0 +1,12 @@
+name: cuscus
+version: 0.0.1
+author: Mariana Marasoiu <mariana.marasoiu@gmail.com
+description: A research interface for creating visualisations based on spreadsheets.
+environment:
+  sdk: '>=1.0.0 <2.0.0'
+dependencies:
+  petitparser: any
+  browser: any
+  js: any
+  possum:
+    git: git://github.com/lukechurch/possum.git

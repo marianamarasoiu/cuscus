@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Cuscus | Data Visualisation</title>
+    <script type="application/javascript" src="packages/cuscus/model/formula_parser/js/ohm.js"></script>
+    <script type="application/javascript" src="packages/cuscus/model/formula_parser/js/grammar.js"></script>
+    <script type="application/javascript" src="packages/cuscus/model/formula_parser/js/semantics.js"></script>
+    <script type="application/javascript" src="packages/cuscus/model/formula_parser/js/parser.js"></script>
+
+    <script type="application/dart"       src="main.dart"></script>
+    <script type="application/javascript" src="packages/browser/dart.js"></script>
+    <link   rel="stylesheet"             href="styles.css"></link>
+    <link   rel ="stylesheet"            href="packages/cuscus/view/box_layout.css"></link>
+  </head>
+
+  <body>
+    <div id="main-container" class="box" layout vertical>
+      
+      <div id="vis-canvas" class="box"></div>
+      
+      <div id="vis-sheet-splitter" class="splitter" horizontal></div>
+      
+      <div id="sheets-container" class="box" layout horizontal>
+        <div id="left-sheet" class="box"></div>
+      
+        <div id="first-sheet-splitter" class="splitter" vertical></div>
+        
+        <div id="right-sheet" class="box"></div>
+      </div>
+    </div>
+    <div class="input-box">
+      <div class="cell-input" contenteditable="true"></div>
+    </div>
+  </body>
+</html>
