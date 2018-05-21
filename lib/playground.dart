@@ -29,6 +29,12 @@ class Playground {
 
     {
       viewmodel.SheetbookViewModel sheetbook = new viewmodel.SheetbookViewModel();
+      sheetbook.createView(_spreadsheetsContainer.querySelector('#middle-sheet'));
+      sheetbook.addSheet('DataSheet');
+    }
+
+    {
+      viewmodel.SheetbookViewModel sheetbook = new viewmodel.SheetbookViewModel();
       sheetbook.createView(_spreadsheetsContainer.querySelector('#right-sheet'));
       sheetbook.addSheet('RectSheet');
     }
