@@ -178,3 +178,39 @@ td.index {
   font-style: normal;
   outline: none;
 }
+
+#drawing-tool-container {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: #eeeeee;
+  padding: 8px;
+  -webkit-box-shadow: 2px 2px 5px 0px rgba(136,136,136,0.75);
+  -moz-box-shadow: 2px 2px 5px 0px rgba(136,136,136,0.75);
+  box-shadow: 2px 2px 5px 0px rgba(136,136,136,0.75);
+}
+
+#drawing-tool-container h3 {
+  padding: 8px;
+  font-weight: normal;
+}
+.shape-button {
+  fill:#666666;
+  stroke: none;
+  display: inline-block;
+  padding: 8px;
+}
+
+.shape-button:hover {
+  background: #dddddd;
+  cursor: pointer;
+}
+
+.shape-button:active,
+.shape-button.selected {
+  background: #aaaaaa;
+}
+
+.shape-button svg {
+  display: block;
+}
