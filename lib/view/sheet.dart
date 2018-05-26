@@ -130,6 +130,34 @@ class SheetView {
       _cellSelector.style.visibility = 'hidden';
     }
   }
+  void selectCellAtCoords(int row, int col) {
+    _selectedCell = dataElements[row][col];
+    _selectedCellRow = getRowOfCell(_selectedCell);
+    _selectedCellColumn = getColumnOfCell(_selectedCell);
+    _cellSelector.style.visibility = 'visible';
+    _cellSelector.style.top = '${_selectedCell.offset.top + 20}px';
+    _cellSelector.style.left = '${_selectedCell.offset.left + 30}px';
+  }
+  void selectCellBelow(TableCellElement cell) {
+    int row = getRowOfCell(cell);
+    int col = getColumnOfCell(cell);
+    selectCellAtCoords(row + 1, col);
+  }
+  void selectCellAbove(TableCellElement cell) {
+    int row = getRowOfCell(cell);
+    int col = getColumnOfCell(cell);
+    selectCellAtCoords(max(0, row - 1), col);
+  }
+  void selectCellRight(TableCellElement cell) {
+    int row = getRowOfCell(cell);
+    int col = getColumnOfCell(cell);
+    selectCellAtCoords(row, col + 1);
+  }
+  void selectCellLeft(TableCellElement cell) {
+    int row = getRowOfCell(cell);
+    int col = getColumnOfCell(cell);
+    selectCellAtCoords(row, max(0, col - 1));
+  }
   int get selectedCellRow => _selectedCellRow;
   int get selectedCellColumn => _selectedCellColumn;
 

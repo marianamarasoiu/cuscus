@@ -1,6 +1,7 @@
 library cuscus.view;
 
 import 'dart:html';
+import 'dart:math';
 
 import 'package:cuscus/viewmodel/viewmodel.dart';
 
