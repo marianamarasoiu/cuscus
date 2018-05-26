@@ -83,29 +83,29 @@ class SpreadsheetEngine {
       throw "Ranges across sheets not supported!";
     }
 
-    List<List<CellCoordinates>> cells = [];
+    List<List<CellCoordinates>> cellMatrix = [];
     for (int row = topLeft.row; row <= bottomRight.row; row++) {
-      cells.add(new List(bottomRight.col - topLeft.col + 1));
+      cellMatrix.add(new List(bottomRight.col - topLeft.col + 1));
     }
 
     for (CellCoordinates cell in spreadsheetEngine.cells.keys.where((CellCoordinates loc) => loc is CellCoordinates)) {
       if (cell.sheetId == topLeft.sheetId &&
           topLeft.row <= cell.row && cell.row <= bottomRight.row &&
           topLeft.col <= cell.col && cell.col <= bottomRight.col) {
-        cells[cell.row][cell.col] = cell;
+        cellMatrix[cell.row - topLeft.row][cell.col - topLeft.col] = cell;
       }
     }
 
     for (int row = topLeft.row; row <= bottomRight.row; row++) {
       for (int col = topLeft.col; col <= bottomRight.col; col++) {
-        if (cells[row][col] == null) {
+        if (cellMatrix[row - topLeft.row][col - topLeft.col] == null) {
           CellCoordinates cell = new CellCoordinates(row, col, topLeft.sheetId);
-          cells[row][col] = cell;
+          cellMatrix[row - topLeft.row][col - topLeft.col] = cell;
           spreadsheetEngine.cells[cell] = new SpreadsheetDep(spreadsheetEngine, new EmptyValue());
         }
       }
     }
-    return cells.fold([], (List<CellCoordinates> cellList, List<CellCoordinates> row) => cellList..addAll(row));
+    return cellMatrix.fold([], (List<CellCoordinates> cellList, List<CellCoordinates> row) => cellList..addAll(row));
   }
 }
 
