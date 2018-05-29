@@ -10,21 +10,27 @@ import 'package:cuscus/model/formula_parser/formula_parser.dart' as parser;
 
 // Import the view
 import 'package:cuscus/view/view.dart' as view;
+import 'package:cuscus/view/box_layout.dart' as box_layout;
 
 part 'sheet.dart';
 part 'sheetbook.dart';
+part 'graphics_editor.dart';
 
 part 'object_id.dart';
 
 part 'formula_parsing_utils.dart';
 
 
-enum InteractionState {
+enum InteractionState { // Rename to uiState
   idle,
+  readyToDraw,
   cellSelected,
   cellEditing,
 }
-enum InteractionAction {
+enum InteractionAction { // Rename to uiAction
+  // actions on the visualisation
+  clickInToolPanel,
+
   // actions on sheets
   createNewSheet,
   selectSheet,
@@ -50,16 +56,57 @@ enum InteractionAction {
   otherKey,
 }
 
+enum ShapeType {
+  rect,
+  ellipse,
+  triangle,
+  line,
+  curve,
+  text,
+}
+
 List<SheetViewModel> sheets = [];
 List<SheetbookViewModel> sheetbooks = [];
-// Selecting a cell
-SheetViewModel activeSheet;
+engine.SpreadsheetEngine spreadsheetEngine = new engine.SpreadsheetEngine();
+GraphicsEditorViewModel graphicsEditorViewModel;
 
-DivElement get _cellInputBox => querySelector('.input-box'); // TODO: rename element to #cell-input-box
-DivElement get _visualisationContainer => querySelector('#vis-canvas'); // TODO: rename element to #visualisation-container
+DivElement get _mainContainer => querySelector('#main-container'); // TODO: rename element to #main-container
 DivElement get _spreadsheetsContainer => querySelector('#sheets-container'); // TODO: rename element to #spreadsheets-container
+DivElement get _graphicsEditorContainer => querySelector('#vis-canvas'); // TODO: rename element to #graphics-editor-container
+DivElement get _cellInputBox => querySelector('.input-box'); // TODO: rename element to #cell-input-box
 
-initListeners() {
+init() {
+  // Init layout elements.
+  new box_layout.Box(_mainContainer);
+  new box_layout.Box(_spreadsheetsContainer);
+
+  // Create the incoming data spreadsheet
+  {
+    SheetbookViewModel sheetbook = new SheetbookViewModel();
+    sheetbooks.add(sheetbook);
+    sheetbook.createView(_spreadsheetsContainer.querySelector('#left-sheet'));
+    sheetbook.addSheet('DataSheet');
+  }
+
+  // Create the data wrangling spreadsheet
+  {
+    SheetbookViewModel sheetbook = new SheetbookViewModel();
+    sheetbooks.add(sheetbook);
+    sheetbook.createView(_spreadsheetsContainer.querySelector('#middle-sheet'));
+    sheetbook.addSheet('WrangleSheet');
+  }
+
+  // Create the visualisation spreadsheet and initialise the graphics editor with it
+  {
+    SheetbookViewModel sheetbook = new SheetbookViewModel();
+    sheetbooks.add(sheetbook);
+    sheetbook.createView(_spreadsheetsContainer.querySelector('#right-sheet'));
+
+    graphicsEditorViewModel = new GraphicsEditorViewModel(sheetbook);
+    graphicsEditorViewModel.createView(_graphicsEditorContainer);
+  }
+
+  // Init listeners
   document.onClick.listen((MouseEvent click) => command(InteractionAction.click, click));
   document.onDoubleClick.listen((MouseEvent doubleclick) => command(InteractionAction.doubleClick, doubleclick));
   document.onKeyDown.listen((KeyboardEvent keyEvent) {
@@ -95,8 +142,6 @@ initListeners() {
   });
 }
 
-engine.SpreadsheetEngine spreadsheetEngine = new engine.SpreadsheetEngine();
-
 InteractionState _state = InteractionState.idle;
 InteractionState get state => _state;
 set state(InteractionState newState) {
@@ -104,9 +149,46 @@ set state(InteractionState newState) {
   _state = newState;
 }
 
+// State data
+// For selecting a cell
+SheetViewModel activeSheet;
+// For drawing
+ShapeType shapeToDraw;
+
 command(InteractionAction action, var data) {
   switch (state) {
+    /*
+     * State: idle
+     */
     case InteractionState.idle:
+      switch (action) {
+        case InteractionAction.clickInToolPanel:
+          shapeToDraw = data;
+          graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
+          state = InteractionState.readyToDraw;
+          break;
+        
+        default:
+          break;
+      }
+      break;
+
+    /*
+     * State: readyToDraw
+     */
+    case InteractionState.readyToDraw:
+      switch (action) {
+        case InteractionAction.clickInToolPanel:
+          shapeToDraw = data;
+          graphicsEditorViewModel.graphicsEditorView.deselectAllShapeButtons();
+          graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
+          state = InteractionState.readyToDraw;
+          break;
+        
+        default:
+          break;
+      }
+      break;
 
     /*
      * State: cellSelected
@@ -115,9 +197,7 @@ command(InteractionAction action, var data) {
       switch (action) {
         case InteractionAction.click:
           MouseEvent mouseEvent = data;
-          mouseEvent.stopImmediatePropagation();
-          mouseEvent.stopPropagation();
-          mouseEvent.preventDefault();
+          stopDefaultBehaviour(mouseEvent);
 
           if (mouseEvent.target is TableCellElement) {
             SheetViewModel sheet = getSheetOfElement(mouseEvent.target);
@@ -287,8 +367,8 @@ _editCell(EventTarget eventTarget) {
   }
 
   SheetViewModel sheet = getSheetOfElement(eventTarget);
-  _cellInputBox.style.minHeight = '${sheet.view.selectedCell.client.height - 2}px';
-  _cellInputBox.style.minWidth = '${sheet.view.selectedCell.client.width - 4}px';
+  _cellInputBox.style.minHeight = '${sheet.view.selectedCell.client._height - 2}px';
+  _cellInputBox.style.minWidth = '${sheet.view.selectedCell.client._width - 4}px';
   _cellInputBox.style.maxHeight = '200px'; // TODO: these should come from the distance between the selected cell and bottom and right margin.
   _cellInputBox.style.maxWidth = '500px';
   _cellInputBox.style.visibility = 'visible';

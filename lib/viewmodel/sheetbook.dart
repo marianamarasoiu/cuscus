@@ -3,9 +3,7 @@ part of cuscus.viewmodel;
 class SheetbookViewModel extends ObjectWithId {
   view.SheetbookView sheetbookView;
 
-  SheetbookViewModel() : super() {
-    sheetbooks.add(this);
-  }
+  SheetbookViewModel() : super();
 
   createView(Element parent) {
     sheetbookView = new view.SheetbookView(this);

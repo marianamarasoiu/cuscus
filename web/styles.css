@@ -206,9 +206,12 @@ td.index {
   cursor: pointer;
 }
 
-.shape-button:active,
-.shape-button.selected {
+.shape-button:active {
   background: #aaaaaa;
+}
+
+.shape-button.selected {
+  background: #bbbbbb;
 }
 
 .shape-button svg {

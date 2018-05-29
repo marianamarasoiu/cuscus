@@ -1,7 +1,5 @@
 part of cuscus.view;
 
-// import 'table.dart' as table;
-
 class SheetbookView {
   DivElement sheetbookElement;
   DivElement tabContainer;
@@ -17,7 +15,7 @@ class SheetbookView {
     addSheetButton = new DivElement()
       ..classes.add('add-sheet-btn')
       ..text = '+'
-      ..onClick.listen(((_) => command(InteractionAction.createNewSheet, null)));
+      ..onClick.listen(((_) => command(InteractionAction.createNewSheet, sheetbookViewModel)));
     tabContainer = new DivElement()..classes.add('tab-container');
     tabContainer.append(addSheetButton);
     
@@ -35,7 +33,7 @@ class SheetbookView {
          ..id = 'sheetbook${sheetbookViewModel.id}-tab${sheet.id}'
          ..value = 'sheetbook${sheetbookViewModel.id}-tab${sheet.id}'
          ..checked = true;
-    input.onChange.listen((Event e) => command(InteractionAction.selectSheet, sheet));
+    input.onChange.listen((_) => command(InteractionAction.selectSheet, sheet));
 
     LabelElement label = new LabelElement();
     label..id = 'sheetbook${sheetbookViewModel.id}-label${sheet.id}'
