@@ -1,5 +1,7 @@
 part of cuscus.view;
 
+typedef void UpdateFunction({num x, num y, num width, num height});
+
 class BoundingBox {
   svg.RectElement topLeftHandle;
   svg.RectElement topHandle;
@@ -11,6 +13,8 @@ class BoundingBox {
   svg.RectElement leftHandle;
   svg.RectElement boundingBoxBorder;
   svg.GElement group;
+
+  UpdateFunction updateFunction;
 
   int handleWidth = 5;
   int handleHeight = 5;
@@ -39,6 +43,31 @@ class BoundingBox {
       ..append(bottomLeftHandle)
       ..append(leftHandle)
       ..append(boundingBoxBorder);
+  }
+
+  initListeners() {
+    StreamSubscription dragMoveSub;
+    StreamSubscription dragEndSub;
+
+    rightHandle.onMouseDown.listen((MouseEvent dragStart) {
+      if (updateFunction == null) {
+        throw "Function associating dragging with changing the shape properties missing!";
+      }
+      int width = int.parse(boundingBoxBorder.attributes['width']);
+      int startMouseX = dragStart.client.x;
+
+      dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
+        int movement = dragMove.client.x - startMouseX;
+        int newWidth = width + movement;
+        updateFunction(width: newWidth);
+      });
+
+      dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
+        // Cancel the dragging
+        dragMoveSub.cancel();
+        dragEndSub.cancel();
+      });
+    });
   }
 
   at(int x, int y, int width, int height) {
