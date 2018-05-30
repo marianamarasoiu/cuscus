@@ -199,27 +199,27 @@ td.index {
   padding: 8px;
   font-weight: normal;
 }
-.shape-button {
+.drawing-tool-button {
   fill:#666666;
   stroke: none;
   display: inline-block;
   padding: 8px;
 }
 
-.shape-button:hover {
+.drawing-tool-button:hover {
   background: #dddddd;
   cursor: pointer;
 }
 
-.shape-button:active {
+.drawing-tool-button:active {
   background: #aaaaaa;
 }
 
-.shape-button.selected {
+.drawing-tool-button.selected {
   background: #bbbbbb;
 }
 
-.shape-button svg {
+.drawing-tool-button svg {
   display: block;
 }
 

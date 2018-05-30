@@ -58,14 +58,13 @@ enum InteractionAction { // Rename to uiAction
   otherKey,
 }
 
-enum ShapeType {
-  select,
-  rect,
-  ellipse,
-  triangle,
-  line,
-  curve,
-  text,
+enum DrawingTool {
+  selectionTool,
+  rectangleTool,
+  ellipseTool,
+  lineTool,
+  curveTool,
+  textTool,
 }
 
 List<SheetViewModel> sheets = [];
@@ -89,7 +88,7 @@ set state(InteractionState newState) {
 // For selecting a cell
 SheetViewModel activeSheet;
 // For drawing
-ShapeType shapeToDraw;
+DrawingTool selectedDrawingTool;
 
 init() {
   // Init layout elements.
@@ -121,8 +120,8 @@ init() {
 
     graphicsEditorViewModel = new GraphicsEditorViewModel(sheetbook);
     graphicsEditorViewModel.createView();
-    shapeToDraw = ShapeType.select;
-    graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
+    selectedDrawingTool = DrawingTool.selectionTool;
+    graphicsEditorViewModel.graphicsEditorView.selectDrawingTool(selectedDrawingTool);
   }
 
   // Init listeners
@@ -169,10 +168,9 @@ command(InteractionAction action, var data) {
     case InteractionState.idle:
       switch (action) {
         case InteractionAction.clickInToolPanel:
-          shapeToDraw = data;
-          graphicsEditorViewModel.graphicsEditorView.deselectAllShapeButtons();
-          graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
-          if (shapeToDraw == ShapeType.select) {
+          selectedDrawingTool = data;
+          graphicsEditorViewModel.graphicsEditorView.selectDrawingTool(selectedDrawingTool);
+          if (selectedDrawingTool == DrawingTool.selectionTool) {
             state = InteractionState.idle;
           } else {
             state = InteractionState.readyToDraw;
@@ -265,10 +263,9 @@ command(InteractionAction action, var data) {
     case InteractionState.readyToDraw:
       switch (action) {
         case InteractionAction.clickInToolPanel:
-          shapeToDraw = data;
-          graphicsEditorViewModel.graphicsEditorView.deselectAllShapeButtons();
-          graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
-          if (shapeToDraw == ShapeType.select) {
+          selectedDrawingTool = data;
+          graphicsEditorViewModel.graphicsEditorView.selectDrawingTool(selectedDrawingTool);
+          if (selectedDrawingTool == DrawingTool.selectionTool) {
             state = InteractionState.idle;
           } else {
             state = InteractionState.readyToDraw;
@@ -401,8 +398,8 @@ _editCell(EventTarget eventTarget) {
   }
 
   SheetViewModel sheet = getSheetOfElement(eventTarget);
-  _cellInputBox.style.minHeight = '${sheet.view.selectedCell.client._height - 2}px';
-  _cellInputBox.style.minWidth = '${sheet.view.selectedCell.client._width - 4}px';
+  _cellInputBox.style.minHeight = '${sheet.view.selectedCell.client.height - 2}px';
+  _cellInputBox.style.minWidth = '${sheet.view.selectedCell.client.width - 4}px';
   _cellInputBox.style.maxHeight = '200px'; // TODO: these should come from the distance between the selected cell and bottom and right margin.
   _cellInputBox.style.maxWidth = '500px';
   _cellInputBox.style.visibility = 'visible';
