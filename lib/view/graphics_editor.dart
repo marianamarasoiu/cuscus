@@ -83,6 +83,8 @@ class GraphicsEditorView {
         tentativeElement.attributes['width'] = '$tentativeWidth';
         tentativeElement.attributes['height'] = '$tentativeHeight';
         break;
+      case ShapeType.select:
+        break;
     }
 
     canvasElement.append(tentativeElement);
@@ -119,6 +121,8 @@ class GraphicsEditorView {
           tentativeElement.attributes['width'] = '$tentativeWidth';
           tentativeElement.attributes['height'] = '$tentativeHeight';
           break;
+        case ShapeType.select:
+          break;
       }
     });
 
@@ -149,9 +153,10 @@ class GraphicsEditorView {
         return ShapeType.curve;
       case 'text-button-shape':
         return ShapeType.text;
-      default:
-        throw 'Shape tool not recognised, got $id';
+      case 'select-button':
+        return ShapeType.select;
     }
+    throw 'Shape tool not recognised, got $id';
   }
 
   DivElement shapeTypeToButton(ShapeType shapeType) {
@@ -168,8 +173,9 @@ class GraphicsEditorView {
         return drawingToolContainer.querySelector('#curve-button-shape');
       case ShapeType.text:
         return drawingToolContainer.querySelector('#text-button-shape');
-      default:
-        throw "Shape type not recognized, got $shapeType";
+      case ShapeType.select:
+        return drawingToolContainer.querySelector('#select-button');
     }
+    throw "Shape type not recognized, got $shapeType";
   }
 }

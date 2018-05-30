@@ -25,7 +25,6 @@ enum InteractionState { // Rename to uiState
   idle,
   readyToDraw,
   drawing,
-  cellSelected,
   cellEditing,
 }
 enum InteractionAction { // Rename to uiAction
@@ -60,6 +59,7 @@ enum InteractionAction { // Rename to uiAction
 }
 
 enum ShapeType {
+  select,
   rect,
   ellipse,
   triangle,
@@ -78,6 +78,19 @@ DivElement get _spreadsheetsContainer => querySelector('#sheets-container'); // 
 DivElement get _graphicsEditorContainer => querySelector('#vis-canvas'); // TODO: rename element to #graphics-editor-container
 DivElement get _cellInputBox => querySelector('.input-box'); // TODO: rename element to #cell-input-box
 
+InteractionState _state = InteractionState.idle;
+InteractionState get state => _state;
+set state(InteractionState newState) {
+  print('New state: $newState');
+  _state = newState;
+}
+
+// State data
+// For selecting a cell
+SheetViewModel activeSheet;
+// For drawing
+ShapeType shapeToDraw;
+
 init() {
   // Init layout elements.
   new box_layout.Box(_mainContainer);
@@ -88,7 +101,8 @@ init() {
     SheetbookViewModel sheetbook = new SheetbookViewModel();
     sheetbooks.add(sheetbook);
     sheetbook.createView(_spreadsheetsContainer.querySelector('#left-sheet'));
-    sheetbook.addSheet('DataSheet');
+    activeSheet = sheetbook.addSheet('DataSheet');
+    activeSheet.view.selectCellAtCoords(0, 0);
   }
 
   // Create the data wrangling spreadsheet
@@ -107,6 +121,8 @@ init() {
 
     graphicsEditorViewModel = new GraphicsEditorViewModel(sheetbook);
     graphicsEditorViewModel.createView();
+    shapeToDraw = ShapeType.select;
+    graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
   }
 
   // Init listeners
@@ -145,19 +161,6 @@ init() {
   });
 }
 
-InteractionState _state = InteractionState.idle;
-InteractionState get state => _state;
-set state(InteractionState newState) {
-  print('New state: $newState');
-  _state = newState;
-}
-
-// State data
-// For selecting a cell
-SheetViewModel activeSheet;
-// For drawing
-ShapeType shapeToDraw;
-
 command(InteractionAction action, var data) {
   switch (state) {
     /*
@@ -167,10 +170,90 @@ command(InteractionAction action, var data) {
       switch (action) {
         case InteractionAction.clickInToolPanel:
           shapeToDraw = data;
+          graphicsEditorViewModel.graphicsEditorView.deselectAllShapeButtons();
           graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
-          state = InteractionState.readyToDraw;
+          if (shapeToDraw == ShapeType.select) {
+            state = InteractionState.idle;
+          } else {
+            state = InteractionState.readyToDraw;
+          }
           break;
-        
+
+        case InteractionAction.click:
+          MouseEvent mouseEvent = data;
+          stopDefaultBehaviour(mouseEvent);
+
+          if (mouseEvent.target is TableCellElement) {
+            SheetViewModel sheet = getSheetOfElement(mouseEvent.target);
+            sheet.view.selectedCell = mouseEvent.target;
+            if (sheet != activeSheet) {
+              activeSheet?.view?.selectedCell = null;
+              activeSheet = sheet;
+            }
+            state = InteractionState.idle;
+          }
+          break;
+
+        case InteractionAction.doubleClick:
+          MouseEvent mouseEvent = data;
+          stopDefaultBehaviour(mouseEvent);
+
+          EventTarget eventTarget = mouseEvent.target;
+          if (eventTarget is TableCellElement ||
+            (eventTarget is DivElement && eventTarget.classes.contains('cell-selector'))) {
+            _editCell(eventTarget);
+            state = InteractionState.cellEditing;
+          }
+          break;
+
+        case InteractionAction.enter:
+          KeyboardEvent keyboardEvent = data;
+          stopDefaultBehaviour(keyboardEvent);
+          _editCell(activeSheet.view.selectedCell);
+          state = InteractionState.cellEditing;
+          break;
+
+        case InteractionAction.backspace:
+          KeyboardEvent keyboardEvent = data;
+          stopDefaultBehaviour(keyboardEvent);
+          _commitFormulaToSelectedCell('');
+          break;
+
+        case InteractionAction.arrowRight:
+          KeyboardEvent keyboardEvent = data;
+          stopDefaultBehaviour(keyboardEvent);
+          activeSheet.view.selectCellRight(activeSheet.view.selectedCell);
+          break;
+
+        case InteractionAction.arrowLeft:
+          KeyboardEvent keyboardEvent = data;
+          stopDefaultBehaviour(keyboardEvent);
+          activeSheet.view.selectCellLeft(activeSheet.view.selectedCell);
+          break;
+
+        case InteractionAction.arrowUp:
+          KeyboardEvent keyboardEvent = data;
+          stopDefaultBehaviour(keyboardEvent);
+          activeSheet.view.selectCellAbove(activeSheet.view.selectedCell);
+          break;
+
+        case InteractionAction.arrowDown:
+          KeyboardEvent keyboardEvent = data;
+          stopDefaultBehaviour(keyboardEvent);
+          activeSheet.view.selectCellBelow(activeSheet.view.selectedCell);
+          break;
+
+        case InteractionAction.otherKey:
+          KeyboardEvent keyboardEvent = data;
+          stopDefaultBehaviour(keyboardEvent);
+
+          _editCell(activeSheet.view.selectedCell);
+          state = InteractionState.cellEditing;
+
+          _cellInputBox.querySelector('.cell-input').text = keyboardEvent.key;
+          window.getSelection().collapse(_cellInputBox.querySelector('.cell-input'), 1);
+          break;
+
         default:
           break;
       }
@@ -185,14 +268,20 @@ command(InteractionAction action, var data) {
           shapeToDraw = data;
           graphicsEditorViewModel.graphicsEditorView.deselectAllShapeButtons();
           graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
-          state = InteractionState.readyToDraw;
+          if (shapeToDraw == ShapeType.select) {
+            state = InteractionState.idle;
+          } else {
+            state = InteractionState.readyToDraw;
+          }
           break;
+
         case InteractionAction.mouseDownOnCanvas:
           MouseEvent mouseDown = data;
           stopDefaultBehaviour(mouseDown);
           graphicsEditorViewModel.graphicsEditorView.startDrawing(mouseDown);
           state = InteractionState.drawing;
           break;
+
         default:
           break;
       }
@@ -210,93 +299,7 @@ command(InteractionAction action, var data) {
           // commit change to the rest of the application
           state = InteractionState.idle; // ??
           break;
-        default:
-          break;
-      }
-      break;
 
-    /*
-     * State: cellSelected
-     */
-    case InteractionState.cellSelected:
-      switch (action) {
-        case InteractionAction.click:
-          MouseEvent mouseEvent = data;
-          stopDefaultBehaviour(mouseEvent);
-
-          if (mouseEvent.target is TableCellElement) {
-            SheetViewModel sheet = getSheetOfElement(mouseEvent.target);
-            sheet.view.selectedCell = mouseEvent.target;
-            if (sheet != activeSheet) {
-              activeSheet?.view?.selectedCell = null;
-              activeSheet = sheet;
-            }
-            state = InteractionState.cellSelected;
-          }
-          break;
-        case InteractionAction.doubleClick:
-          MouseEvent mouseEvent = data;
-          stopDefaultBehaviour(mouseEvent);
-
-          EventTarget eventTarget = mouseEvent.target;
-          if (eventTarget is TableCellElement ||
-            (eventTarget is DivElement && eventTarget.classes.contains('cell-selector'))) {
-            _editCell(eventTarget);
-            state = InteractionState.cellEditing;
-          }
-          break;
-        case InteractionAction.enter:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          _editCell(activeSheet.view.selectedCell);
-          state = InteractionState.cellEditing;
-          break;
-        case InteractionAction.backspace:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          _commitFormulaToSelectedCell('');
-          break;
-        case InteractionAction.arrowRight:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          activeSheet.view.selectCellRight(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
-          break;
-        case InteractionAction.arrowLeft:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          activeSheet.view.selectCellLeft(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
-          break;
-        case InteractionAction.arrowUp:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          activeSheet.view.selectCellAbove(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
-          break;
-        case InteractionAction.arrowDown:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          activeSheet.view.selectCellBelow(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
-          break;
-        case InteractionAction.otherKey:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          _editCell(activeSheet.view.selectedCell);
-          state = InteractionState.cellEditing;
-
-          _cellInputBox.querySelector('.cell-input').text = keyboardEvent.key;
-          window.getSelection().collapse(_cellInputBox.querySelector('.cell-input'), 1);
-            
-          break;
         default:
           break;
       }
@@ -314,8 +317,9 @@ command(InteractionAction action, var data) {
           _commitFormulaToSelectedCell(_cellInputBox.text.trim());
 
           activeSheet.view.selectCellBelow(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
+          state = InteractionState.idle;
           break;
+
         case InteractionAction.arrowRight:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
@@ -323,8 +327,9 @@ command(InteractionAction action, var data) {
           _commitFormulaToSelectedCell(_cellInputBox.text.trim());
 
           activeSheet.view.selectCellRight(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
+          state = InteractionState.idle;
           break;
+
         case InteractionAction.arrowLeft:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
@@ -332,8 +337,9 @@ command(InteractionAction action, var data) {
           _commitFormulaToSelectedCell(_cellInputBox.text.trim());
 
           activeSheet.view.selectCellLeft(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
+          state = InteractionState.idle;
           break;
+
         case InteractionAction.arrowUp:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
@@ -341,8 +347,9 @@ command(InteractionAction action, var data) {
           _commitFormulaToSelectedCell(_cellInputBox.text.trim());
 
           activeSheet.view.selectCellAbove(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
+          state = InteractionState.idle;
           break;
+
         case InteractionAction.arrowDown:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
@@ -350,8 +357,9 @@ command(InteractionAction action, var data) {
           _commitFormulaToSelectedCell(_cellInputBox.text.trim());
 
           activeSheet.view.selectCellBelow(activeSheet.view.selectedCell);
-          state = InteractionState.cellSelected;
+          state = InteractionState.idle;
           break;
+
         case InteractionAction.click:
           MouseEvent mouseEvent = data;
           stopDefaultBehaviour(mouseEvent);
@@ -362,12 +370,13 @@ command(InteractionAction action, var data) {
           } else {
             _commitFormulaToSelectedCell(_cellInputBox.text.trim());
             
-            state = InteractionState.cellSelected;
+            state = InteractionState.idle;
             
             // Process the click
             command(InteractionAction.click, data);
           }
           break;
+
         default:
           break;
       }
