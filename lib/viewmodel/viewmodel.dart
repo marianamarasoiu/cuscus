@@ -24,12 +24,15 @@ part 'formula_parsing_utils.dart';
 enum InteractionState { // Rename to uiState
   idle,
   readyToDraw,
+  drawing,
   cellSelected,
   cellEditing,
 }
 enum InteractionAction { // Rename to uiAction
   // actions on the visualisation
   clickInToolPanel,
+  mouseDownOnCanvas,
+  mouseUpOnCanvas,
 
   // actions on sheets
   createNewSheet,
@@ -103,7 +106,7 @@ init() {
     sheetbook.createView(_spreadsheetsContainer.querySelector('#right-sheet'));
 
     graphicsEditorViewModel = new GraphicsEditorViewModel(sheetbook);
-    graphicsEditorViewModel.createView(_graphicsEditorContainer);
+    graphicsEditorViewModel.createView();
   }
 
   // Init listeners
@@ -184,7 +187,29 @@ command(InteractionAction action, var data) {
           graphicsEditorViewModel.graphicsEditorView.selectShapeButton(shapeToDraw);
           state = InteractionState.readyToDraw;
           break;
-        
+        case InteractionAction.mouseDownOnCanvas:
+          MouseEvent mouseDown = data;
+          stopDefaultBehaviour(mouseDown);
+          graphicsEditorViewModel.graphicsEditorView.startDrawing(mouseDown);
+          state = InteractionState.drawing;
+          break;
+        default:
+          break;
+      }
+      break;
+
+    /*
+     * State: drawing
+     */
+    case InteractionState.drawing:
+      switch (action) {
+        case InteractionAction.mouseUpOnCanvas:
+          // MouseEvent mouseUp = data;
+          // stopDefaultBehaviour(mouseUp);
+          // graphicsEditorViewModel.graphicsEditorView.stopDrawing(mouseUp);
+          // commit change to the rest of the application
+          state = InteractionState.idle; // ??
+          break;
         default:
           break;
       }
@@ -350,7 +375,7 @@ command(InteractionAction action, var data) {
   }
 }
 
-stopDefaultBehaviour(Event event) {
+stopDefaultBehaviour(Event event) { // Move to a common utils file
   event.stopImmediatePropagation();
   event.stopPropagation();
   event.preventDefault();

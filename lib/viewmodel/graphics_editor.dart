@@ -8,8 +8,7 @@ class GraphicsEditorViewModel extends ObjectWithId {
     this.sheetbook = sheetbook;
   }
 
-  createView(Element parent) {
+  createView() {
     graphicsEditorView = new view.GraphicsEditorView(this);
-    parent.append(graphicsEditorView.element);
   }
 }
