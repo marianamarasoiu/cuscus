@@ -6,7 +6,7 @@ abstract class SheetViewModel extends ObjectWithId {
   int columns;
   String name;
   SheetbookViewModel sheetbook;
-  view.SheetView view;
+  view.SheetView sheetView;
 
   List<String> activeColumnNames;
 

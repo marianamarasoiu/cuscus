@@ -28,7 +28,7 @@ class SheetbookViewModel extends ObjectWithId {
       default:
         sheet = new DataSheet(100, 12, 'Sheet$sheetCounter');
     }
-    sheet.view = sheetbookView.addSheet(sheet);
+    sheet.sheetView = sheetbookView.addSheet(sheet);
     return sheet;
   }
 }
