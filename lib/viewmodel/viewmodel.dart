@@ -406,7 +406,7 @@ _editCell(EventTarget eventTarget) {
   _cellInputBox.style.top = '${sheet.sheetView.selectedCell.getBoundingClientRect().top - 1}px';
   _cellInputBox.style.left = '${sheet.sheetView.selectedCell.getBoundingClientRect().left - 1}px';
   _cellInputBox.querySelector('.cell-input')
-    ..text = sheet.sheetView.selectedCell.text
+    ..text = sheet.sheetView.selectedCell.attributes['data-formula']
     ..focus();
 }
 
@@ -440,6 +440,7 @@ bool _commitFormulaToSelectedCell(String formula) {
 
   // Update contents of current cell
   activeSheet.sheetView.selectedCell.text = spreadsheetEngine.cells[cell].computedValue.toString();
+  activeSheet.sheetView.selectedCell.attributes['data-formula'] = formula;
   
   // Hide the cell editing box
   _cellInputBox.style.visibility = 'hidden';
