@@ -7,7 +7,7 @@ class SheetbookView {
   DivElement sheetContainer;
 
   SheetbookViewModel sheetbookViewModel;
-  SheetViewModel selectedSheet = null;
+  SheetViewModel selectedSheet;
 
   List<SheetView> sheetViews = [];
   
@@ -33,7 +33,6 @@ class SheetbookView {
          ..id = 'sheetbook${sheetbookViewModel.id}-tab${sheet.id}'
          ..value = 'sheetbook${sheetbookViewModel.id}-tab${sheet.id}'
          ..checked = true;
-    input.onChange.listen((_) => command(InteractionAction.selectSheet, sheet));
 
     LabelElement label = new LabelElement();
     label..id = 'sheetbook${sheetbookViewModel.id}-label${sheet.id}'
@@ -64,6 +63,12 @@ class SheetbookView {
         }
       });
     });
+    label.onClick.listen((_) {
+      input.checked = true;
+      selectedSheet.sheetView.sheetElement.parent.classes.remove('selected');
+      selectedSheet = sheet;
+      selectedSheet.sheetView.sheetElement.parent.classes.add('selected');
+    });
 
     MenuElement contextMenu = new MenuElement();
     DivElement deleteItem = new DivElement();
@@ -84,7 +89,12 @@ class SheetbookView {
 
     sheetContainer.append(sheetElement);
 
+    if (selectedSheet != null) {
+      selectedSheet.sheetView.sheetElement.parent.classes.remove('selected');
+    }
     selectedSheet = sheet;
+    sheetView.sheetElement.parent.classes.add('selected');
+
     return sheetView;
   }
 

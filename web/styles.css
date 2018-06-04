@@ -93,6 +93,14 @@ html, body{
   height: 100%;
 }
 
+.sheet {
+  display: none;
+}
+
+.sheet.selected {
+  display: block;
+}
+
 .scroll-container {
   overflow-x: scroll;
   overflow-y: scroll;
