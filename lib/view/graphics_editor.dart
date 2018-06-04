@@ -83,8 +83,8 @@ class GraphicsEditorView {
 
     dragMoveSub = canvasElement.onMouseMove.listen((mouseMove) {
       stopDefaultBehaviour(mouseMove);
-      int tentativeWidth = mouseMove.client.x - startPositionX;
-      int tentativeHeight = mouseMove.client.y - startPositionY;
+      tentativeWidth = mouseMove.client.x - startPositionX;
+      tentativeHeight = mouseMove.client.y - startPositionY;
 
       switch (selectedDrawingTool) {
         case DrawingTool.rectangleTool:
@@ -120,6 +120,7 @@ class GraphicsEditorView {
         'width': tentativeWidth,
         'height': tentativeHeight
         });
+      tentativeElement.remove();
       dragMoveSub.cancel();
       dragEndSub.cancel();
     });
