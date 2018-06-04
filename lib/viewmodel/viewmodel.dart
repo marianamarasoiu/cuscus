@@ -293,6 +293,7 @@ command(InteractionAction action, var data) {
           Map shapeData = data;
           // Add rectangle
           view.Rect rectView = new view.Rect(shapeData['x'], shapeData['y'], shapeData['width'], shapeData['height']);
+          graphicsEditorViewModel.graphicsEditorView.shapeViews.add(rectView);
           graphicsEditorViewModel.graphicsEditorView.canvasElement.append(rectView.element);
           
           // Add sheet
@@ -352,7 +353,7 @@ command(InteractionAction action, var data) {
             }
             // Update contents of current cell
             sheet.sheetView.dataElements[0][i].text = value.toString();
-            activeSheet.sheetView.selectedCell.attributes['data-formula'] = value.toString();
+            sheet.sheetView.dataElements[0][i].attributes['data-formula'] = value.toString();
 
             addNodeToSpreadsheetEngine(value, cell, spreadsheetEngine);
           }
@@ -520,6 +521,11 @@ bool _commitFormulaToSelectedCell(String formula) {
   cellsToUpdate.forEach((cell) {
     SheetViewModel sheet = sheets.singleWhere((sheet) => sheet.id == cell.sheetId);
     sheet.sheetView.dataElements[cell.row][cell.col].text = '${spreadsheetEngine.cells[cell].computedValue}';
+
+    if (sheet is RectSheet) {
+      view.Rect rect = graphicsEditorViewModel.graphicsEditorView.shapeViews[cell.row];
+      rect.setAttribute(propertyFromColumnName(sheet.activeColumnNames[cell.col]), spreadsheetEngine.cells[cell].computedValue.value);
+    }
   });
 
   // Update contents of current cell
@@ -529,6 +535,52 @@ bool _commitFormulaToSelectedCell(String formula) {
   // Hide the cell editing box
   _cellInputBox.style.visibility = 'hidden';
   return true;
+}
+
+String propertyFromColumnName(String column) {
+  switch (column) {
+    case 'Width':
+      return 'width';
+      break;
+    case 'Height':
+      return 'height';
+      break;
+    case 'Center X':
+      return 'x';
+      break;
+    case 'Center Y':
+      return 'y';
+      break;
+    case 'Corner Radius X':
+      return 'rx';
+      break;
+    case 'Corner Radius Y':
+      return 'ry';
+      break;
+    case 'Rotation':
+      return 'rotate';
+      break;
+    case 'Fill Color':
+      return 'fill';
+      break;
+    case 'Fill Opacity':
+      return 'fill-opacity';
+      break;
+    case 'Border Style':
+      return 'border';
+      break;
+    case 'Border Width':
+      return 'stroke-width';
+      break;
+    case 'Border Color':
+      return 'stroke';
+      break;
+    case 'Border Opacity':
+      return 'stroke-opacity';
+      break;
+    default:
+      return column;
+  }
 }
 
 SheetViewModel getSheetOfElement(Element cell) {

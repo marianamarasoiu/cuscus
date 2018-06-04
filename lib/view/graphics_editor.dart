@@ -4,6 +4,8 @@ class GraphicsEditorView {
   svg.SvgSvgElement canvasElement;
   DivElement drawingToolContainer;
 
+  List<Shape> shapeViews = [];
+
   GraphicsEditorViewModel graphicsEditorViewModel;
 
   DrawingTool selectedTool = DrawingTool.selectionTool;
