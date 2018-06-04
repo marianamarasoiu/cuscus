@@ -14,16 +14,16 @@ class SheetbookViewModel extends ObjectWithId {
     SheetViewModel sheet;
     switch (type) {
       case 'LineSheet':
-        sheet = new LineSheet(100, 12, 'Line$sheetCounter');
+        sheet = new LineSheet(100, 'Line$sheetCounter');
         break;
       case 'RectSheet':
-        sheet = new RectSheet(100, 12, 'Rect$sheetCounter');
+        sheet = new RectSheet(100, 'Rect$sheetCounter');
         break;
       case 'EllipseSheet':
-        sheet = new EllipseSheet(100, 12, 'Ellipse$sheetCounter');
+        sheet = new EllipseSheet(100, 'Ellipse$sheetCounter');
         break;
       case 'TextSheet':
-        sheet = new TextSheet(100, 12, 'Text$sheetCounter');
+        sheet = new TextSheet(100, 'Text$sheetCounter');
         break;
       default:
         sheet = new DataSheet(100, 12, 'Sheet$sheetCounter');

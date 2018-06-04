@@ -25,7 +25,7 @@ class SheetView {
   DivElement _cellSelector;
 
   SheetView.from(this.sheetViewModel) {
-    columnHeaders = getColumns(sheetViewModel.columns);
+    columnHeaders = sheetViewModel.activeColumnNames;
 
     sheetElement = new DivElement();
     sheetElement..classes.add('scroll-container');

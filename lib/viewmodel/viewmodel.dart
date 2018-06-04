@@ -290,11 +290,93 @@ command(InteractionAction action, var data) {
     case InteractionState.drawing:
       switch (action) {
         case InteractionAction.mouseUpOnCanvas:
-          // MouseEvent mouseUp = data;
-          // stopDefaultBehaviour(mouseUp);
-          // graphicsEditorViewModel.graphicsEditorView.stopDrawing(mouseUp);
+          Map shapeData = data;
+          // Add rectangle
+          view.Rect rectView = new view.Rect(shapeData['x'], shapeData['y'], shapeData['width'], shapeData['height']);
+          graphicsEditorViewModel.graphicsEditorView.canvasElement.append(rectView.element);
+          
+          // Add sheet
+          SheetViewModel sheet = graphicsEditorViewModel.sheetbook.addSheet(selectedDrawingTool == DrawingTool.rectangleTool ? 'RectSheet' : 'other');
+
+          print('columns: ');
+          print(sheet.sheetView.columnHeaders.length);
+          print(sheet.sheetView.columnHeaders);
+          print('tbale columns: ');
+          print(sheet.sheetView.dataElements[0].length);
+          for (int i = 0; i < sheet.sheetView.columnHeaders.length; i++) {
+            engine.CellCoordinates cell = new engine.CellCoordinates(0, i, sheet.id);
+            engine.LiteralValue value;
+            switch (sheet.sheetView.columnHeaders[i]) {
+              case 'Width':
+                value = new engine.LiteralDoubleValue(rectView.width.toDouble());
+                break;
+              case 'Height':
+                value = new engine.LiteralDoubleValue(rectView.height.toDouble());
+                break;
+              case 'Center X':
+                value = new engine.LiteralDoubleValue(rectView.x.toDouble());
+                break;
+              case 'Center Y':
+                value = new engine.LiteralDoubleValue(rectView.y.toDouble());
+                break;
+              case 'Corner Radius X':
+                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('rx')));
+                break;
+              case 'Corner Radius Y':
+                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('ry')));
+                break;
+              case 'Rotation':
+                value = new engine.LiteralDoubleValue(0.0);
+                break;
+              case 'Fill Color':
+                value = new engine.LiteralStringValue(rectView.getAttribute('fill'));
+                break;
+              case 'Fill Opacity':
+                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('fill-opacity')));
+                break;
+              case 'Border Style':
+                value = new engine.LiteralStringValue('solid');
+                break;
+              case 'Border Width':
+                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('stroke-width')));
+                break;
+              case 'Border Color':
+                value = new engine.LiteralStringValue(rectView.getAttribute('stroke'));
+                break;
+              case 'Border Opacity':
+                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('stroke-opacity')));
+                break;
+              default:
+                value = new engine.LiteralStringValue('');
+                break;
+            }
+            // Update contents of current cell
+            sheet.sheetView.dataElements[0][i].text = value.toString();
+            activeSheet.sheetView.selectedCell.attributes['data-formula'] = value.toString();
+
+            addNodeToSpreadsheetEngine(value, cell, spreadsheetEngine);
+          }
+
+          // Get the list of cells to update
+          List<engine.SpreadsheetDep> dirtyNodes = spreadsheetEngine.depGraph.dirtyNodes.toList();
+          List<engine.CellCoordinates> cellsToUpdate = [];
+          spreadsheetEngine.cells.forEach((cell, dep) {
+            if (dirtyNodes.contains(dep)) cellsToUpdate.add(cell);
+          });
+
+          // Propagate the changes in the dependency graph.
+          print(spreadsheetEngine);
+          spreadsheetEngine.depGraph.update();
+          print(spreadsheetEngine);
+
+          // Update the cells in the interface
+          cellsToUpdate.forEach((cell) {
+            SheetViewModel sheet = sheets.singleWhere((sheet) => sheet.id == cell.sheetId);
+            sheet.sheetView.dataElements[cell.row][cell.col].text = '${spreadsheetEngine.cells[cell].computedValue}';
+          });
+          
           // commit change to the rest of the application
-          state = InteractionState.idle; // ??
+          state = InteractionState.idle;
           break;
 
         default:
@@ -417,7 +499,9 @@ bool _commitFormulaToSelectedCell(String formula) {
       activeSheet.sheetView.sheetViewModel.id);
   String jsonParseTree = parser.parseFormula(formula);
   Map formulaParseTree = JSON.decode(jsonParseTree);
+  print(formulaParseTree);
   var elementsResolvedTree = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
+  print(elementsResolvedTree);
   addNodeToSpreadsheetEngine(elementsResolvedTree, cell, spreadsheetEngine);
 
   // Get the list of cells to update

@@ -36,8 +36,9 @@ abstract class VisualisationSheet extends SheetViewModel {
 }
 
 class LineSheet extends VisualisationSheet {
-  LineSheet(rows, columns, name) : super(rows, columns, name) {
-    activeColumnNames = _lineProperties.map((item) => item.first);
+  LineSheet(rows, name) : super(rows, null, name) {
+    activeColumnNames = _lineProperties.map((item) => item.first).toList();
+    columns = activeColumnNames.length;
   }
 
   bool hasMultipleOptionsForColumn(int column) {
@@ -52,8 +53,9 @@ class LineSheet extends VisualisationSheet {
 }
 
 class RectSheet extends VisualisationSheet {
-  RectSheet(rows, columns, name) : super(rows, columns, name) {
-    activeColumnNames = _rectProperties.map((item) => item.first);
+  RectSheet(rows, name) : super(rows, null, name) {
+    activeColumnNames = _rectProperties.map((item) => item.first).toList();
+    columns = activeColumnNames.length;
   }
 
   bool hasMultipleOptionsForColumn(int column) {
@@ -68,8 +70,8 @@ class RectSheet extends VisualisationSheet {
 }
 
 class EllipseSheet extends VisualisationSheet {
-  EllipseSheet(rows, columns, name) : super(rows, columns, name) {
-    activeColumnNames = _ellipseProperties.map((item) => item.first);
+  EllipseSheet(rows, name) : super(rows, null, name) {
+    activeColumnNames = _ellipseProperties.map((item) => item.first).toList();
     columns = activeColumnNames.length;
   }
 
@@ -85,8 +87,9 @@ class EllipseSheet extends VisualisationSheet {
 }
 
 class TextSheet extends VisualisationSheet {
-  TextSheet(rows, columns, name) : super(rows, columns, name) {
-    activeColumnNames = _textProperties.map((item) => item.first);
+  TextSheet(rows, name) : super(rows, null, name) {
+    activeColumnNames = _textProperties.map((item) => item.first).toList();
+    columns = activeColumnNames.length;
   }
 
   bool hasMultipleOptionsForColumn(int column) {
