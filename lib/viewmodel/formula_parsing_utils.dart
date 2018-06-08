@@ -2,14 +2,14 @@ part of cuscus.viewmodel;
 
 addNodeToSpreadsheetEngine(var elementsResolvedTree, engine.CellCoordinates cell, engine.SpreadsheetEngine sse) {
   if (elementsResolvedTree is engine.LiteralValue || elementsResolvedTree is engine.EmptyValue) {
-    sse.setNode(cell, new engine.SpreadsheetDep(sse, elementsResolvedTree));
+    sse.setNode(cell, new engine.SpreadsheetDepNode(sse, elementsResolvedTree));
   } else { // it's a function call
     List dependants = getDependants(elementsResolvedTree);
-    var ssDep = new engine.SpreadsheetDep(sse, new engine.FunctionCall(elementsResolvedTree, dependants));
+    var ssDep = new engine.SpreadsheetDepNode(sse, new engine.FunctionCall(elementsResolvedTree, dependants));
     dependants.forEach((coords) {
-      engine.SpreadsheetDep dep = sse.cells[coords];
+      engine.SpreadsheetDepNode dep = sse.cells[coords];
       if (dep == null) { // it's referencing an empty cell
-        sse.setNode(coords, new engine.SpreadsheetDep(sse, new engine.EmptyValue()));
+        sse.setNode(coords, new engine.SpreadsheetDepNode(sse, new engine.EmptyValue()));
       }
       ssDep.dependants.add(sse.cells[coords]);
     });
@@ -59,7 +59,7 @@ resolveSymbols(Map parseTree, int baseSheetId, engine.SpreadsheetEngine ss) {
       }
     }
     return literalValue;
-    
+
   } else if (parseTree.keys.first == "formula") {
     return resolveSymbolsRecursive(parseTree["formula"], baseSheetId, ss);
   } else {
@@ -124,7 +124,7 @@ Map resolveSymbolsRecursive(Map expression, int baseSheetId, engine.SpreadsheetE
       // Get the rows
       int rowStart = expressionContent["rowStart"] == "" ? -1 : int.parse(expressionContent["rowStart"]) - 1; // -1 because in the UI, index is from 1, internally index is from 0
       int rowEnd = expressionContent["rowEnd"] == "" ? -1 : int.parse(expressionContent["rowEnd"]) - 1; // -1 because in the UI, index is from 1, internally index is from 0
-      
+
       if (columnEnd == -1 && rowEnd == -1) { // it's a single cell
         newExpression = {"cell-ref": new engine.CellCoordinates(rowStart, columnStart, sheet.id)};
       } else if (columnStart != -1 && rowStart != -1 && columnEnd != -1 && rowEnd != -1) { // rectangular range

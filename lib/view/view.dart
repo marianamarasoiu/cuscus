@@ -7,6 +7,7 @@ import 'dart:svg' as svg;
 
 import 'package:cuscus/viewmodel/viewmodel.dart';
 
+part 'cell.dart';
 part 'sheet.dart';
 part 'sheetbook.dart';
 

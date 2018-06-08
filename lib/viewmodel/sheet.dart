@@ -5,13 +5,47 @@ abstract class SheetViewModel extends ObjectWithId {
   int rows;
   int columns;
   String name;
-  SheetbookViewModel sheetbook;
+  SheetbookViewModel sheetbookViewModel;
   view.SheetView sheetView;
+  List<List<CellViewModel>> cells = [];
 
   List<String> activeColumnNames;
 
   SheetViewModel(this.rows, this.columns, this.name) : super() {
     sheets.add(this);
+    for (int r = 0; r < rows; r++) {
+      cells.add([]);
+      for (int c = 0; c < columns; c++) {
+        cells.last.add(new CellViewModel(r, c, this));
+      }
+    }
+  }
+
+  CellViewModel selectedCell;
+
+  void deselectCell() {
+    selectedCell = null;
+    sheetView.selectedCell = null;
+
+    sheetView.hideCellSelector();
+  }
+
+  void selectCellAtCoords(int row, int col) {
+    selectedCell = cells[row][col];
+    sheetView.selectedCell = selectedCell.cellView;
+    sheetView.showCellSelector();
+  }
+  void selectCellBelow(CellViewModel cell) {
+    selectCellAtCoords(cell.row + 1, cell.column);
+  }
+  void selectCellAbove(CellViewModel cell) {
+    selectCellAtCoords(math.max(0, cell.row - 1), cell.column);
+  }
+  void selectCellRight(CellViewModel cell) {
+    selectCellAtCoords(cell.row, cell.column + 1);
+  }
+  void selectCellLeft(CellViewModel cell) {
+    selectCellAtCoords(cell.row, math.max(0, cell.column - 1));
   }
 
   String toString() {
@@ -33,10 +67,14 @@ class WrangleSheet extends SheetViewModel {
 
 abstract class VisualisationSheet extends SheetViewModel {
   VisualisationSheet(rows, columns, name) : super(rows, columns, name);
+
+  bool hasMultipleOptionsForColumn(int column);
+  List<String> getOptionsForColumn(int column);
+  void selectOptionForColumn(int column, String option);
 }
 
 class LineSheet extends VisualisationSheet {
-  LineSheet(rows, name) : super(rows, null, name) {
+  LineSheet(rows, name) : super(rows, _lineProperties.length, name) {
     activeColumnNames = _lineProperties.map((item) => item.first).toList();
     columns = activeColumnNames.length;
   }
@@ -47,13 +85,13 @@ class LineSheet extends VisualisationSheet {
   List<String> getOptionsForColumn(int column) {
     return _lineProperties[column];
   }
-  selectOptionForColumn(int column, String option) {
+  void selectOptionForColumn(int column, String option) {
     activeColumnNames[column] = option;
   }
 }
 
 class RectSheet extends VisualisationSheet {
-  RectSheet(rows, name) : super(rows, null, name) {
+  RectSheet(rows, name) : super(rows, _rectProperties.length, name) {
     activeColumnNames = _rectProperties.map((item) => item.first).toList();
     columns = activeColumnNames.length;
   }
@@ -64,13 +102,13 @@ class RectSheet extends VisualisationSheet {
   List<String> getOptionsForColumn(int column) {
     return _rectProperties[column];
   }
-  selectOptionForColumn(int column, String option) {
+  void selectOptionForColumn(int column, String option) {
     activeColumnNames[column] = option;
   }
 }
 
 class EllipseSheet extends VisualisationSheet {
-  EllipseSheet(rows, name) : super(rows, null, name) {
+  EllipseSheet(rows, name) : super(rows, _ellipseProperties.length, name) {
     activeColumnNames = _ellipseProperties.map((item) => item.first).toList();
     columns = activeColumnNames.length;
   }
@@ -81,13 +119,13 @@ class EllipseSheet extends VisualisationSheet {
   List<String> getOptionsForColumn(int column) {
     return _ellipseProperties[column];
   }
-  selectOptionForColumn(int column, String option) {
+  void selectOptionForColumn(int column, String option) {
     activeColumnNames[column] = option;
   }
 }
 
 class TextSheet extends VisualisationSheet {
-  TextSheet(rows, name) : super(rows, null, name) {
+  TextSheet(rows, name) : super(rows, _textProperties.length, name) {
     activeColumnNames = _textProperties.map((item) => item.first).toList();
     columns = activeColumnNames.length;
   }
@@ -98,7 +136,7 @@ class TextSheet extends VisualisationSheet {
   List<String> getOptionsForColumn(int column) {
     return _textProperties[column];
   }
-  selectOptionForColumn(int column, String option) {
+  void selectOptionForColumn(int column, String option) {
     activeColumnNames[column] = option;
   }
 }

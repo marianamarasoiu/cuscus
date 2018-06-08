@@ -157,10 +157,8 @@ td.index {
 
 .cell-selector {
   position: absolute;
-  z-index: 20;
+  z-index: 40;
   border: 2px solid dodgerblue;
-  height: 20px;
-  width: 100px;
   visibility: hidden;
 }
 
@@ -173,7 +171,7 @@ td.index {
   margin: 0;
   background-color: rgb(255, 255, 255);
   border: 2px #5292f7 solid;
-  /* box-shadow: 0 2px 5px rgba(0,0,0,0.4); */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
   font-size: 13px;
   display: inline-block;
   overflow: hidden;

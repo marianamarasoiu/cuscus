@@ -2,6 +2,7 @@ part of cuscus.viewmodel;
 
 class SheetbookViewModel extends ObjectWithId {
   view.SheetbookView sheetbookView;
+  SheetViewModel selectedSheet;
 
   SheetbookViewModel() : super();
 
@@ -28,8 +29,18 @@ class SheetbookViewModel extends ObjectWithId {
       default:
         sheet = new DataSheet(100, 12, 'Sheet$sheetCounter');
     }
-    sheet.sheetView = sheetbookView.addSheet(sheet);
+    view.SheetView sheetView = new view.SheetView(sheet);
+    sheet.sheetView = sheetView;
+    sheetbookView.addSheet(sheetView);
+    selectSheet(sheet);
     return sheet;
+  }
+
+
+  void selectSheet(SheetViewModel sheet) {
+    selectedSheet = sheet;
+    sheetbookView.selectedSheet = sheet.sheetView;
+    sheetbookView.showSelectedSheet();
   }
 }
 

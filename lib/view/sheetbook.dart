@@ -7,10 +7,10 @@ class SheetbookView {
   DivElement sheetContainer;
 
   SheetbookViewModel sheetbookViewModel;
-  SheetViewModel selectedSheet;
+  SheetView selectedSheet;
 
   List<SheetView> sheetViews = [];
-  
+
   SheetbookView(this.sheetbookViewModel) {
     addSheetButton = new DivElement()
       ..classes.add('add-sheet-btn')
@@ -18,26 +18,27 @@ class SheetbookView {
       ..onClick.listen(((_) => command(InteractionAction.createNewSheet, sheetbookViewModel)));
     tabContainer = new DivElement()..classes.add('tab-container');
     tabContainer.append(addSheetButton);
-    
+
     sheetContainer = new DivElement()..classes.add('sheet-container');
-    
+
     sheetbookElement = new DivElement()..classes.add('sheetbook');
     sheetbookElement.attributes['data-sheetbook-id'] = '${sheetbookViewModel.id}';
     sheetbookElement.append(tabContainer);
     sheetbookElement.append(sheetContainer);
   }
 
-  SheetView addSheet(SheetViewModel sheet) {
+  addSheet(SheetView sheet) {
+    SheetViewModel sheetViewModel = sheet.sheetViewModel;
     InputElement input = new InputElement(type: 'radio');
     input..name = 'sheetbook${sheetbookViewModel.id}-tabs'
-         ..id = 'sheetbook${sheetbookViewModel.id}-tab${sheet.id}'
-         ..value = 'sheetbook${sheetbookViewModel.id}-tab${sheet.id}'
+         ..id = 'sheetbook${sheetbookViewModel.id}-tab${sheetViewModel.id}'
+         ..value = 'sheetbook${sheetbookViewModel.id}-tab${sheetViewModel.id}'
          ..checked = true;
 
     LabelElement label = new LabelElement();
-    label..id = 'sheetbook${sheetbookViewModel.id}-label${sheet.id}'
+    label..id = 'sheetbook${sheetbookViewModel.id}-label${sheetViewModel.id}'
          ..setAttribute('for', input.id)
-         ..text = sheet.name;
+         ..text = sheetViewModel.name;
     label.onDoubleClick.listen((MouseEvent doubleClick) {
       label.contentEditable = 'true';
       String initialName = label.text;
@@ -63,46 +64,38 @@ class SheetbookView {
         }
       });
     });
-    label.onClick.listen((_) {
-      input.checked = true;
-      selectedSheet.sheetView.sheetElement.parent.classes.remove('selected');
-      selectedSheet = sheet;
-      selectedSheet.sheetView.sheetElement.parent.classes.add('selected');
-    });
+    label.onClick.listen((_) => sheetbookViewModel.selectSheet(sheetViewModel));
 
     MenuElement contextMenu = new MenuElement();
     DivElement deleteItem = new DivElement();
     deleteItem.text = 'Delete sheet';
-    deleteItem.onClick.listen((_) => command(InteractionAction.deleteSheet, sheet));
+    deleteItem.onClick.listen((_) => command(InteractionAction.deleteSheet, sheetViewModel));
     contextMenu.append(deleteItem);
     label.contextMenu = contextMenu;
 
     tabContainer.insertAllBefore([input, label], addSheetButton);
 
-    DivElement sheetElement = new DivElement();
-    sheetElement..classes.add('sheet')
-                ..id = 'sheetbook${sheetbookViewModel.id}-sheet${sheet.id}'
-                ..attributes['data-sheet-id'] = '${sheet.id}';
-    SheetView sheetView = new SheetView.from(sheet);
-    sheetViews.add(sheetView);
-    sheetElement.append(sheetView.sheetElement);
+    DivElement sheetElementParent = new DivElement();
+    sheetElementParent..classes.add('sheet')
+                ..id = 'sheetbook${sheetbookViewModel.id}-sheet${sheetViewModel.id}'
+                ..attributes['data-sheet-id'] = '${sheetViewModel.id}';
+    sheetViews.add(sheet);
+    sheetElementParent.append(sheet.sheetElement);
 
-    sheetContainer.append(sheetElement);
+    sheetContainer.append(sheetElementParent);
+  }
 
-    if (selectedSheet != null) {
-      selectedSheet.sheetView.sheetElement.parent.classes.remove('selected');
-    }
-    selectedSheet = sheet;
-    sheetView.sheetElement.parent.classes.add('selected');
-
-    return sheetView;
+  showSelectedSheet() {
+    (querySelector('input#sheetbook${sheetbookViewModel.id}-tab${selectedSheet.sheetViewModel.id}') as InputElement).checked = true;
+    sheetViews.forEach((sheetView) => sheetView.sheetElement.parent.classes.remove('selected'));
+    selectedSheet.sheetElement.parent.classes.add('selected');
   }
 
   removeSheet(SheetViewModel sheet) {
     tabContainer.querySelector('sheetbook${sheetbookViewModel.id}-tab${sheet.id}').remove();
     tabContainer.querySelector('sheetbook${sheetbookViewModel.id}-label${sheet.id}').remove();
     sheetContainer.querySelector('sheetbook${sheetbookViewModel.id}-sheet${sheet.id}').remove();
-    
+
     SheetView sheetView = sheetViews.singleWhere((sheetView) => sheetView.sheetViewModel == sheet);
     sheetView.remove();
     sheetViews.remove(sheetView);

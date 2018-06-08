@@ -12,6 +12,7 @@ import 'package:cuscus/model/formula_parser/formula_parser.dart' as parser;
 import 'package:cuscus/view/view.dart' as view;
 import 'package:cuscus/view/box_layout.dart' as box_layout;
 
+part 'cell.dart';
 part 'sheet.dart';
 part 'sheetbook.dart';
 part 'graphics_editor.dart';
@@ -101,7 +102,7 @@ init() {
     sheetbooks.add(sheetbook);
     sheetbook.createView(_spreadsheetsContainer.querySelector('#left-sheet'));
     activeSheet = sheetbook.addSheet('DataSheet');
-    activeSheet.sheetView.selectCellAtCoords(0, 0);
+    activeSheet.selectCellAtCoords(0, 0);
   }
 
   // Create the data wrangling spreadsheet
@@ -182,11 +183,18 @@ command(InteractionAction action, var data) {
           stopDefaultBehaviour(mouseEvent);
 
           if (mouseEvent.target is TableCellElement) {
-            SheetViewModel sheet = getSheetOfElement(mouseEvent.target);
-            sheet.sheetView.selectedCell = mouseEvent.target;
-            if (sheet != activeSheet) {
-              activeSheet?.sheetView?.selectedCell = null;
-              activeSheet = sheet;
+            TableCellElement cellElement = mouseEvent.target;
+            SheetViewModel sheet = getSheetOfElement(cellElement);
+            if (cellElement.attributes.containsKey('data-row') && cellElement.attributes.containsKey('data-col')) {
+              int row = int.parse(cellElement.attributes['data-row']);
+              int col = int.parse(cellElement.attributes['data-col']);
+              sheet.selectCellAtCoords(row, col);
+              if (sheet != activeSheet) {
+                activeSheet.deselectCell();
+                activeSheet = sheet;
+              }
+            } else {
+              // TODO: implement column and row selection
             }
             state = InteractionState.idle;
           }
@@ -199,7 +207,7 @@ command(InteractionAction action, var data) {
           EventTarget eventTarget = mouseEvent.target;
           if (eventTarget is TableCellElement ||
             (eventTarget is DivElement && eventTarget.classes.contains('cell-selector'))) {
-            _editCell(eventTarget);
+            _editCell(activeSheet.selectedCell);
             state = InteractionState.cellEditing;
           }
           break;
@@ -207,45 +215,45 @@ command(InteractionAction action, var data) {
         case InteractionAction.enter:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
-          _editCell(activeSheet.sheetView.selectedCell);
+          _editCell(activeSheet.selectedCell);
           state = InteractionState.cellEditing;
           break;
 
         case InteractionAction.backspace:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
-          _commitFormulaToSelectedCell('');
+          activeSheet.selectedCell.commitFormula('');
           break;
 
         case InteractionAction.arrowRight:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
-          activeSheet.sheetView.selectCellRight(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellRight(activeSheet.selectedCell);
           break;
 
         case InteractionAction.arrowLeft:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
-          activeSheet.sheetView.selectCellLeft(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellLeft(activeSheet.selectedCell);
           break;
 
         case InteractionAction.arrowUp:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
-          activeSheet.sheetView.selectCellAbove(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellAbove(activeSheet.selectedCell);
           break;
 
         case InteractionAction.arrowDown:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
-          activeSheet.sheetView.selectCellBelow(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellBelow(activeSheet.selectedCell);
           break;
 
         case InteractionAction.otherKey:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          _editCell(activeSheet.sheetView.selectedCell);
+          _editCell(activeSheet.selectedCell);
           state = InteractionState.cellEditing;
 
           _cellInputBox.querySelector('.cell-input').text = keyboardEvent.key;
@@ -295,87 +303,60 @@ command(InteractionAction action, var data) {
           view.Rect rectView = new view.Rect(shapeData['x'], shapeData['y'], shapeData['width'], shapeData['height']);
           graphicsEditorViewModel.graphicsEditorView.shapeViews.add(rectView);
           graphicsEditorViewModel.graphicsEditorView.canvasElement.append(rectView.element);
-          
+
           // Add sheet
           SheetViewModel sheet = graphicsEditorViewModel.sheetbook.addSheet(selectedDrawingTool == DrawingTool.rectangleTool ? 'RectSheet' : 'other');
 
-          print('columns: ');
-          print(sheet.sheetView.columnHeaders.length);
-          print(sheet.sheetView.columnHeaders);
-          print('tbale columns: ');
-          print(sheet.sheetView.dataElements[0].length);
-          for (int i = 0; i < sheet.sheetView.columnHeaders.length; i++) {
-            engine.CellCoordinates cell = new engine.CellCoordinates(0, i, sheet.id);
-            engine.LiteralValue value;
-            switch (sheet.sheetView.columnHeaders[i]) {
+          for (int i = 0; i < sheet.activeColumnNames.length; i++) {
+            String value;
+            switch (sheet.activeColumnNames[i]) {
               case 'Width':
-                value = new engine.LiteralDoubleValue(rectView.width.toDouble());
+                value = rectView.width.toString();
                 break;
               case 'Height':
-                value = new engine.LiteralDoubleValue(rectView.height.toDouble());
+                value = rectView.height.toString();
                 break;
               case 'Center X':
-                value = new engine.LiteralDoubleValue(rectView.x.toDouble());
+                value = rectView.x.toString();
                 break;
               case 'Center Y':
-                value = new engine.LiteralDoubleValue(rectView.y.toDouble());
+                value = rectView.y.toString();
                 break;
               case 'Corner Radius X':
-                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('rx')));
+                value = rectView.getAttribute('rx');
                 break;
               case 'Corner Radius Y':
-                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('ry')));
+                value = rectView.getAttribute('ry');
                 break;
               case 'Rotation':
-                value = new engine.LiteralDoubleValue(0.0);
+                value = '0.0';
                 break;
               case 'Fill Color':
-                value = new engine.LiteralStringValue(rectView.getAttribute('fill'));
+                value = rectView.getAttribute('fill');
                 break;
               case 'Fill Opacity':
-                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('fill-opacity')));
+                value = rectView.getAttribute('fill-opacity');
                 break;
               case 'Border Style':
-                value = new engine.LiteralStringValue('solid');
+                value = 'solid';
                 break;
               case 'Border Width':
-                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('stroke-width')));
+                value = rectView.getAttribute('stroke-width');
                 break;
               case 'Border Color':
-                value = new engine.LiteralStringValue(rectView.getAttribute('stroke'));
+                value = rectView.getAttribute('stroke');
                 break;
               case 'Border Opacity':
-                value = new engine.LiteralDoubleValue(double.parse(rectView.getAttribute('stroke-opacity')));
+                value = rectView.getAttribute('stroke-opacity');
                 break;
               default:
-                value = new engine.LiteralStringValue('');
+                value = '';
                 break;
             }
             // Update contents of current cell
-            sheet.sheetView.dataElements[0][i].text = value.toString();
-            sheet.sheetView.dataElements[0][i].attributes['data-formula'] = value.toString();
-
-            addNodeToSpreadsheetEngine(value, cell, spreadsheetEngine);
+            sheet.cells[0][i].commitFormula(value.toString());
           }
 
-          // Get the list of cells to update
-          List<engine.SpreadsheetDep> dirtyNodes = spreadsheetEngine.depGraph.dirtyNodes.toList();
-          List<engine.CellCoordinates> cellsToUpdate = [];
-          spreadsheetEngine.cells.forEach((cell, dep) {
-            if (dirtyNodes.contains(dep)) cellsToUpdate.add(cell);
-          });
-
-          // Propagate the changes in the dependency graph.
-          print(spreadsheetEngine);
-          spreadsheetEngine.depGraph.update();
-          print(spreadsheetEngine);
-
-          // Update the cells in the interface
-          cellsToUpdate.forEach((cell) {
-            SheetViewModel sheet = sheets.singleWhere((sheet) => sheet.id == cell.sheetId);
-            sheet.sheetView.dataElements[cell.row][cell.col].text = '${spreadsheetEngine.cells[cell].computedValue}';
-          });
-          
           // commit change to the rest of the application
           state = InteractionState.idle;
           break;
@@ -394,9 +375,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyEvent = data;
           stopDefaultBehaviour(keyEvent);
 
-          _commitFormulaToSelectedCell(_cellInputBox.text.trim());
+          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
 
-          activeSheet.sheetView.selectCellBelow(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellBelow(activeSheet.selectedCell);
           state = InteractionState.idle;
           break;
 
@@ -404,9 +385,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          _commitFormulaToSelectedCell(_cellInputBox.text.trim());
+          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
 
-          activeSheet.sheetView.selectCellRight(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellRight(activeSheet.selectedCell);
           state = InteractionState.idle;
           break;
 
@@ -414,9 +395,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          _commitFormulaToSelectedCell(_cellInputBox.text.trim());
+          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
 
-          activeSheet.sheetView.selectCellLeft(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellLeft(activeSheet.selectedCell);
           state = InteractionState.idle;
           break;
 
@@ -424,9 +405,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          _commitFormulaToSelectedCell(_cellInputBox.text.trim());
+          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
 
-          activeSheet.sheetView.selectCellAbove(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellAbove(activeSheet.selectedCell);
           state = InteractionState.idle;
           break;
 
@@ -434,24 +415,24 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          _commitFormulaToSelectedCell(_cellInputBox.text.trim());
+          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
 
-          activeSheet.sheetView.selectCellBelow(activeSheet.sheetView.selectedCell);
+          activeSheet.selectCellBelow(activeSheet.selectedCell);
           state = InteractionState.idle;
           break;
 
         case InteractionAction.click:
           MouseEvent mouseEvent = data;
           stopDefaultBehaviour(mouseEvent);
-          
+
           EventTarget eventTarget = mouseEvent.target;
           if (eventTarget is DivElement && eventTarget.classes.contains('cell-input')) {
               // Clicking inside the cell being edited => ignore
           } else {
-            _commitFormulaToSelectedCell(_cellInputBox.text.trim());
-            
+            activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
+
             state = InteractionState.idle;
-            
+
             // Process the click
             command(InteractionAction.click, data);
           }
@@ -470,71 +451,17 @@ stopDefaultBehaviour(Event event) { // Move to a common utils file
   event.preventDefault();
 }
 
-_editCell(EventTarget eventTarget) {
-  if (eventTarget is TableCellElement) {
-    SheetViewModel sheet = getSheetOfElement(eventTarget);
-    sheet.sheetView.selectedCell = eventTarget;
-    if (sheet != activeSheet) {
-      activeSheet?.sheetView?.selectedCell = null;
-      activeSheet = sheet;
-    }
-  }
-
-  SheetViewModel sheet = getSheetOfElement(eventTarget);
-  _cellInputBox.style.minHeight = '${sheet.sheetView.selectedCell.client.height - 2}px';
-  _cellInputBox.style.minWidth = '${sheet.sheetView.selectedCell.client.width - 4}px';
+_editCell(CellViewModel cell) {
+  _cellInputBox.style.minHeight = '${cell.cellView.cellElement.client.height - 2}px';
+  _cellInputBox.style.minWidth = '${cell.cellView.cellElement.client.width - 4}px';
   _cellInputBox.style.maxHeight = '200px'; // TODO: these should come from the distance between the selected cell and bottom and right margin.
   _cellInputBox.style.maxWidth = '500px';
   _cellInputBox.style.visibility = 'visible';
-  _cellInputBox.style.top = '${sheet.sheetView.selectedCell.getBoundingClientRect().top - 1}px';
-  _cellInputBox.style.left = '${sheet.sheetView.selectedCell.getBoundingClientRect().left - 1}px';
+  _cellInputBox.style.top = '${cell.cellView.cellElement.getBoundingClientRect().top - 1}px';
+  _cellInputBox.style.left = '${cell.cellView.cellElement.getBoundingClientRect().left - 1}px';
   _cellInputBox.querySelector('.cell-input')
-    ..text = sheet.sheetView.selectedCell.attributes['data-formula']
+    ..text = cell._userEnteredFormula
     ..focus();
-}
-
-bool _commitFormulaToSelectedCell(String formula) {
-  engine.CellCoordinates cell = new engine.CellCoordinates(
-      activeSheet.sheetView.selectedCellRow, 
-      activeSheet.sheetView.selectedCellColumn,
-      activeSheet.sheetView.sheetViewModel.id);
-  String jsonParseTree = parser.parseFormula(formula);
-  Map formulaParseTree = JSON.decode(jsonParseTree);
-  print(formulaParseTree);
-  var elementsResolvedTree = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
-  print(elementsResolvedTree);
-  addNodeToSpreadsheetEngine(elementsResolvedTree, cell, spreadsheetEngine);
-
-  // Get the list of cells to update
-  List<engine.SpreadsheetDep> dirtyNodes = spreadsheetEngine.depGraph.dirtyNodes.toList();
-  List<engine.CellCoordinates> cellsToUpdate = [];
-  spreadsheetEngine.cells.forEach((cell, dep) {
-    if (dirtyNodes.contains(dep)) cellsToUpdate.add(cell);
-  });
-
-  // Propagate the changes in the dependency graph.        
-  print(spreadsheetEngine);
-  spreadsheetEngine.depGraph.update();
-  print(spreadsheetEngine);
-
-  // Update the cells in the interface
-  cellsToUpdate.forEach((cell) {
-    SheetViewModel sheet = sheets.singleWhere((sheet) => sheet.id == cell.sheetId);
-    sheet.sheetView.dataElements[cell.row][cell.col].text = '${spreadsheetEngine.cells[cell].computedValue}';
-
-    if (sheet is RectSheet) {
-      view.Rect rect = graphicsEditorViewModel.graphicsEditorView.shapeViews[cell.row];
-      rect.setAttribute(propertyFromColumnName(sheet.activeColumnNames[cell.col]), spreadsheetEngine.cells[cell].computedValue.value);
-    }
-  });
-
-  // Update contents of current cell
-  activeSheet.sheetView.selectedCell.text = spreadsheetEngine.cells[cell].computedValue.toString();
-  activeSheet.sheetView.selectedCell.attributes['data-formula'] = formula;
-  
-  // Hide the cell editing box
-  _cellInputBox.style.visibility = 'hidden';
-  return true;
 }
 
 String propertyFromColumnName(String column) {

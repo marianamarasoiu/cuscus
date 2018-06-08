@@ -3,6 +3,8 @@
  * Based on the initial implementation by @lukechurch in [possum](https://github.com/lukechurch/possum/blob/master/lib/spreadsheet.dart)
  */
 
+import 'dart:async';
+
 import 'package:possum/deps_map.dart';
 
 import 'intrinsics.dart';
@@ -10,7 +12,7 @@ import 'intrinsics.dart';
 SpreadsheetEngine spreadsheetEngine = new SpreadsheetEngine();
 
 class SpreadsheetEngine {
-  Map<CellCoordinates, SpreadsheetDep> cells = {};
+  Map<CellCoordinates, SpreadsheetDepNode> cells = {};
   DepGraph depGraph = new DepGraph();
 
   toString() {
@@ -22,22 +24,15 @@ class SpreadsheetEngine {
   // The node should have correct dependants
   // This function will fix up the node that is being
   // removed
-  setNode(CellCoordinates coords, SpreadsheetDep node) {
-    print('-----');
-    print(node);
-    print(node.dependees);
-    print(node.dependants);
-    print('-----');
-    
-
+  setNode(CellCoordinates coords, SpreadsheetDepNode node) {
     if (node.dependees.length > 0) throw "Don't set dependees on nodes before adding them";
 
-    SpreadsheetDep existingNode = cells[coords];
+    SpreadsheetDepNode existingNode = cells[coords];
 
     // Remove existing node
     if (existingNode != null) {
       depGraph.nodes.remove(existingNode);
-      
+
       // Remove the existing node from the graph and add the new one.
       for (var dpNode in existingNode.dependees) {
         dpNode.dependants..remove(existingNode)..add(node);
@@ -59,12 +54,12 @@ class SpreadsheetEngine {
   }
 
   clear(CellCoordinates coords) {
-    SpreadsheetDep existingNode = cells[coords];
+    SpreadsheetDepNode existingNode = cells[coords];
 
     // Remove existing node
     if (existingNode != null) {
       depGraph.nodes.remove(existingNode);
-      
+
       // Remove the existing node from the graph and add the new one.
       for (var dpNode in existingNode.dependees) {
         dpNode.dependants.remove(existingNode);
@@ -101,7 +96,7 @@ class SpreadsheetEngine {
         if (cellMatrix[row - topLeft.row][col - topLeft.col] == null) {
           CellCoordinates cell = new CellCoordinates(row, col, topLeft.sheetId);
           cellMatrix[row - topLeft.row][col - topLeft.col] = cell;
-          spreadsheetEngine.cells[cell] = new SpreadsheetDep(spreadsheetEngine, new EmptyValue());
+          spreadsheetEngine.cells[cell] = new SpreadsheetDepNode(spreadsheetEngine, new EmptyValue());
         }
       }
     }
@@ -109,11 +104,14 @@ class SpreadsheetEngine {
   }
 }
 
-class SpreadsheetDep extends DepNode<CellContents> {
+class SpreadsheetDepNode extends DepNode<CellContents> {
   SpreadsheetEngine sheet;
-  SpreadsheetDep(this.sheet, CellContents fc) : super(fc) { }
-  
   LiteralValue computedValue;
+
+  StreamController changeController = new StreamController<String>();
+  Stream<String> get onChange => changeController.stream;
+
+  SpreadsheetDepNode(this.sheet, CellContents fc) : super(fc);
 
   eval() {
     if (!this.dirty) {
@@ -123,17 +121,11 @@ class SpreadsheetDep extends DepNode<CellContents> {
     // TODO: this is a hack. Should be replaced with expected types for the dependants of a function call, and then a switch here creating the appropriate [LiteralValue]
     if (value is EmptyValue) {
       computedValue = new LiteralDoubleValue(0.0);
-      dirty = false;
-      return;
-    }
 
-    if (value is LiteralValue) {
+    } else if (value is LiteralValue) {
       computedValue = value;
-      dirty = false;
-      return;
-    }
 
-    if (value is FunctionCall) {
+    } else if (value is FunctionCall) {
       var functionCall = value as FunctionCall;
 
       // Look up the values
@@ -143,10 +135,11 @@ class SpreadsheetDep extends DepNode<CellContents> {
       }
 
       computedValue = evalFunctionCall(functionCall.ast, coordsValues);
-
-      dirty = false;
-      return;
     }
+
+    dirty = false;
+    changeController.add('Value Changed');
+    return;
   }
 }
 
