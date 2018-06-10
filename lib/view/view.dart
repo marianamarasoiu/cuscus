@@ -10,6 +10,7 @@ import 'package:cuscus/viewmodel/viewmodel.dart';
 part 'cell.dart';
 part 'sheet.dart';
 part 'sheetbook.dart';
+part 'cell_input_box.dart';
 
 part 'graphics_editor.dart';
 

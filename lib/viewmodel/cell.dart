@@ -41,7 +41,7 @@ class CellViewModel {
     _text = node.computedValue.value.toString();
 
     // Hide the cell editing box
-    _cellInputBox.style.visibility = 'hidden';
+    cellInputBoxViewModel.hide();
 
     // Save a copy of the formula for later
     _userEnteredFormula = formula;

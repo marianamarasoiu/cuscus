@@ -15,6 +15,8 @@ import 'package:cuscus/view/box_layout.dart' as box_layout;
 part 'cell.dart';
 part 'sheet.dart';
 part 'sheetbook.dart';
+part 'cell_input_box.dart';
+
 part 'graphics_editor.dart';
 
 part 'object_id.dart';
@@ -71,12 +73,12 @@ enum DrawingTool {
 List<SheetViewModel> sheets = [];
 List<SheetbookViewModel> sheetbooks = [];
 engine.SpreadsheetEngine spreadsheetEngine = new engine.SpreadsheetEngine();
+CellInputBoxViewModel cellInputBoxViewModel = new CellInputBoxViewModel();
 GraphicsEditorViewModel graphicsEditorViewModel;
 
 DivElement get _mainContainer => querySelector('#main-container'); // TODO: rename element to #main-container
 DivElement get _spreadsheetsContainer => querySelector('#sheets-container'); // TODO: rename element to #spreadsheets-container
 DivElement get _graphicsEditorContainer => querySelector('#vis-canvas'); // TODO: rename element to #graphics-editor-container
-DivElement get _cellInputBox => querySelector('.input-box'); // TODO: rename element to #cell-input-box
 
 InteractionState _state = InteractionState.idle;
 InteractionState get state => _state;
@@ -207,7 +209,7 @@ command(InteractionAction action, var data) {
           EventTarget eventTarget = mouseEvent.target;
           if (eventTarget is TableCellElement ||
             (eventTarget is DivElement && eventTarget.classes.contains('cell-selector'))) {
-            _editCell(activeSheet.selectedCell);
+            cellInputBoxViewModel.show(activeSheet.selectedCell);
             state = InteractionState.cellEditing;
           }
           break;
@@ -215,7 +217,7 @@ command(InteractionAction action, var data) {
         case InteractionAction.enter:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
-          _editCell(activeSheet.selectedCell);
+          cellInputBoxViewModel.show(activeSheet.selectedCell);
           state = InteractionState.cellEditing;
           break;
 
@@ -253,11 +255,11 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          _editCell(activeSheet.selectedCell);
           state = InteractionState.cellEditing;
 
-          _cellInputBox.querySelector('.cell-input').text = keyboardEvent.key;
-          window.getSelection().collapse(_cellInputBox.querySelector('.cell-input'), 1);
+          cellInputBoxViewModel.show(activeSheet.selectedCell);
+          cellInputBoxViewModel.enterKey(keyboardEvent.key);
+          cellInputBoxViewModel.positionCursorAtEnd();
           break;
 
         default:
@@ -375,9 +377,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyEvent = data;
           stopDefaultBehaviour(keyEvent);
 
-          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
-
+          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellBelow(activeSheet.selectedCell);
+
           state = InteractionState.idle;
           break;
 
@@ -385,9 +387,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
-
+          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellRight(activeSheet.selectedCell);
+
           state = InteractionState.idle;
           break;
 
@@ -395,9 +397,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
-
+          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellLeft(activeSheet.selectedCell);
+
           state = InteractionState.idle;
           break;
 
@@ -405,9 +407,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
-
+          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellAbove(activeSheet.selectedCell);
+
           state = InteractionState.idle;
           break;
 
@@ -415,9 +417,9 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
-
+          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellBelow(activeSheet.selectedCell);
+
           state = InteractionState.idle;
           break;
 
@@ -429,7 +431,7 @@ command(InteractionAction action, var data) {
           if (eventTarget is DivElement && eventTarget.classes.contains('cell-input')) {
               // Clicking inside the cell being edited => ignore
           } else {
-            activeSheet.selectedCell.commitFormula(_cellInputBox.text.trim());
+            activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
 
             state = InteractionState.idle;
 
@@ -449,19 +451,6 @@ stopDefaultBehaviour(Event event) { // Move to a common utils file
   event.stopImmediatePropagation();
   event.stopPropagation();
   event.preventDefault();
-}
-
-_editCell(CellViewModel cell) {
-  _cellInputBox.style.minHeight = '${cell.cellView.cellElement.client.height - 2}px';
-  _cellInputBox.style.minWidth = '${cell.cellView.cellElement.client.width - 4}px';
-  _cellInputBox.style.maxHeight = '200px'; // TODO: these should come from the distance between the selected cell and bottom and right margin.
-  _cellInputBox.style.maxWidth = '500px';
-  _cellInputBox.style.visibility = 'visible';
-  _cellInputBox.style.top = '${cell.cellView.cellElement.getBoundingClientRect().top - 1}px';
-  _cellInputBox.style.left = '${cell.cellView.cellElement.getBoundingClientRect().left - 1}px';
-  _cellInputBox.querySelector('.cell-input')
-    ..text = cell._userEnteredFormula
-    ..focus();
 }
 
 String propertyFromColumnName(String column) {
