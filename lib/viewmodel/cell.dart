@@ -46,4 +46,12 @@ class CellViewModel {
     // Save a copy of the formula for later
     _userEnteredFormula = formula;
   }
+
+  update() {
+    engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
+    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+    print (cell);
+    _text = node.computedValue.value.toString();
+    _userEnteredFormula = _value;
+  }
 }

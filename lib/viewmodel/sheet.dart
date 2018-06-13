@@ -65,15 +65,24 @@ class WrangleSheet extends SheetViewModel {
   }
 }
 
-abstract class VisualisationSheet extends SheetViewModel {
-  VisualisationSheet(rows, columns, name) : super(rows, columns, name);
+abstract class GraphicsSheetViewModel extends SheetViewModel {
+  LayerViewModel layerViewModel;
+
+  GraphicsSheetViewModel(rows, columns, name) : super(rows, columns, name);
 
   bool hasMultipleOptionsForColumn(int column);
   List<String> getOptionsForColumn(int column);
   void selectOptionForColumn(int column, String option);
+
+  selectRow(int row) => (sheetView as view.GraphicsSheetView).showRowSelector(row);
+  deselectRow(int row) => (sheetView as view.GraphicsSheetView).hideRowSelector(row);
+
+  updateRow(int row) {
+    cells[row].forEach((CellViewModel cell) => cell.update());
+  }
 }
 
-class LineSheet extends VisualisationSheet {
+class LineSheet extends GraphicsSheetViewModel {
   LineSheet(rows, name) : super(rows, _lineProperties.length, name) {
     activeColumnNames = _lineProperties.map((item) => item.first).toList();
     columns = activeColumnNames.length;
@@ -90,9 +99,9 @@ class LineSheet extends VisualisationSheet {
   }
 }
 
-class RectSheet extends VisualisationSheet {
-  RectSheet(rows, name) : super(rows, _rectProperties.length, name) {
-    activeColumnNames = _rectProperties.map((item) => item.first).toList();
+class RectSheet extends GraphicsSheetViewModel {
+  RectSheet(rows, name) : super(rows, rectPropertyToColumnName.length, name) {
+    activeColumnNames = rectPropertyToColumnName.values.toList();
     columns = activeColumnNames.length;
   }
 
@@ -107,7 +116,7 @@ class RectSheet extends VisualisationSheet {
   }
 }
 
-class EllipseSheet extends VisualisationSheet {
+class EllipseSheet extends GraphicsSheetViewModel {
   EllipseSheet(rows, name) : super(rows, _ellipseProperties.length, name) {
     activeColumnNames = _ellipseProperties.map((item) => item.first).toList();
     columns = activeColumnNames.length;
@@ -124,7 +133,7 @@ class EllipseSheet extends VisualisationSheet {
   }
 }
 
-class TextSheet extends VisualisationSheet {
+class TextSheet extends GraphicsSheetViewModel {
   TextSheet(rows, name) : super(rows, _textProperties.length, name) {
     activeColumnNames = _textProperties.map((item) => item.first).toList();
     columns = activeColumnNames.length;

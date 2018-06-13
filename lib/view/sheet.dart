@@ -119,3 +119,16 @@ class SheetView {
     cellSelector.style.visibility = 'hidden';
   }
 }
+
+class GraphicsSheetView extends SheetView {
+
+  GraphicsSheetView(SheetViewModel sheetViewModel) : super(sheetViewModel);
+
+  showRowSelector(int index) {
+    data.rows[index].classes.add('selected');
+  }
+
+  hideRowSelector(int index) {
+    data.rows[index].classes.remove('selected');
+  }
+}

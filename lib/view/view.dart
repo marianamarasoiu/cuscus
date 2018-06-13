@@ -12,8 +12,9 @@ part 'sheet.dart';
 part 'sheetbook.dart';
 part 'cell_input_box.dart';
 
+part 'shape.dart';
+part 'layer.dart';
 part 'graphics_editor.dart';
+part 'shape_bounding_box.dart';
 
-part 'shapes/bounding_box.dart';
 part 'shapes/group.dart';
-part 'shapes/rect.dart';

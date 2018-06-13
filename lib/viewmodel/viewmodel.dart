@@ -16,7 +16,12 @@ part 'cell.dart';
 part 'sheet.dart';
 part 'sheetbook.dart';
 part 'cell_input_box.dart';
+part 'shape_bounding_box.dart';
 
+part 'layer_sheet_factory.dart';
+
+part 'shape.dart';
+part 'layer.dart';
 part 'graphics_editor.dart';
 
 part 'object_id.dart';
@@ -70,10 +75,18 @@ enum DrawingTool {
   textTool,
 }
 
+enum Shape {
+  rect
+}
+
 List<SheetViewModel> sheets = [];
 List<SheetbookViewModel> sheetbooks = [];
 engine.SpreadsheetEngine spreadsheetEngine = new engine.SpreadsheetEngine();
+
 CellInputBoxViewModel cellInputBoxViewModel = new CellInputBoxViewModel();
+ShapeBoundingBoxViewModel shapeBoundingBoxViewModel = new ShapeBoundingBoxViewModel();
+
+SheetbookViewModel graphicsSheetbookViewModel;
 GraphicsEditorViewModel graphicsEditorViewModel;
 
 DivElement get _mainContainer => querySelector('#main-container'); // TODO: rename element to #main-container
@@ -117,11 +130,11 @@ init() {
 
   // Create the visualisation spreadsheet and initialise the graphics editor with it
   {
-    SheetbookViewModel sheetbook = new SheetbookViewModel();
-    sheetbooks.add(sheetbook);
-    sheetbook.createView(_spreadsheetsContainer.querySelector('#right-sheet'));
+    graphicsSheetbookViewModel = new SheetbookViewModel();
+    sheetbooks.add(graphicsSheetbookViewModel);
+    graphicsSheetbookViewModel.createView(_spreadsheetsContainer.querySelector('#right-sheet'));
 
-    graphicsEditorViewModel = new GraphicsEditorViewModel(sheetbook);
+    graphicsEditorViewModel = new GraphicsEditorViewModel(graphicsSheetbookViewModel);
     graphicsEditorViewModel.createView();
     selectedDrawingTool = DrawingTool.selectionTool;
     graphicsEditorViewModel.graphicsEditorView.selectDrawingTool(selectedDrawingTool);
@@ -301,63 +314,24 @@ command(InteractionAction action, var data) {
       switch (action) {
         case InteractionAction.mouseUpOnCanvas:
           Map shapeData = data;
-          // Add rectangle
-          view.Rect rectView = new view.Rect(shapeData['x'], shapeData['y'], shapeData['width'], shapeData['height']);
-          graphicsEditorViewModel.graphicsEditorView.shapeViews.add(rectView);
-          graphicsEditorViewModel.graphicsEditorView.canvasElement.append(rectView.element);
 
-          // Add sheet
-          SheetViewModel sheet = graphicsEditorViewModel.sheetbook.addSheet(selectedDrawingTool == DrawingTool.rectangleTool ? 'RectSheet' : 'other');
+          LayerSheetFactory layerSheetFactory = new LayerSheetFactory(selectedDrawingTool == DrawingTool.rectangleTool ? Shape.rect : null);
+          GraphicsSheetViewModel sheet = layerSheetFactory.sheet;
+          LayerViewModel layer = layerSheetFactory.layer;
 
-          for (int i = 0; i < sheet.activeColumnNames.length; i++) {
-            String value;
-            switch (sheet.activeColumnNames[i]) {
-              case 'Width':
-                value = rectView.width.toString();
-                break;
-              case 'Height':
-                value = rectView.height.toString();
-                break;
-              case 'Center X':
-                value = rectView.x.toString();
-                break;
-              case 'Center Y':
-                value = rectView.y.toString();
-                break;
-              case 'Corner Radius X':
-                value = rectView.getAttribute('rx');
-                break;
-              case 'Corner Radius Y':
-                value = rectView.getAttribute('ry');
-                break;
-              case 'Rotation':
-                value = '0.0';
-                break;
-              case 'Fill Color':
-                value = rectView.getAttribute('fill');
-                break;
-              case 'Fill Opacity':
-                value = rectView.getAttribute('fill-opacity');
-                break;
-              case 'Border Style':
-                value = 'solid';
-                break;
-              case 'Border Width':
-                value = rectView.getAttribute('stroke-width');
-                break;
-              case 'Border Color':
-                value = rectView.getAttribute('stroke');
-                break;
-              case 'Border Opacity':
-                value = rectView.getAttribute('stroke-opacity');
-                break;
-              default:
-                value = '';
-                break;
-            }
-            // Update contents of current cell
-            sheet.cells[0][i].commitFormula(value.toString());
-          }
+          print (sheet);
+          print (layer);
+          print (sheet.layerViewModel);
+          print (layer.graphicsSheetViewModel);
+
+          RectViewModel rectViewModel = layer.addShape(0, x: shapeData['x'], y: shapeData['y'], width: shapeData['width'], height: shapeData['height']);
+
+          graphicsEditorViewModel.graphicsEditorView.shapeViews.add(rectViewModel.shapeView);
+          graphicsEditorViewModel.graphicsEditorView.canvasElement.append(rectViewModel.shapeView.element);
+
+          print (spreadsheetEngine);
+
+          sheet.updateRow(0); // TODO: this is a hack
 
           // commit change to the rest of the application
           state = InteractionState.idle;
@@ -528,3 +502,50 @@ Element getParentOfClass(Element e, String className) {
   }
   return null; // no parent with the given class.
 }
+
+
+// TODO: move to another file
+enum Rect {
+  x,
+  y,
+  width,
+  height,
+  rx,
+  ry,
+  fillColor,
+  fillOpacity,
+  strokeColor,
+  strokeWidth,
+  strokeOpacity,
+  opacity
+}
+
+const Map<Rect, String> rectPropertyToColumnName = const {
+  Rect.width: 'Width',
+  Rect.height: 'Height',
+  Rect.x: 'X',
+  Rect.y: 'Y',
+  Rect.rx: 'Corner Radius X',
+  Rect.ry: 'Corner Radius Y',
+  Rect.fillColor: 'Fill Color',
+  Rect.fillOpacity: 'Fill Opacity',
+  Rect.strokeColor: 'Border Color',
+  Rect.strokeWidth: 'Border Width',
+  Rect.strokeOpacity: 'BorderOpacity',
+  Rect.opacity: 'Opacity'
+};
+
+const Map<Rect, String> rectPropertyToSvgProperty = const {
+  Rect.width: 'width',
+  Rect.height: 'height',
+  Rect.x: 'x',
+  Rect.y: 'y',
+  Rect.rx: 'rx',
+  Rect.ry: 'ry',
+  Rect.fillColor: 'fill',
+  Rect.fillOpacity: 'fill-opacity',
+  Rect.strokeColor: 'stroke',
+  Rect.strokeWidth: 'stroke-width',
+  Rect.strokeOpacity: 'stroke-opacity',
+  Rect.opacity: 'opacity'
+};

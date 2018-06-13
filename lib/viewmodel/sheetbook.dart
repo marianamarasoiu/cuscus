@@ -11,7 +11,7 @@ class SheetbookViewModel extends ObjectWithId {
     parent.append(sheetbookView.sheetbookElement);
   }
 
-  SheetViewModel addSheet([String type]) {
+  SheetViewModel addSheet([String type]) { // TODO: replace the type with an enum
     SheetViewModel sheet;
     switch (type) {
       case 'LineSheet':

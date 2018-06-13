@@ -7,7 +7,7 @@ class CellInputBoxViewModel {
     cellInputBoxView = new view.CellInputBoxView(this);
   }
 
-  get contents => cellInputBoxView.contents;
+  String get contents => cellInputBoxView.contents;
 
   show(CellViewModel cell) => cellInputBoxView.show(cell.cellView);
 

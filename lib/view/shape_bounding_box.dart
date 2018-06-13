@@ -2,7 +2,7 @@ part of cuscus.view;
 
 typedef void UpdateFunction({num x, num y, num width, num height});
 
-class BoundingBox {
+class ShapeBoundingBoxView {
   svg.RectElement topLeftHandle;
   svg.RectElement topHandle;
   svg.RectElement topRightHandle;
@@ -14,12 +14,14 @@ class BoundingBox {
   svg.RectElement boundingBoxBorder;
   svg.GElement group;
 
-  UpdateFunction updateFunction;
-
   int handleWidth = 5;
   int handleHeight = 5;
 
-  BoundingBox() {
+  UpdateFunction updateFunction;
+
+  ShapeBoundingBoxViewModel shapeBoundingBoxViewModel;
+
+  ShapeBoundingBoxView(this.shapeBoundingBoxViewModel) {
     topLeftHandle = _createNewHandle()..id = "top-left-handle";
     topHandle = _createNewHandle()..id = "top-handle";
     topRightHandle = _createNewHandle()..id = "top-right-handle";
@@ -28,11 +30,14 @@ class BoundingBox {
     bottomHandle = _createNewHandle()..id = "bottom-handle";
     bottomLeftHandle = _createNewHandle()..id = "bottom-left-handle";
     leftHandle = _createNewHandle()..id = "left-handle";
-    boundingBoxBorder = new svg.RectElement()..id = "bounding-box-border"
+    boundingBoxBorder = new svg.RectElement()
+      ..id = "bounding-box-border"
       ..attributes["fill"] = ""
       ..attributes["stroke-width"] = "1"
       ..attributes["stroke"] = "dodgerblue";
-    group = new svg.GElement()..id = "bounding-box"
+
+    group = new svg.GElement()
+      ..id = "bounding-box"
       ..attributes["visibility"] = "hidden"
       ..append(topLeftHandle)
       ..append(topHandle)
@@ -43,6 +48,8 @@ class BoundingBox {
       ..append(bottomLeftHandle)
       ..append(leftHandle)
       ..append(boundingBoxBorder);
+
+    initListeners();
   }
 
   initListeners() {
@@ -70,7 +77,12 @@ class BoundingBox {
     });
   }
 
-  at(int x, int y, int width, int height) {
+  show(ShapeView shape) {
+    int x = shape.x;
+    int y = shape.y;
+    int width = shape.width;
+    int height = shape.height;
+
     boundingBoxBorder
       ..attributes["x"] = "$x"
       ..attributes["y"] = "$y"
@@ -96,11 +108,11 @@ class BoundingBox {
     bottomRightHandle
       ..attributes["x"] = "${x + width - handleWidth/2}"
       ..attributes["y"] = "${y + height - handleHeight/2}";
-    
+
     bottomHandle
       ..attributes["x"] = "${x + width/2 - handleWidth/2}"
       ..attributes["y"] = "${y + height/2 - handleHeight/2}";
-    
+
     bottomLeftHandle
       ..attributes["x"] = "${x - handleWidth/2}"
       ..attributes["y"] = "${y + height - handleHeight/2}";
@@ -108,9 +120,9 @@ class BoundingBox {
     leftHandle
       ..attributes["x"] = "${x - handleWidth/2}"
       ..attributes["y"] = "${y + height/2 - handleHeight/2}";
-  }
 
-  show() => group.attributes["visibility"] = "visible";
+    group.attributes["visibility"] = "visible";
+  }
 
   hide() => group.attributes["visibility"] = "hidden";
 
