@@ -103,7 +103,13 @@ set state(InteractionState newState) {
 
 // State data
 // For selecting a cell
-SheetViewModel activeSheet;
+SheetViewModel _activeSheet;
+SheetViewModel get activeSheet => _activeSheet;
+void set activeSheet(SheetViewModel sheet) {
+  _activeSheet?.deselectCell();
+  _activeSheet = sheet;
+}
+
 // For drawing
 DrawingTool selectedDrawingTool;
 
@@ -206,19 +212,23 @@ command(InteractionAction action, var data) {
               int col = int.parse(cellElement.attributes['data-col']);
               sheet.selectCellAtCoords(row, col);
               if (sheet != activeSheet) {
-                activeSheet.deselectCell();
                 activeSheet = sheet;
               }
             } else {
               // TODO: implement column and row selection
             }
             state = InteractionState.idle;
-          } else if (mouseEvent.target is svg.GeometryElement) {
+          } else if (mouseEvent.target is svg.GeometryElement && mouseEvent.target.id != 'bounding-box-border') {
             svg.GeometryElement element = mouseEvent.target;
             List coordinates = element.id.split('-');
             int sheetId = int.parse(coordinates[0]);
             LayerViewModel layer = graphicsEditorViewModel.layers.singleWhere((layer) => layer.graphicsSheetViewModel.id == sheetId);
             layer.selectShapeAtIndex(int.parse(coordinates[1]));
+            SheetViewModel sheet = sheets.singleWhere((sheet) => sheet.id == sheetId);
+            sheet.selectCellAtCoords(int.parse(coordinates[1]), 0);
+            if (sheet != activeSheet) {
+              activeSheet = sheet;
+            }
           }
           break;
 
@@ -330,6 +340,8 @@ command(InteractionAction action, var data) {
 
           sheet.updateRow(0); // TODO: this is a hack
           layer.selectShapeAtIndex(0);
+          activeSheet = sheet;
+          activeSheet.selectCellAtCoords(0, 0);
 
           // commit change to the rest of the application
           state = InteractionState.idle;

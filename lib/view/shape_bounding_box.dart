@@ -43,7 +43,7 @@ class ShapeBoundingBoxView {
       ..attributes["stroke"] = "dodgerblue";
 
     handleGroup = new svg.GElement()
-      ..id = "temporary-bounding-box"
+      ..id = "handle-bounding-box"
       ..attributes["visibility"] = "hidden"
       ..append(topLeftHandle)
       ..append(topHandle)

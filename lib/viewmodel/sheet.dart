@@ -86,6 +86,11 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
     super.selectCellAtCoords(row, col);
     layerViewModel.selectShapeAtIndex(row);
   }
+
+  void deselectCell() {
+    layerViewModel.deselectShape();
+    super.deselectCell();
+  }
 }
 
 class LineSheet extends GraphicsSheetViewModel {
