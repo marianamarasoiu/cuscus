@@ -4,7 +4,7 @@ class GraphicsEditorView {
   svg.SvgSvgElement canvasElement;
   DivElement drawingToolContainer;
 
-  List<ShapeView> shapeViews = [];
+  List<LayerView> layers = [];
 
   GraphicsEditorViewModel graphicsEditorViewModel;
 
@@ -21,10 +21,14 @@ class GraphicsEditorView {
 
     canvasElement = querySelector("#canvas");
     canvasElement.onMouseDown.listen((mouseDown) => command(InteractionAction.mouseDownOnCanvas, mouseDown));
+
+    selectionBoundingBox = graphicsEditorViewModel.shapeBoundingBoxViewModel.shapeBoundingBoxView;
+    canvasElement.append(selectionBoundingBox.group);
   }
 
   addLayer(LayerView layer) {
-    // TODO
+    layers.add(layer);
+    canvasElement.insertBefore(layer.layerElement, selectionBoundingBox.group);
   }
 
   selectDrawingTool(DrawingTool drawingTool) {

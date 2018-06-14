@@ -4,7 +4,12 @@ class GraphicsEditorViewModel extends ObjectWithId {
   view.GraphicsEditorView graphicsEditorView;
   SheetbookViewModel sheetbook;
 
+  List<LayerViewModel> layers = [];
+
+  ShapeBoundingBoxViewModel shapeBoundingBoxViewModel;
+
   GraphicsEditorViewModel(SheetbookViewModel sheetbook) : super() {
+    this.shapeBoundingBoxViewModel = new ShapeBoundingBoxViewModel();
     this.sheetbook = sheetbook;
   }
 
@@ -22,6 +27,8 @@ class GraphicsEditorViewModel extends ObjectWithId {
         throw 'Unrecognised shape type, got $type';
         break;
     }
+
+    layers.add(layer);
 
     view.LayerView layerView = new view.LayerView(layer);
     layer.layerView = layerView;

@@ -67,6 +67,7 @@ class WrangleSheet extends SheetViewModel {
 
 abstract class GraphicsSheetViewModel extends SheetViewModel {
   LayerViewModel layerViewModel;
+  view.GraphicsSheetView sheetView;
 
   GraphicsSheetViewModel(rows, columns, name) : super(rows, columns, name);
 
@@ -74,11 +75,16 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
   List<String> getOptionsForColumn(int column);
   void selectOptionForColumn(int column, String option);
 
-  selectRow(int row) => (sheetView as view.GraphicsSheetView).showRowSelector(row);
-  deselectRow(int row) => (sheetView as view.GraphicsSheetView).hideRowSelector(row);
+  selectRow(int row) => sheetView.showRowSelector(row);
+  deselectRow(int row) => sheetView.hideRowSelector(row);
 
   updateRow(int row) {
     cells[row].forEach((CellViewModel cell) => cell.update());
+  }
+
+  void selectCellAtCoords(int row, int col) {
+    super.selectCellAtCoords(row, col);
+    layerViewModel.selectShapeAtIndex(row);
   }
 }
 

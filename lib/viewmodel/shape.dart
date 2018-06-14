@@ -53,11 +53,21 @@ class RectViewModel extends ShapeViewModel {
     // Propagate the changes in the dependency graph.
     spreadsheetEngine.depGraph.update();
 
-    // Update contents of current cell
+    setupListenersForCell(property, cell);
+  }
+
+  setupListenersForCell(Rect property, engine.CellCoordinates cell) {
     engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
     node.onChange.listen((_) {
       properties[property] = node.computedValue.value;
       shapeView.setAttribute(rectPropertyToSvgProperty[property], node.computedValue.value.toString());
+    });
+    node.whenDone.then((_) {
+      engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+      properties[property] = node.computedValue.value;
+      shapeView.setAttribute(rectPropertyToSvgProperty[property], node.computedValue.value.toString());
+
+      setupListenersForCell(property, cell);
     });
   }
 

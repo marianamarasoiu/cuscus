@@ -41,6 +41,9 @@ class SpreadsheetEngine {
       for (var dpNode in existingNode.dependants) {
         dpNode.dependees.remove(existingNode);
       }
+
+      // Notify the view model that the node has been changed and that they should subscribe to the new node.
+      existingNode.changeController.close();
     }
 
     depGraph.nodes.add(node);
@@ -108,8 +111,9 @@ class SpreadsheetDepNode extends DepNode<CellContents> {
   SpreadsheetEngine sheet;
   LiteralValue computedValue;
 
-  StreamController changeController = new StreamController<String>();
+  StreamController changeController = new StreamController<String>.broadcast();
   Stream<String> get onChange => changeController.stream;
+  Future get whenDone => changeController.done;
 
   SpreadsheetDepNode(this.sheet, CellContents fc) : super(fc);
 
@@ -196,7 +200,6 @@ class CellCoordinates {
 
 LiteralValue evalFunctionCall(Map function, Map<CellCoordinates, LiteralValue> coordsValues) {
   assert(function.length == 1);
-  print(function);
   String functionType = function.keys.first;
   var functionContent = function.values.first;
 

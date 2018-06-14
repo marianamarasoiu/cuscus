@@ -47,7 +47,7 @@ class Box {
 
     num width = num.parse(element.getComputedStyle().width.replaceAll('px', ''));
     num height = num.parse(element.getComputedStyle().height.replaceAll('px', ''));
-    
+
     num innerBoxWidth = (width - splitterSize * splitters.length) / innerBoxes.length;
     num innerBoxHeight = (height - splitterSize * splitters.length) / innerBoxes.length;
     num innerBoxWidthPercent = innerBoxWidth / width * 100;
@@ -130,7 +130,6 @@ class Splitter {
     if (element.querySelectorAll('div.inner div.dot').isEmpty) {
       element.querySelector('div.inner').appendHtml('<div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>');
     }
-    print('splitter created');
 
     element.onMouseDown.listen((MouseEvent mouseDown) {
       mouseDown.preventDefault();
@@ -147,13 +146,7 @@ class Splitter {
       Point nextElementMinSizePercent = new Point(
         nextElementMinSize.x / outerBoxSize.x * 100,
         nextElementMinSize.y / outerBoxSize.y * 100);
-      {
-        print(previousElementMinSize);
-        print(previousElementMinSizePercent);
-        print(nextElementMinSize);
-        print(nextElementMinSizePercent);
-      }
-      
+
       num previousElementWidthPercent;
       num previousElementHeightPercent;
       num nextElementWidthPercent;
@@ -165,7 +158,7 @@ class Splitter {
         previousElementHeightPercent = num.parse(previousElement.style.height.replaceAll('%', ''));
         nextElementHeightPercent = num.parse(nextElement.style.height.replaceAll('%', ''));
       }
-      
+
       _mouseMoveStream = document.onMouseMove.listen((MouseEvent mouseMove) {
         Point mouseDelta = mouseMove.client - mouseDownClient;
         Point deltaPercent = new Point(
@@ -177,22 +170,16 @@ class Splitter {
           bool previousAdjusted = false;
           bool nextAdjusted = false;
           if (previousElementWidthPercent + deltaPercent.x < previousElementMinSizePercent.x) {
-            print('---');
-            print(deltaPercent);
             deltaPercent = new Point(
               previousElementMinSizePercent.x - previousElementWidthPercent,
               deltaPercent.y);
-            print(deltaPercent);
             previousAdjusted = true;
           }
           if (nextElementWidthPercent - deltaPercent.x < nextElementMinSizePercent.x) {
-            print('---');
-            print(deltaPercent);
             deltaPercent = new Point(
               -nextElementMinSizePercent.x + nextElementWidthPercent,
               deltaPercent.y);
             nextAdjusted = true;
-            print(deltaPercent);
           }
           if (!previousAdjusted || !nextAdjusted) {
             previousElement.style.width = '${previousElementWidthPercent + deltaPercent.x}%';
@@ -204,22 +191,16 @@ class Splitter {
           bool previousAdjusted = false;
           bool nextAdjusted = false;
           if (previousElementHeightPercent + deltaPercent.y < previousElementMinSizePercent.y) {
-            print('---');
-            print(deltaPercent);
             deltaPercent = new Point(
               deltaPercent.x,
               previousElementMinSizePercent.y - previousElementHeightPercent);
             previousAdjusted = true;
-            print(deltaPercent);
           }
           if (nextElementHeightPercent - deltaPercent.y < nextElementMinSizePercent.y) {
-            print('---');
-            print(deltaPercent);
             deltaPercent = new Point(
               deltaPercent.x,
               -nextElementMinSizePercent.y + nextElementHeightPercent);
             nextAdjusted = true;
-            print(deltaPercent);
           }
           if (!previousAdjusted || !nextAdjusted) {
             previousElement.style.height = '${previousElementHeightPercent + deltaPercent.y}%';

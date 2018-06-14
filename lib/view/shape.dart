@@ -18,6 +18,7 @@ class RectView extends ShapeView {
 
   RectView(this.shapeViewModel) {
     element = new svg.RectElement();
+    element.id = '${shapeViewModel.layer.graphicsSheetViewModel.id}-${shapeViewModel.index}';
 
     shapeViewModel.properties.forEach(
       (Rect property, var value) => element.attributes[rectPropertyToSvgProperty[property]] = value.toString());

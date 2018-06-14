@@ -18,7 +18,6 @@ addNodeToSpreadsheetEngine(var elementsResolvedTree, engine.CellCoordinates cell
 }
 
 List<engine.CellCoordinates> getDependants(Map elementsResolvedTree) {
-  print(elementsResolvedTree);
   String expressionType = elementsResolvedTree.keys.first;
   List<engine.CellCoordinates> dependants = [];
 

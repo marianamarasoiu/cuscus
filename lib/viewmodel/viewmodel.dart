@@ -1,5 +1,6 @@
 library cuscus.viewmodel;
 
+import 'dart:svg' as svg;
 import 'dart:html';
 import 'dart:convert' show JSON;
 import 'dart:math' as math;
@@ -40,6 +41,7 @@ enum InteractionAction { // Rename to uiAction
   clickInToolPanel,
   mouseDownOnCanvas,
   mouseUpOnCanvas,
+  selectShape,
 
   // actions on sheets
   createNewSheet,
@@ -84,7 +86,6 @@ List<SheetbookViewModel> sheetbooks = [];
 engine.SpreadsheetEngine spreadsheetEngine = new engine.SpreadsheetEngine();
 
 CellInputBoxViewModel cellInputBoxViewModel = new CellInputBoxViewModel();
-ShapeBoundingBoxViewModel shapeBoundingBoxViewModel = new ShapeBoundingBoxViewModel();
 
 SheetbookViewModel graphicsSheetbookViewModel;
 GraphicsEditorViewModel graphicsEditorViewModel;
@@ -212,6 +213,12 @@ command(InteractionAction action, var data) {
               // TODO: implement column and row selection
             }
             state = InteractionState.idle;
+          } else if (mouseEvent.target is svg.GeometryElement) {
+            svg.GeometryElement element = mouseEvent.target;
+            List coordinates = element.id.split('-');
+            int sheetId = int.parse(coordinates[0]);
+            LayerViewModel layer = graphicsEditorViewModel.layers.singleWhere((layer) => layer.graphicsSheetViewModel.id == sheetId);
+            layer.selectShapeAtIndex(int.parse(coordinates[1]));
           }
           break;
 
@@ -319,19 +326,10 @@ command(InteractionAction action, var data) {
           GraphicsSheetViewModel sheet = layerSheetFactory.sheet;
           LayerViewModel layer = layerSheetFactory.layer;
 
-          print (sheet);
-          print (layer);
-          print (sheet.layerViewModel);
-          print (layer.graphicsSheetViewModel);
-
-          RectViewModel rectViewModel = layer.addShape(0, x: shapeData['x'], y: shapeData['y'], width: shapeData['width'], height: shapeData['height']);
-
-          graphicsEditorViewModel.graphicsEditorView.shapeViews.add(rectViewModel.shapeView);
-          graphicsEditorViewModel.graphicsEditorView.canvasElement.append(rectViewModel.shapeView.element);
-
-          print (spreadsheetEngine);
+          layer.addShape(0, x: shapeData['x'], y: shapeData['y'], width: shapeData['width'], height: shapeData['height']);
 
           sheet.updateRow(0); // TODO: this is a hack
+          layer.selectShapeAtIndex(0);
 
           // commit change to the rest of the application
           state = InteractionState.idle;

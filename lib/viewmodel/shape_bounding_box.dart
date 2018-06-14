@@ -9,7 +9,7 @@ class ShapeBoundingBoxViewModel {
 
   set onUpdate(view.UpdateFunction updateFunction) => shapeBoundingBoxView.updateFunction = updateFunction;
 
-  show(ShapeViewModel shape) => shapeBoundingBoxView.show(shape.shapeView);
+  show(ShapeViewModel shape) => shapeBoundingBoxView.showAroundShape(shape.shapeView);
 
   hide() => shapeBoundingBoxView.hide();
 }

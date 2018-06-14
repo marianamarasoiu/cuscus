@@ -1,7 +1,6 @@
 part of cuscus.viewmodel;
 
 abstract class LayerViewModel {
-  GraphicsEditorViewModel graphicsEditorViewModel;
   view.LayerView layerView;
   Map<int, ShapeViewModel> shapes = {};
 
@@ -13,9 +12,14 @@ abstract class LayerViewModel {
 
   void selectShapeAtIndex(int index) {
     selectedShape = shapes[index];
+    if (selectedShape == null) {
+      print("Trying to select shape at row $index that doesn't exist yet.");
+      graphicsEditorViewModel.shapeBoundingBoxViewModel.hide();
+      return;
+    }
 
-    shapeBoundingBoxViewModel.show(selectedShape);
-    shapeBoundingBoxViewModel.onUpdate = ({num x, num y, num width, num height}) {
+    graphicsEditorViewModel.shapeBoundingBoxViewModel.show(selectedShape);
+    graphicsEditorViewModel.shapeBoundingBoxViewModel.onUpdate = ({num x, num y, num width, num height}) {
       if (x != null) {
         selectedShape.x = x;
       }
@@ -34,10 +38,8 @@ abstract class LayerViewModel {
   }
 
   void deselectShape() {
-    shapeBoundingBoxViewModel.hide();
-
+    graphicsEditorViewModel.shapeBoundingBoxViewModel.hide();
     graphicsSheetViewModel.deselectRow(selectedShape.index);
-
     selectedShape = null;
   }
 
@@ -51,6 +53,7 @@ class RectLayer extends LayerViewModel {
     rectViewModel.commit();
 
     shapes[index] = rectViewModel;
+    layerView.addShape(rectViewModel.shapeView);
     return rectViewModel;
   }
 }

@@ -35,10 +35,8 @@ class CellViewModel {
     // Propagate the changes in the dependency graph.
     spreadsheetEngine.depGraph.update();
 
-    // Update contents of current cell
-    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
-    node.onChange.listen((_) => _text = node.computedValue.value.toString());
-    _text = node.computedValue.value.toString();
+    // Update contents of current cell and set listeners
+    setupListenersForCell();
 
     // Hide the cell editing box
     cellInputBoxViewModel.hide();
@@ -47,11 +45,25 @@ class CellViewModel {
     _userEnteredFormula = formula;
   }
 
+  setupListenersForCell() {
+    engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
+    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+    _text = node.computedValue.value.toString();
+
+    node.onChange.listen((_) {
+      _text = node.computedValue.value.toString();
+    });
+
+    node.whenDone.then((_) {
+      setupListenersForCell();
+    });
+  }
+
   update() {
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
     engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
-    print (cell);
     _text = node.computedValue.value.toString();
     _userEnteredFormula = _value;
+    setupListenersForCell();
   }
 }
