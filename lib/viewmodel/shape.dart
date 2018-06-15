@@ -36,6 +36,23 @@ class RectViewModel extends ShapeViewModel {
     shapeView = new view.RectView(this);
   }
 
+  RectViewModel.fromCellRow(LayerViewModel layer, int index) {
+    this.layer = layer;
+    this.index = index;
+
+    properties.forEach((Rect property, var value) {
+      List<String> columns = layer.graphicsSheetViewModel.activeColumnNames;
+      int column = columns.indexOf(rectPropertyToColumnName[property]);
+      engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
+      engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+      properties[property] = node.computedValue.value;
+
+      setupListenersForCell(property, cell);
+    });
+
+    shapeView = new view.RectView(this);
+  }
+
   commit() {
     properties.forEach((Rect property, var value) => commitProperty(property, value));
   }
@@ -47,8 +64,8 @@ class RectViewModel extends ShapeViewModel {
     engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
     String jsonParseTree = parser.parseFormula(value.toString());
     Map formulaParseTree = JSON.decode(jsonParseTree);
-    var elementsResolvedTree = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
-    addNodeToSpreadsheetEngine(elementsResolvedTree, cell, spreadsheetEngine);
+    engine.CellContents cellContents = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
+    addNodeToSpreadsheetEngine(cellContents, cell, spreadsheetEngine);
 
     // Propagate the changes in the dependency graph.
     spreadsheetEngine.depGraph.update();

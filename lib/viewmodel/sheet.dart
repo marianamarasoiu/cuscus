@@ -91,6 +91,26 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
     layerViewModel.deselectShape();
     super.deselectCell();
   }
+
+  void fillInRow(CellViewModel cell) {
+    List<CellViewModel> firstRowOfCells = cells[0];
+    List<CellViewModel> newRowOfCells = cells[cell.row];
+    newRowOfCells.where((c) => c != cell).forEach((emptyCell) {
+      int index = newRowOfCells.indexOf(emptyCell);
+      CellViewModel templateCell = firstRowOfCells[index];
+      engine.CellContents cellContents = firstRowOfCells[index].cellContents;
+      engine.CellContents newCellContents = makeRelativeCellContents(
+        cellContents,
+        new engine.CellCoordinates(templateCell.row, templateCell.column, templateCell.sheetViewModel.id),
+        new engine.CellCoordinates(emptyCell.row, emptyCell.column, emptyCell.sheetViewModel.id),
+        spreadsheetEngine);
+
+      emptyCell.commitFormula(newCellContents);
+    });
+    updateRow(cell.row);
+
+    layerViewModel.addShapeFromRow(cell.row);
+  }
 }
 
 class LineSheet extends GraphicsSheetViewModel {

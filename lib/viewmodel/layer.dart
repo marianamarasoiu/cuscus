@@ -38,19 +38,30 @@ abstract class LayerViewModel {
   }
 
   void deselectShape() {
-    graphicsEditorViewModel.shapeBoundingBoxViewModel.hide();
-    graphicsSheetViewModel.deselectRow(selectedShape.index);
-    selectedShape = null;
+    if (selectedShape != null) {
+      graphicsEditorViewModel.shapeBoundingBoxViewModel.hide();
+      graphicsSheetViewModel.deselectRow(selectedShape.index);
+      selectedShape = null;
+    }
   }
 
-  ShapeViewModel addShape(int index, {int x, int y, int width, int height});
+  ShapeViewModel addShape(int index, Map properties);
+  ShapeViewModel addShapeFromRow(int index);
 }
 
 class RectLayer extends LayerViewModel {
 
-  RectViewModel addShape(int index, {int x, int y, int width, int height}) {
-    RectViewModel rectViewModel = new RectViewModel(this, index, {Rect.x: x, Rect.y: y, Rect.width: width, Rect.height: height});
+  RectViewModel addShape(int index, Map<Rect, dynamic> properties) {
+    RectViewModel rectViewModel = new RectViewModel(this, index, properties);
     rectViewModel.commit();
+
+    shapes[index] = rectViewModel;
+    layerView.addShape(rectViewModel.shapeView);
+    return rectViewModel;
+  }
+
+  ShapeViewModel addShapeFromRow(int index) {
+    RectViewModel rectViewModel = new RectViewModel.fromCellRow(this, index);
 
     shapes[index] = rectViewModel;
     layerView.addShape(rectViewModel.shapeView);

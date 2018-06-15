@@ -1,12 +1,17 @@
 part of cuscus.viewmodel;
 
-addNodeToSpreadsheetEngine(var elementsResolvedTree, engine.CellCoordinates cell, engine.SpreadsheetEngine sse) {
-  if (elementsResolvedTree is engine.LiteralValue || elementsResolvedTree is engine.EmptyValue) {
-    sse.setNode(cell, new engine.SpreadsheetDepNode(sse, elementsResolvedTree));
-  } else { // it's a function call
-    List dependants = getDependants(elementsResolvedTree);
-    var ssDep = new engine.SpreadsheetDepNode(sse, new engine.FunctionCall(elementsResolvedTree, dependants));
-    dependants.forEach((coords) {
+void addNodeToSpreadsheetEngine(engine.CellContents newCellContents, engine.CellCoordinates cell, engine.SpreadsheetEngine sse) {
+  if (newCellContents is engine.EmptyValue) {
+    sse.setNode(cell, new engine.SpreadsheetDepNode(sse, newCellContents));
+    return;
+  }
+  if (newCellContents is engine.LiteralValue) {
+    sse.setNode(cell, new engine.SpreadsheetDepNode(sse, newCellContents));
+    return;
+  }
+  if (newCellContents is engine.FunctionCall) {
+    var ssDep = new engine.SpreadsheetDepNode(sse, newCellContents);
+    newCellContents.dependants.forEach((coords) {
       engine.SpreadsheetDepNode dep = sse.cells[coords];
       if (dep == null) { // it's referencing an empty cell
         sse.setNode(coords, new engine.SpreadsheetDepNode(sse, new engine.EmptyValue()));
@@ -37,12 +42,13 @@ List<engine.CellCoordinates> getDependants(Map elementsResolvedTree) {
   return dependants;
 }
 
-resolveSymbols(Map parseTree, int baseSheetId, engine.SpreadsheetEngine ss) {
+engine.CellContents resolveSymbols(Map parseTree, int baseSheetId, engine.SpreadsheetEngine ss) {
   if (parseTree.keys.first == "text") {
     String cellValue = parseTree["text"];
     if (cellValue.isEmpty) {
       return new engine.EmptyValue();
     }
+
     engine.LiteralValue literalValue;
     if (cellValue.toLowerCase() == "true" || cellValue.toLowerCase() == "false") {
       literalValue = new engine.LiteralBoolValue(cellValue.toLowerCase() == "true");
@@ -60,7 +66,9 @@ resolveSymbols(Map parseTree, int baseSheetId, engine.SpreadsheetEngine ss) {
     return literalValue;
 
   } else if (parseTree.keys.first == "formula") {
-    return resolveSymbolsRecursive(parseTree["formula"], baseSheetId, ss);
+    Map elementsResolvedTree = resolveSymbolsRecursive(parseTree["formula"], baseSheetId, ss);
+    List dependants = getDependants(elementsResolvedTree);
+    return new engine.FunctionCall(elementsResolvedTree, dependants);
   } else {
     throw "Unrecognised parse tree: first key is ${parseTree.keys.first}, should be 'text' or 'formula'";
   }
@@ -139,4 +147,104 @@ Map resolveSymbolsRecursive(Map expression, int baseSheetId, engine.SpreadsheetE
   }
 
   return newExpression;
+}
+
+engine.CellContents cloneElementsResolvedTree(engine.CellContents cellContents) {
+  if (cellContents is engine.EmptyValue) {
+    return new engine.EmptyValue();
+  }
+  if (cellContents is engine.LiteralValue) {
+    return cellContents.clone();
+  }
+  if (cellContents is engine.FunctionCall) {
+    return cellContents.clone();
+  }
+
+  throw "Unknown type of cell contents, got $cellContents";
+}
+
+engine.CellContents makeRelativeCellContents(engine.CellContents cellContentsFrom, engine.CellCoordinates cellFrom, engine.CellCoordinates cellTo, engine.SpreadsheetEngine sse) {
+  if (cellContentsFrom is engine.EmptyValue) {
+    return new engine.EmptyValue();
+  }
+  if (cellContentsFrom is engine.LiteralValue) {
+    return cellContentsFrom.clone();
+  }
+  if (cellContentsFrom is engine.FunctionCall) {
+    Map relativeAst = makeRelativeAstRecursive(cellContentsFrom.ast, cellFrom, cellTo);
+    List dependants = getDependants(relativeAst);
+    return new engine.FunctionCall(relativeAst, dependants);
+  }
+
+  throw "Unknown type of cell contents, got $cellContentsFrom";
+}
+
+Map makeRelativeAstRecursive(Map ast, engine.CellCoordinates cellFrom, engine.CellCoordinates cellTo) {
+  Map newAst = {};
+  String expressionType = ast.keys.first;
+  var expressionValue = ast.values.first;
+  switch (expressionType) {
+    case "literal":
+      newAst = {"literal": (expressionValue as engine.LiteralValue).clone()};
+      break;
+    case "funcCall":
+      String functionName = expressionValue["functionName"];
+      List args = expressionValue["args"];
+      List newArgs = [];
+      args.forEach((Map arg) => newArgs.add(makeRelativeAstRecursive(arg, cellFrom, cellTo)));
+      newAst = {"funcCall": {"functionName": functionName, "args": newArgs}};
+      break;
+    case "cell-ref":
+      engine.CellCoordinates oldCellRef = expressionValue;
+      engine.CellCoordinates newCellRef = new engine.CellCoordinates(
+        oldCellRef.row + cellTo.row - cellFrom.row,
+        oldCellRef.col + cellTo.col - cellFrom.col,
+        oldCellRef.sheetId == cellFrom.sheetId ? cellTo.sheetId : oldCellRef.sheetId);
+      newAst = {"cell-ref": newCellRef};
+      break;
+  }
+  return newAst;
+}
+
+String stringifyFormula(engine.CellContents cellContents, int baseSheetId, engine.SpreadsheetEngine ss) {
+  if (cellContents is engine.EmptyValue) {
+    return '';
+  }
+  if (cellContents is engine.LiteralValue) {
+    return cellContents.toString();
+  }
+  if (cellContents is engine.FunctionCall) {
+    return "=" + stringifyFormulaRecursive(cellContents.ast, baseSheetId, ss);
+  }
+  throw "Unknown type of cell contents, got $cellContents";
+}
+
+String stringifyFormulaRecursive(Map ast, int baseSheetId, engine.SpreadsheetEngine ss) {
+  String expressionType = ast.keys.first;
+  var expressionValue = ast.keys.first;
+  switch (expressionType) {
+    case "literal":
+      return expressionValue.toString();
+    case "funcCall":
+      String functionName = expressionValue["functionName"];
+      List args = expressionValue["args"];
+      List<String> newArgs = [];
+      args.forEach((Map arg) => newArgs.add(stringifyFormulaRecursive(arg, baseSheetId, ss)));
+      String arguments = newArgs.fold('', (prev, arg) => '$prev, $arg');
+      return '${functionName.toUpperCase()}($arguments)';
+      break;
+    case "cell-ref":
+      engine.CellCoordinates cellRef = expressionValue;
+      SheetViewModel currentSheet = sheets.singleWhere((s) => s.id == baseSheetId);
+      SheetViewModel refSheet = sheets.singleWhere((s) => s.id == cellRef.sheetId);
+
+      String columnName = refSheet.activeColumnNames[cellRef.col];
+
+      if (currentSheet == refSheet) {
+        return '$columnName${cellRef.row + 1}';
+      } else {
+        return '${refSheet.name}!$columnName${cellRef.row + 1}';
+      }
+  }
+  throw "Unknown type of formula, got $expressionType";
 }

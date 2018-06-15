@@ -5,6 +5,7 @@ class CellViewModel {
   int column;
 
   String _userEnteredFormula = '';
+  engine.CellContents cellContents = null;
   String _value = '';
 
   SheetViewModel sheetViewModel;
@@ -25,12 +26,26 @@ class CellViewModel {
   String get value => _value;
   String get formula => _userEnteredFormula;
 
-  void commitFormula(String formula) {
-    engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
+  void commitFormulaString(String formula) {
     String jsonParseTree = parser.parseFormula(formula);
     Map formulaParseTree = JSON.decode(jsonParseTree);
-    var elementsResolvedTree = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
-    addNodeToSpreadsheetEngine(elementsResolvedTree, cell, spreadsheetEngine);
+    engine.CellContents cellContents = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
+
+    commitFormula(cellContents);
+
+    // TODO fix hack
+    if (sheetViewModel is GraphicsSheetViewModel) {
+      GraphicsSheetViewModel sheet = sheetViewModel;
+      if (!sheet.layerViewModel.shapes.containsKey(row)) {
+        sheet.fillInRow(this);
+      }
+    }
+  }
+
+  void commitFormula(engine.CellContents cellContents) {
+    this.cellContents = cellContents;
+    engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
+    addNodeToSpreadsheetEngine(cellContents, cell, spreadsheetEngine);
 
     // Propagate the changes in the dependency graph.
     spreadsheetEngine.depGraph.update();
@@ -42,7 +57,7 @@ class CellViewModel {
     cellInputBoxViewModel.hide();
 
     // Save a copy of the formula for later
-    _userEnteredFormula = formula;
+    _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
   }
 
   setupListenersForCell() {
@@ -62,8 +77,9 @@ class CellViewModel {
   update() {
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
     engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+    cellContents = node.value;
     _text = node.computedValue.value.toString();
-    _userEnteredFormula = _value;
+    _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
     setupListenersForCell();
   }
 }

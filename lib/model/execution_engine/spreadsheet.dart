@@ -54,6 +54,7 @@ class SpreadsheetEngine {
     cells[coords] = node;
 
     depGraph.setDirtyAndPropagate(node);
+    print(this);
   }
 
   clear(CellCoordinates coords) {
@@ -147,7 +148,9 @@ class SpreadsheetDepNode extends DepNode<CellContents> {
   }
 }
 
-abstract class CellContents { }
+abstract class CellContents {
+  CellContents clone();
+}
 
 abstract class LiteralValue extends CellContents {
   var value;
@@ -157,22 +160,26 @@ abstract class LiteralValue extends CellContents {
 class LiteralDoubleValue extends LiteralValue {
   double value;
   LiteralDoubleValue(this.value);
+  LiteralDoubleValue clone() => new LiteralDoubleValue(value);
 }
 
 class LiteralStringValue extends LiteralValue {
   String value;
   LiteralStringValue(this.value);
+  LiteralStringValue clone() => new LiteralStringValue(value);
 }
 
 class LiteralBoolValue extends LiteralValue {
   bool value;
   LiteralBoolValue(this.value);
+  LiteralBoolValue clone() => new LiteralBoolValue(value);
 }
 
 class EmptyValue extends CellContents {
   final String stringValue = '';
   final double doubleValue = 0.0;
   toString() => "<EMPTY>";
+  EmptyValue clone() => new EmptyValue();
 }
 
 class FunctionCall extends CellContents {
@@ -181,6 +188,33 @@ class FunctionCall extends CellContents {
 
   FunctionCall(this.ast, this.dependants) { }
   toString() => "$ast";
+  FunctionCall clone() {
+    Map astClone = cloneAst(ast);
+    List<CellCoordinates> dependantsClone = new List.from(dependants);
+    return new FunctionCall(astClone, dependantsClone);
+  }
+
+  cloneAst(Map ast) {
+    Map newAst = {};
+    String expressionType = ast.keys.first;
+    var expressionValue = ast.values.first;
+    switch (expressionType) {
+      case "literal":
+        newAst = {"literal": (expressionValue as LiteralValue).clone()};
+        break;
+      case "funcCall":
+        String functionName = expressionValue["functionName"];
+        List args = expressionValue["args"];
+        List newArgs = [];
+        args.forEach((Map arg) => newArgs.add(cloneAst(arg)));
+        newAst = {"funcCall": {"functionName": functionName, "args": newArgs}};
+        break;
+      case "cell-ref":
+        newAst = {"cell-ref": expressionValue};
+        break;
+    }
+    return newAst;
+  }
 }
 
 class CellCoordinates {

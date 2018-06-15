@@ -254,7 +254,7 @@ command(InteractionAction action, var data) {
         case InteractionAction.backspace:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
-          activeSheet.selectedCell.commitFormula('');
+          activeSheet.selectedCell.commitFormulaString('');
           break;
 
         case InteractionAction.arrowRight:
@@ -336,7 +336,7 @@ command(InteractionAction action, var data) {
           GraphicsSheetViewModel sheet = layerSheetFactory.sheet;
           LayerViewModel layer = layerSheetFactory.layer;
 
-          layer.addShape(0, x: shapeData['x'], y: shapeData['y'], width: shapeData['width'], height: shapeData['height']);
+          layer.addShape(0, {Rect.x: shapeData['x'], Rect.y: shapeData['y'], Rect.width: shapeData['width'], Rect.height: shapeData['height']});
 
           sheet.updateRow(0); // TODO: this is a hack
           layer.selectShapeAtIndex(0);
@@ -361,7 +361,7 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyEvent = data;
           stopDefaultBehaviour(keyEvent);
 
-          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
+          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellBelow(activeSheet.selectedCell);
 
           state = InteractionState.idle;
@@ -371,7 +371,7 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
+          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellRight(activeSheet.selectedCell);
 
           state = InteractionState.idle;
@@ -381,7 +381,7 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
+          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellLeft(activeSheet.selectedCell);
 
           state = InteractionState.idle;
@@ -391,7 +391,7 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
+          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellAbove(activeSheet.selectedCell);
 
           state = InteractionState.idle;
@@ -401,7 +401,7 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
 
-          activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
+          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellBelow(activeSheet.selectedCell);
 
           state = InteractionState.idle;
@@ -415,7 +415,7 @@ command(InteractionAction action, var data) {
           if (eventTarget is DivElement && eventTarget.classes.contains('cell-input')) {
               // Clicking inside the cell being edited => ignore
           } else {
-            activeSheet.selectedCell.commitFormula(cellInputBoxViewModel.contents.trim());
+            activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
 
             state = InteractionState.idle;
 
@@ -545,6 +545,14 @@ const Map<Rect, String> rectPropertyToColumnName = const {
   Rect.opacity: 'Opacity'
 };
 
+Map<String, Rect> _columnNameToRectProperty = {};
+Map<String, Rect> get columnNameToRectProperty {
+  if (_columnNameToRectProperty.isEmpty) {
+    rectPropertyToColumnName.forEach((rect, column) => _columnNameToRectProperty[column] = rect);
+  }
+  return _columnNameToRectProperty;
+}
+
 const Map<Rect, String> rectPropertyToSvgProperty = const {
   Rect.width: 'width',
   Rect.height: 'height',
@@ -559,3 +567,11 @@ const Map<Rect, String> rectPropertyToSvgProperty = const {
   Rect.strokeOpacity: 'stroke-opacity',
   Rect.opacity: 'opacity'
 };
+
+Map<String, Rect> _svgPropertyToRectProperty = {};
+Map<String, Rect> get svgPropertyToRectProperty {
+  if (_svgPropertyToRectProperty.isEmpty) {
+    rectPropertyToSvgProperty.forEach((rect, property) => _svgPropertyToRectProperty[property] = rect);
+  }
+  return _svgPropertyToRectProperty;
+}
