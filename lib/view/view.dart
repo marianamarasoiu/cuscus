@@ -2,7 +2,6 @@ library cuscus.view;
 
 import 'dart:async';
 import 'dart:html';
-import 'dart:math';
 import 'dart:svg' as svg;
 
 import 'package:cuscus/viewmodel/viewmodel.dart';

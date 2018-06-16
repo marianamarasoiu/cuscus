@@ -1,10 +1,10 @@
 library cuscus.viewmodel;
 
 import 'dart:async';
-import 'dart:svg' as svg;
-import 'dart:html';
 import 'dart:convert' show JSON;
+import 'dart:html';
 import 'dart:math' as math;
+import 'dart:svg' as svg;
 
 // Import the model
 import 'package:cuscus/model/execution_engine/spreadsheet.dart' as engine;
@@ -96,7 +96,6 @@ GraphicsEditorViewModel graphicsEditorViewModel;
 
 DivElement get _mainContainer => querySelector('#main-container'); // TODO: rename element to #main-container
 DivElement get _spreadsheetsContainer => querySelector('#sheets-container'); // TODO: rename element to #spreadsheets-container
-DivElement get _graphicsEditorContainer => querySelector('#vis-canvas'); // TODO: rename element to #graphics-editor-container
 
 InteractionState _state = InteractionState.idle;
 InteractionState get state => _state;
@@ -215,8 +214,9 @@ command(InteractionAction action, var data) {
           MouseEvent mouseEvent = data;
           stopDefaultBehaviour(mouseEvent);
 
-          if (mouseEvent.target is TableCellElement) {
-            TableCellElement cellElement = mouseEvent.target;
+          EventTarget mouseTarget = mouseEvent.target;
+          if (mouseTarget is TableCellElement) {
+            TableCellElement cellElement = mouseTarget;
             SheetViewModel sheet = getSheetOfElement(cellElement);
             if (cellElement.attributes.containsKey('data-row') && cellElement.attributes.containsKey('data-col')) {
               int row = int.parse(cellElement.attributes['data-row']);
@@ -230,14 +230,14 @@ command(InteractionAction action, var data) {
             }
             state = InteractionState.idle;
 
-          } else if (mouseEvent.target is DivElement && mouseEvent.target.id == "formula-editor") {
+          } else if (mouseTarget is DivElement && mouseTarget.id == "formula-editor") {
             cellInputBoxViewModel.show(activeSheet.selectedCell);
             cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
             cellInputFormulaBarViewModel.focus();
             state = InteractionState.cellEditing;
 
-          } else if (mouseEvent.target is svg.GeometryElement && mouseEvent.target.id != 'bounding-box-border') {
-            svg.GeometryElement element = mouseEvent.target;
+          } else if (mouseTarget is svg.GeometryElement && mouseTarget.id != 'bounding-box-border') {
+            svg.GeometryElement element = mouseTarget;
             List coordinates = element.id.split('-');
             int sheetId = int.parse(coordinates[0]);
             LayerViewModel layer = graphicsEditorViewModel.layers.singleWhere((layer) => layer.graphicsSheetViewModel.id == sheetId);
