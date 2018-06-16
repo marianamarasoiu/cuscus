@@ -389,6 +389,17 @@ command(InteractionAction action, var data) {
           state = InteractionState.idle;
           break;
 
+        case InteractionAction.escape:
+          KeyboardEvent keyEvent = data;
+          stopDefaultBehaviour(keyEvent);
+
+          cellInputBoxViewModel.hide();
+          cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
+          cellInputFormulaBarViewModel.unfocus();
+
+          state = InteractionState.idle;
+          break;
+
         case InteractionAction.click:
           MouseEvent mouseEvent = data;
           stopDefaultBehaviour(mouseEvent);
