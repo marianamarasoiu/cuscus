@@ -389,54 +389,6 @@ command(InteractionAction action, var data) {
           state = InteractionState.idle;
           break;
 
-        case InteractionAction.arrowRight:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
-          activeSheet.selectCellRight(activeSheet.selectedCell);
-          cellInputBoxViewModel.hide();
-          cellInputFormulaBarViewModel.unfocus();
-
-          state = InteractionState.idle;
-          break;
-
-        case InteractionAction.arrowLeft:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
-          activeSheet.selectCellLeft(activeSheet.selectedCell);
-          cellInputBoxViewModel.hide();
-          cellInputFormulaBarViewModel.unfocus();
-
-          state = InteractionState.idle;
-          break;
-
-        case InteractionAction.arrowUp:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
-          activeSheet.selectCellAbove(activeSheet.selectedCell);
-          cellInputBoxViewModel.hide();
-          cellInputFormulaBarViewModel.unfocus();
-
-          state = InteractionState.idle;
-          break;
-
-        case InteractionAction.arrowDown:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-
-          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
-          activeSheet.selectCellBelow(activeSheet.selectedCell);
-          cellInputBoxViewModel.hide();
-          cellInputFormulaBarViewModel.unfocus();
-
-          state = InteractionState.idle;
-          break;
-
         case InteractionAction.click:
           MouseEvent mouseEvent = data;
           stopDefaultBehaviour(mouseEvent);
