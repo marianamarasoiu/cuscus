@@ -221,7 +221,7 @@ String stringifyFormula(engine.CellContents cellContents, int baseSheetId, engin
 
 String stringifyFormulaRecursive(Map ast, int baseSheetId, engine.SpreadsheetEngine ss) {
   String expressionType = ast.keys.first;
-  var expressionValue = ast.keys.first;
+  var expressionValue = ast.values.first;
   switch (expressionType) {
     case "literal":
       return expressionValue.toString();
@@ -230,7 +230,7 @@ String stringifyFormulaRecursive(Map ast, int baseSheetId, engine.SpreadsheetEng
       List args = expressionValue["args"];
       List<String> newArgs = [];
       args.forEach((Map arg) => newArgs.add(stringifyFormulaRecursive(arg, baseSheetId, ss)));
-      String arguments = newArgs.fold('', (prev, arg) => '$prev, $arg');
+      String arguments = newArgs.fold('', (prev, arg) => prev == '' ? '$arg' : '$prev, $arg');
       return '${functionName.toUpperCase()}($arguments)';
       break;
     case "cell-ref":
