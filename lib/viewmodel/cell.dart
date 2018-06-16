@@ -53,9 +53,6 @@ class CellViewModel {
     // Update contents of current cell and set listeners
     setupListenersForCell();
 
-    // Hide the cell editing box
-    cellInputBoxViewModel.hide();
-
     // Save a copy of the formula for later
     _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
   }

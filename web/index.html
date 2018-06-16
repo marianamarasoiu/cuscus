@@ -15,7 +15,7 @@
 
   <body>
     <div id="main-container" class="box" layout vertical>
-      
+
       <div id="vis-canvas" class="box">
         <svg id="canvas"></svg>
 
@@ -26,7 +26,7 @@
 
           <h3>Marks</h3>
           <div class="group">
-            
+
             <div id="rect-tool-button" class="drawing-tool-button">
               <svg x="0" y="0" width="32px" height="24px" viewbox="0 0 33 25">
                 <path d="M33,25H0V0h33V25z M1,24h31V1H1V24z"/>
@@ -79,19 +79,26 @@
         </div>
 
       </div>
-      
-      <div id="vis-sheet-splitter" class="splitter" horizontal></div>
-      
-      <div id="sheets-container" class="box" layout horizontal>
-        <div id="left-sheet" class="box"></div>
-      
-        <div id="first-sheet-splitter" class="splitter" vertical></div>
-        
-        <div id="middle-sheet" class="box"></div>
 
-        <div id="second-sheet-splitter" class="splitter" vertical></div>
-        
-        <div id="right-sheet" class="box"></div>
+      <div id="vis-sheet-splitter" class="splitter" horizontal></div>
+
+      <div id="spreadsheets-container" class="box" layout vertical>
+          <div id="formula-bar">
+              <div id="formula-icon-container"><div id="formula-icon">fx</div></div>
+              <div id="formula-editor-container"><div id="formula-editor" contenteditable="true"></div></div>
+            </div>
+
+        <div id="sheets-container" class="box" layout horizontal>
+          <div id="left-sheet" class="box"></div>
+
+          <div id="first-sheet-splitter" class="splitter" vertical></div>
+
+          <div id="middle-sheet" class="box"></div>
+
+          <div id="second-sheet-splitter" class="splitter" vertical></div>
+
+          <div id="right-sheet" class="box"></div>
+        </div>
       </div>
     </div>
     <div class="input-box">

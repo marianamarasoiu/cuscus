@@ -32,6 +32,55 @@ html, body{
   height: 100%;
 }
 
+/* Formula bar */
+#formula-bar {
+  height: 24px;
+  width: 100%;
+  border-bottom: 1px solid #cccccc;
+}
+
+#formula-icon-container {
+  margin: 0;
+  float: left;
+  padding: 0;
+  position: relative;
+  text-align: center;
+  align-content: center;
+}
+
+#formula-icon {
+  font-family: cursive;
+  font-weight: bolder;
+  font-size: 14px;
+  color: #AAAAAA;
+  margin: 4px 0;
+  padding: 0 10px;
+  border-right: 1px solid;
+  display: inline-block;
+}
+
+#formula-editor-container {
+  width: auto;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  padding-left: 10px;
+}
+
+#formula-editor {
+  width: 100%;
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  outline: none;
+}
+
+.monospace-font {
+  font-family: Inconsolata, monospace;
+}
+
+/* End formula bar */
+
 #sheets-container {
   display: flex;
   justify-content: space-between;

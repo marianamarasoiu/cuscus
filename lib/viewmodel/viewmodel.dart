@@ -1,5 +1,6 @@
 library cuscus.viewmodel;
 
+import 'dart:async';
 import 'dart:svg' as svg;
 import 'dart:html';
 import 'dart:convert' show JSON;
@@ -17,6 +18,7 @@ part 'cell.dart';
 part 'sheet.dart';
 part 'sheetbook.dart';
 part 'cell_input_box.dart';
+part 'cell_input_formula_bar.dart';
 part 'shape_bounding_box.dart';
 
 part 'layer_sheet_factory.dart';
@@ -86,6 +88,7 @@ List<SheetbookViewModel> sheetbooks = [];
 engine.SpreadsheetEngine spreadsheetEngine = new engine.SpreadsheetEngine();
 
 CellInputBoxViewModel cellInputBoxViewModel = new CellInputBoxViewModel();
+CellInputFormulaBarViewModel cellInputFormulaBarViewModel = new CellInputFormulaBarViewModel();
 
 SheetbookViewModel graphicsSheetbookViewModel;
 GraphicsEditorViewModel graphicsEditorViewModel;
@@ -116,7 +119,12 @@ DrawingTool selectedDrawingTool;
 init() {
   // Init layout elements.
   new box_layout.Box(_mainContainer);
+  new box_layout.Box(querySelector("#spreadsheets-container"));
   new box_layout.Box(_spreadsheetsContainer);
+
+  // Setup listeners to each other for the cell editors
+  cellInputBoxViewModel.setupListeners();
+  cellInputFormulaBarViewModel.setupListeners();
 
   // Create the incoming data spreadsheet
   {
@@ -218,6 +226,13 @@ command(InteractionAction action, var data) {
               // TODO: implement column and row selection
             }
             state = InteractionState.idle;
+
+          } else if (mouseEvent.target is DivElement && mouseEvent.target.id == "formula-editor") {
+            cellInputBoxViewModel.show(activeSheet.selectedCell);
+            cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
+            cellInputFormulaBarViewModel.focus();
+            state = InteractionState.cellEditing;
+
           } else if (mouseEvent.target is svg.GeometryElement && mouseEvent.target.id != 'bounding-box-border') {
             svg.GeometryElement element = mouseEvent.target;
             List coordinates = element.id.split('-');
@@ -240,6 +255,8 @@ command(InteractionAction action, var data) {
           if (eventTarget is TableCellElement ||
             (eventTarget is DivElement && eventTarget.classes.contains('cell-selector'))) {
             cellInputBoxViewModel.show(activeSheet.selectedCell);
+            cellInputBoxViewModel.focus();
+            cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
             state = InteractionState.cellEditing;
           }
           break;
@@ -248,6 +265,8 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
           cellInputBoxViewModel.show(activeSheet.selectedCell);
+          cellInputBoxViewModel.focus();
+          cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
           state = InteractionState.cellEditing;
           break;
 
@@ -255,6 +274,7 @@ command(InteractionAction action, var data) {
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
           activeSheet.selectedCell.commitFormulaString('');
+          cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
           break;
 
         case InteractionAction.arrowRight:
@@ -363,6 +383,8 @@ command(InteractionAction action, var data) {
 
           activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellBelow(activeSheet.selectedCell);
+          cellInputBoxViewModel.hide();
+          cellInputFormulaBarViewModel.unfocus();
 
           state = InteractionState.idle;
           break;
@@ -373,6 +395,8 @@ command(InteractionAction action, var data) {
 
           activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellRight(activeSheet.selectedCell);
+          cellInputBoxViewModel.hide();
+          cellInputFormulaBarViewModel.unfocus();
 
           state = InteractionState.idle;
           break;
@@ -383,6 +407,8 @@ command(InteractionAction action, var data) {
 
           activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellLeft(activeSheet.selectedCell);
+          cellInputBoxViewModel.hide();
+          cellInputFormulaBarViewModel.unfocus();
 
           state = InteractionState.idle;
           break;
@@ -393,6 +419,8 @@ command(InteractionAction action, var data) {
 
           activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellAbove(activeSheet.selectedCell);
+          cellInputBoxViewModel.hide();
+          cellInputFormulaBarViewModel.unfocus();
 
           state = InteractionState.idle;
           break;
@@ -403,6 +431,8 @@ command(InteractionAction action, var data) {
 
           activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
           activeSheet.selectCellBelow(activeSheet.selectedCell);
+          cellInputBoxViewModel.hide();
+          cellInputFormulaBarViewModel.unfocus();
 
           state = InteractionState.idle;
           break;
@@ -414,6 +444,8 @@ command(InteractionAction action, var data) {
           EventTarget eventTarget = mouseEvent.target;
           if (eventTarget is DivElement && eventTarget.classes.contains('cell-input')) {
               // Clicking inside the cell being edited => ignore
+          } else if (eventTarget is DivElement && eventTarget.id == 'formula-editor') {
+            // Clicking in the formula bar => ignore
           } else {
             activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
 

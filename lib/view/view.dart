@@ -11,6 +11,7 @@ part 'cell.dart';
 part 'sheet.dart';
 part 'sheetbook.dart';
 part 'cell_input_box.dart';
+part 'cell_input_formula_bar.dart';
 
 part 'shape.dart';
 part 'layer.dart';

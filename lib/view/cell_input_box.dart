@@ -12,6 +12,7 @@ class CellInputBoxView {
   }
 
   String get contents => inputElement.text;
+  set contents (String value) => inputElement.text = value;
 
   show(CellView cell) {
     element.style
@@ -23,10 +24,10 @@ class CellInputBoxView {
       ..left = '${cell.cellElement.getBoundingClientRect().left - 1}px'
       ..visibility = 'visible';
 
-    inputElement
-      ..text = cell.cellViewModel.formula
-      ..focus();
+    inputElement.text = cell.cellViewModel.formula;
   }
+
+  focus() => inputElement.focus();
 
   hide() => element.style.visibility = 'hidden';
 

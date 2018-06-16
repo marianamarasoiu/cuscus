@@ -34,6 +34,7 @@ abstract class SheetViewModel extends ObjectWithId {
     selectedCell = cells[row][col];
     sheetView.selectedCell = selectedCell.cellView;
     sheetView.showCellSelector();
+    cellInputFormulaBarViewModel.contents = selectedCell.formula;
   }
   void selectCellBelow(CellViewModel cell) {
     selectCellAtCoords(cell.row + 1, cell.column);
