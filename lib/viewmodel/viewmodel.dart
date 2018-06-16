@@ -61,6 +61,7 @@ enum InteractionAction { // Rename to uiAction
   control,
   meta,
   backspace,
+  delete,
   capsLock,
   tab,
   arrowRight,
@@ -173,6 +174,8 @@ init() {
       command(InteractionAction.meta, keyEvent);
     } else if (keyEvent.key == "Backspace") {
       command(InteractionAction.backspace, keyEvent);
+    } else if (keyEvent.key == "Delete") {
+      command(InteractionAction.delete, keyEvent);
     } else if (keyEvent.key == "CapsLock") {
       command(InteractionAction.capsLock, keyEvent);
     } else if (keyEvent.key == "Tab") {
@@ -271,6 +274,13 @@ command(InteractionAction action, var data) {
           break;
 
         case InteractionAction.backspace:
+          KeyboardEvent keyboardEvent = data;
+          stopDefaultBehaviour(keyboardEvent);
+          activeSheet.selectedCell.commitFormulaString('');
+          cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
+          break;
+
+        case InteractionAction.delete:
           KeyboardEvent keyboardEvent = data;
           stopDefaultBehaviour(keyboardEvent);
           activeSheet.selectedCell.commitFormulaString('');
