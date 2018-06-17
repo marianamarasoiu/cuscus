@@ -41,9 +41,6 @@ class SpreadsheetEngine {
       for (var dpNode in existingNode.dependants) {
         dpNode.dependees.remove(existingNode);
       }
-
-      // Notify the view model that the node has been changed and that they should subscribe to the new node.
-      existingNode.changeController.close();
     }
 
     depGraph.nodes.add(node);
@@ -54,7 +51,11 @@ class SpreadsheetEngine {
     cells[coords] = node;
 
     depGraph.setDirtyAndPropagate(node);
-    print(this);
+
+    if (existingNode != null) {
+      // Notify the view model that the node has been changed and that they should subscribe to the new node.
+      existingNode.changeController.close();
+    }
   }
 
   clear(CellCoordinates coords) {
@@ -71,6 +72,9 @@ class SpreadsheetEngine {
       for (var dpNode in existingNode.dependants) {
         dpNode.dependees.remove(existingNode);
       }
+
+      // Notify the view model that the node has been changed and that they should subscribe to the new node.
+      existingNode.changeController.close();
     }
 
     cells.remove(coords);
