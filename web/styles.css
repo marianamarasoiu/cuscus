@@ -274,6 +274,13 @@ td.index {
   background: #bbbbbb;
 }
 
+.drawing-tool-button[disabled],
+.drawing-tool-button[disabled]:hover,
+.drawing-tool-button[disabled]:active {
+  fill: #cccccc;
+  background: none;
+}
+
 .drawing-tool-button svg {
   display: block;
 }

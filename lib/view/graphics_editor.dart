@@ -14,9 +14,11 @@ class GraphicsEditorView {
   GraphicsEditorView(this.graphicsEditorViewModel) {
     drawingToolContainer = querySelector("#drawing-tool-container");
     drawingToolContainer.querySelectorAll(".drawing-tool-button").forEach((toolButton) {
-      toolButton.onClick.listen((MouseEvent clickEvent) {
-        command(InteractionAction.clickInToolPanel, buttonIdToDrawingTool(toolButton.id));
-      });
+      if (!toolButton.attributes.containsKey('disabled')) {
+        toolButton.onClick.listen((MouseEvent clickEvent) {
+          command(InteractionAction.clickInToolPanel, buttonIdToDrawingTool(toolButton.id));
+        });
+      }
     });
 
     canvasElement = querySelector("#canvas");
