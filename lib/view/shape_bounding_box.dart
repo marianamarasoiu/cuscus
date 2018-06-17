@@ -340,6 +340,41 @@ class ShapeBoundingBoxView {
         dragEndSub.cancel();
       });
     });
+
+    boundingBoxBorder.onMouseDown.listen((MouseEvent dragStart) {
+      if (updateFunction == null) {
+        throw "Function associating dragging with changing the shape properties missing!";
+      }
+      int startMouseX = dragStart.client.x;
+      int startMouseY = dragStart.client.y;
+
+      handleGroup.attributes["visibility"] = "hidden";
+      group.attributes["visibility"] = "visible";
+
+      dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
+        int movementX = dragMove.client.x - startMouseX;
+        int newX = x + movementX;
+        int movementY = dragMove.client.y - startMouseY;
+        int newY = y + movementY;
+        _setBoundingBoxAtCoords(newX, newY, width, height);
+      });
+
+      dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
+        int movementX = dragEnd.client.x - startMouseX;
+        int newX = x + movementX;
+        int movementY = dragEnd.client.y - startMouseY;
+        int newY = y + movementY;
+        // Commit the resize
+        x = newX;
+        y = newY;
+        updateFunction(x: newX, y: newY);
+        _showHandlesAndBox();
+
+        // Cancel the dragging
+        dragMoveSub.cancel();
+        dragEndSub.cancel();
+      });
+    });
   }
 
   showAroundShape(ShapeView shape) {
