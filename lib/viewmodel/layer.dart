@@ -11,6 +11,8 @@ abstract class LayerViewModel {
   ShapeViewModel selectedShape;
 
   void selectShapeAtIndex(int index) {
+    deselectShape();
+
     selectedShape = shapes[index];
     if (selectedShape == null) {
       print("Trying to select shape at row $index that doesn't exist yet.");

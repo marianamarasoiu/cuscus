@@ -299,3 +299,7 @@ td.flash {
 rect.animate {
   transition: all 1s ease;
 }
+
+tr.selected {
+  background: rgba(30, 143, 255, 0.15);
+}
