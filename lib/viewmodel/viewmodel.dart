@@ -240,13 +240,20 @@ command(InteractionAction action, var data) {
             svg.GeometryElement element = mouseTarget;
             List coordinates = element.id.split('-');
             int sheetId = int.parse(coordinates[0]);
+
             LayerViewModel layer = graphicsEditorViewModel.layers.singleWhere((layer) => layer.graphicsSheetViewModel.id == sheetId);
+            graphicsEditorViewModel.selectLayer(layer);
             layer.selectShapeAtIndex(int.parse(coordinates[1]));
+
             SheetViewModel sheet = sheets.singleWhere((sheet) => sheet.id == sheetId);
+            graphicsSheetbookViewModel.selectSheet(sheet);
             sheet.selectCellAtCoords(int.parse(coordinates[1]), 0);
             if (sheet != activeSheet) {
               activeSheet = sheet;
             }
+          } else if (mouseTarget is svg.SvgSvgElement && mouseTarget.id == 'canvas') {
+            graphicsEditorViewModel.selectedLayer.deselectShape();
+            (graphicsSheetbookViewModel.selectedSheet as GraphicsSheetViewModel).deselectRow(activeSheet.selectedCell.row);
           }
           break;
 

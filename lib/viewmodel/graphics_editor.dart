@@ -5,6 +5,7 @@ class GraphicsEditorViewModel extends ObjectWithId {
   SheetbookViewModel sheetbook;
 
   List<LayerViewModel> layers = [];
+  LayerViewModel selectedLayer;
 
   ShapeBoundingBoxViewModel shapeBoundingBoxViewModel;
 
@@ -38,8 +39,7 @@ class GraphicsEditorViewModel extends ObjectWithId {
   }
 
   void selectLayer(LayerViewModel layer) {
-    // selectedLayer = layer;
-    // graphicsEditorView.selectedLayer = layer.layerView;
-    // graphicsEditorView.showSelectedLayer();
+    selectedLayer?.deselectShape();
+    selectedLayer = layer;
   }
 }
