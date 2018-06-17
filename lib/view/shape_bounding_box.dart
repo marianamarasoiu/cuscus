@@ -66,6 +66,7 @@ class ShapeBoundingBoxView {
   initListeners() {
     StreamSubscription dragMoveSub;
     StreamSubscription dragEndSub;
+    StreamSubscription escKeySub;
 
     topLeftHandle.onMouseDown.listen((MouseEvent dragStart) {
       if (updateFunction == null) {
@@ -105,6 +106,17 @@ class ShapeBoundingBoxView {
         // Cancel the dragging
         dragMoveSub.cancel();
         dragEndSub.cancel();
+        escKeySub.cancel();
+      });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
       });
     });
 
@@ -137,6 +149,16 @@ class ShapeBoundingBoxView {
         // Cancel the dragging
         dragMoveSub.cancel();
         dragEndSub.cancel();
+      });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
       });
     });
 
@@ -176,6 +198,16 @@ class ShapeBoundingBoxView {
         dragMoveSub.cancel();
         dragEndSub.cancel();
       });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
+      });
     });
 
     rightHandle.onMouseDown.listen((MouseEvent dragStart) {
@@ -204,6 +236,16 @@ class ShapeBoundingBoxView {
         // Cancel the dragging
         dragMoveSub.cancel();
         dragEndSub.cancel();
+      });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
       });
     });
 
@@ -240,6 +282,16 @@ class ShapeBoundingBoxView {
         dragMoveSub.cancel();
         dragEndSub.cancel();
       });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
+      });
     });
 
     bottomHandle.onMouseDown.listen((MouseEvent dragStart) {
@@ -268,6 +320,16 @@ class ShapeBoundingBoxView {
         // Cancel the dragging
         dragMoveSub.cancel();
         dragEndSub.cancel();
+      });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
       });
     });
 
@@ -307,6 +369,16 @@ class ShapeBoundingBoxView {
         dragMoveSub.cancel();
         dragEndSub.cancel();
       });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
+      });
     });
 
     leftHandle.onMouseDown.listen((MouseEvent dragStart) {
@@ -338,6 +410,16 @@ class ShapeBoundingBoxView {
         // Cancel the dragging
         dragMoveSub.cancel();
         dragEndSub.cancel();
+      });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
       });
     });
 
@@ -373,6 +455,16 @@ class ShapeBoundingBoxView {
         // Cancel the dragging
         dragMoveSub.cancel();
         dragEndSub.cancel();
+      });
+
+      escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
+        if (keyEvent.key == "Escape") {
+          _showHandlesAndBox();
+
+          // Cancel the dragging
+          dragMoveSub.cancel();
+          dragEndSub.cancel();
+        }
       });
     });
   }

@@ -37,13 +37,16 @@ class GraphicsEditorView {
     selectedTool = drawingTool;
   }
 
+  StreamSubscription dragMoveSub;
+  StreamSubscription dragEndSub;
+  svg.SvgElement tentativeElement;
+
   startDrawing(MouseEvent mouseDown) {
     int startPositionX = mouseDown.client.x;
     int startPositionY = mouseDown.client.y;
     int tentativeWidth = mouseDown.client.x - startPositionX;
     int tentativeHeight = mouseDown.client.y - startPositionY;
 
-    svg.SvgElement tentativeElement;
     switch (selectedDrawingTool) {
       case DrawingTool.rectangleTool:
         tentativeElement = new svg.RectElement();
@@ -86,10 +89,6 @@ class GraphicsEditorView {
     }
 
     canvasElement.append(tentativeElement);
-
-
-    StreamSubscription dragMoveSub;
-    StreamSubscription dragEndSub;
 
     dragMoveSub = canvasElement.onMouseMove.listen((mouseMove) {
       stopDefaultBehaviour(mouseMove);
@@ -134,6 +133,12 @@ class GraphicsEditorView {
       dragMoveSub.cancel();
       dragEndSub.cancel();
     });
+  }
+
+  cancelDrawing() {
+    tentativeElement.remove();
+    dragMoveSub.cancel();
+    dragEndSub.cancel();
   }
 
   DrawingTool buttonIdToDrawingTool(String id) {

@@ -384,6 +384,12 @@ command(InteractionAction action, var data) {
           command(InteractionAction.clickInToolPanel, DrawingTool.selectionTool);
           break;
 
+        case InteractionAction.escape:
+          graphicsEditorViewModel.graphicsEditorView.cancelDrawing();
+          state = InteractionState.idle;
+          command(InteractionAction.clickInToolPanel, DrawingTool.selectionTool);
+          break;
+
         default:
           break;
       }
