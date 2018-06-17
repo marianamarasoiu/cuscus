@@ -373,8 +373,8 @@ command(InteractionAction action, var data) {
           activeSheet = sheet;
           activeSheet.selectCellAtCoords(0, 0);
 
-          // commit change to the rest of the application
           state = InteractionState.idle;
+          command(InteractionAction.clickInToolPanel, DrawingTool.selectionTool);
           break;
 
         default:
