@@ -168,7 +168,7 @@ table {
 .table-header,
 .table-index {
   position: absolute;
-  z-index: 30;
+  z-index: 40;
 }
 
 .table-data {
@@ -206,7 +206,7 @@ td.index {
 
 .cell-selector {
   position: absolute;
-  z-index: 40;
+  z-index: 30;
   border: 2px solid dodgerblue;
   visibility: hidden;
 }
