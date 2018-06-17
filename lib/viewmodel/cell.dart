@@ -26,11 +26,16 @@ class CellViewModel {
   String get value => _value;
   String get formula => _userEnteredFormula;
 
+  /// When the shape is changed directly, the node in the engine is replaced. For this case,
+  /// we don't want to duplicate the number of listeners on the node by adding another listener on the node in the whenDone event.
+  bool updatedFromDirectEdit = false;
+
   void commitFormulaString(String formula) {
     String jsonParseTree = parser.parseFormula(formula);
     Map formulaParseTree = JSON.decode(jsonParseTree);
     engine.CellContents cellContents = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
 
+    updatedFromDirectEdit = true;
     commitFormula(cellContents);
 
     // TODO fix hack
@@ -73,6 +78,7 @@ class CellViewModel {
     _text = node.computedValue.value.toString();
     _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
 
+    // This is when the node has been changed due to value propagation in the engine.
     node.onChange.listen((_) {
       engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
       cellContents = node.value;
@@ -84,11 +90,15 @@ class CellViewModel {
       new Timer(new Duration(seconds: 1), () => cellView.cellElement.classes.remove('flash'));
     });
 
+    // This is when the node has been edited directly, which results in a replacement in the engine.
     node.whenDone.then((_) {
-      setupListenersForCell();
-
-      cellView.cellElement.classes.add('flash');
-      new Timer(new Duration(seconds: 1), () => cellView.cellElement.classes.remove('flash'));
+      if (!updatedFromDirectEdit) {
+        setupListenersForCell();
+        cellView.cellElement.classes.add('flash');
+        new Timer(new Duration(seconds: 1), () => cellView.cellElement.classes.remove('flash'));
+      } else {
+        updatedFromDirectEdit = false;
+      }
     });
   }
 }

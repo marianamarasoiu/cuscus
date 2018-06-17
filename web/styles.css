@@ -295,3 +295,7 @@ td.flash {
   animation-name: flash;
   animation-duration: 1s;
 }
+
+rect.animate {
+  transition: all 1s ease;
+}
