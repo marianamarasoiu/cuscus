@@ -283,3 +283,15 @@ td.index {
   stroke: dodgerblue;
   stroke-width: 1;
 }
+
+
+@keyframes flash {
+  0%   {background: #ffffff;}
+  50%  {background: #8cc6ff;}
+  100%  {background: #ffffff;}
+}
+
+td.flash {
+  animation-name: flash;
+  animation-duration: 1s;
+}

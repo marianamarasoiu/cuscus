@@ -52,31 +52,43 @@ class CellViewModel {
 
     // Update contents of current cell and set listeners
     setupListenersForCell();
-
-    // Save a copy of the formula for later
-    _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
-  }
-
-  setupListenersForCell() {
-    engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
-    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
-    _text = node.computedValue.value.toString();
-
-    node.onChange.listen((_) {
-      _text = node.computedValue.value.toString();
-    });
-
-    node.whenDone.then((_) {
-      setupListenersForCell();
-    });
   }
 
   update() {
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
     engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
     cellContents = node.value;
+
+    setupListenersForCell();
+
+    cellView.cellElement.classes.add('flash');
+    new Timer(new Duration(seconds: 1), () => cellView.cellElement.classes.remove('flash'));
+  }
+
+  setupListenersForCell() {
+    engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
+    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+    cellContents = node.value;
+
     _text = node.computedValue.value.toString();
     _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
-    setupListenersForCell();
+
+    node.onChange.listen((_) {
+      engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+      cellContents = node.value;
+
+      _text = node.computedValue.value.toString();
+      _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
+
+      cellView.cellElement.classes.add('flash');
+      new Timer(new Duration(seconds: 1), () => cellView.cellElement.classes.remove('flash'));
+    });
+
+    node.whenDone.then((_) {
+      setupListenersForCell();
+
+      cellView.cellElement.classes.add('flash');
+      new Timer(new Duration(seconds: 1), () => cellView.cellElement.classes.remove('flash'));
+    });
   }
 }

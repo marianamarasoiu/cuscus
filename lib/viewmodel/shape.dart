@@ -91,21 +91,21 @@ class RectViewModel extends ShapeViewModel {
   int get x => properties[Rect.x];
   set x (int value) {
     properties[Rect.x] = value;
-    commit();
+    commitProperty(Rect.x, value);
   }
   int get y => properties[Rect.y];
   set y (int value) {
     properties[Rect.y] = value;
-    commit();
+    commitProperty(Rect.y, value);
   }
   int get width => properties[Rect.width];
   set width (int value) {
     properties[Rect.width] = value;
-    commit();
+    commitProperty(Rect.width, value);
   }
   int get height => properties[Rect.height];
   set height (int value) {
     properties[Rect.height] = value;
-    commit();
+    commitProperty(Rect.height, value);
   }
 }
