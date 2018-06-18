@@ -30,24 +30,24 @@ class CellViewModel {
   /// we don't want to duplicate the number of listeners on the node by adding another listener on the node in the whenDone event.
   bool updatedFromDirectEdit = false;
 
-  void commitFormulaString(String formula) {
+  void commitFormulaString(String formula, {bool updatedFromDirectEdit = true}) {
     String jsonParseTree = parser.parseFormula(formula);
     Map formulaParseTree = JSON.decode(jsonParseTree);
     engine.CellContents cellContents = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
 
-    updatedFromDirectEdit = true;
-    commitFormula(cellContents);
+    commitFormula(cellContents, updatedFromDirectEdit: updatedFromDirectEdit);
 
     // TODO fix hack
     if (sheetViewModel is GraphicsSheetViewModel) {
       GraphicsSheetViewModel sheet = sheetViewModel;
       if (!sheet.layerViewModel.shapes.containsKey(row)) {
-        sheet.fillInRow(this);
+        sheet.fillInRowWithAlreadyFilledInCells(row, [column]);
       }
     }
   }
 
-  void commitFormula(engine.CellContents cellContents) {
+  void commitFormula(engine.CellContents cellContents, {bool updatedFromDirectEdit = true}) {
+    print ("commit formula");
     this.cellContents = cellContents;
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
     addNodeToSpreadsheetEngine(cellContents, cell, spreadsheetEngine);
@@ -55,11 +55,13 @@ class CellViewModel {
     // Propagate the changes in the dependency graph.
     spreadsheetEngine.depGraph.update();
 
+    this.updatedFromDirectEdit = updatedFromDirectEdit;
     // Update contents of current cell and set listeners
     setupListenersForCell();
   }
 
   update() {
+    print ("update");
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
     engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
     cellContents = node.value;
@@ -86,6 +88,7 @@ class CellViewModel {
       _text = node.computedValue.toString();
       _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
 
+      print('on change');
       cellView.cellElement.classes.add('flash');
       new Timer(new Duration(seconds: 1), () => cellView.cellElement.classes.remove('flash'));
     });
@@ -94,6 +97,7 @@ class CellViewModel {
     node.whenDone.then((_) {
       if (!updatedFromDirectEdit) {
         setupListenersForCell();
+        print('when done cell');
         cellView.cellElement.classes.add('flash');
         new Timer(new Duration(seconds: 1), () => cellView.cellElement.classes.remove('flash'));
       } else {

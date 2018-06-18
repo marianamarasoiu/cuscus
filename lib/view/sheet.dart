@@ -19,6 +19,8 @@ class SheetView {
   // Support for selecting a cell (needs to be at sheet level because of scrolling)
   CellView selectedCell;
   DivElement cellSelector;
+  DivElement fillHandle;
+  DivElement selectionBorder;
 
   SheetView(this.sheetViewModel) {
     sheetElement = new DivElement();
@@ -71,11 +73,20 @@ class SheetView {
     cellSelector = new DivElement();
     cellSelector.classes.add("cell-selector");
 
+    fillHandle = new DivElement();
+    fillHandle.classes.add("cell-selector-corner");
+    fillHandle.onMouseDown.listen((mouseDown) => command(InteractionAction.mouseDownOnFillHandle, mouseDown));
+
+    selectionBorder = new DivElement();
+    selectionBorder.classes.add("fill-selection-border");
+
     sheetElement.append(header);
     sheetElement.append(index);
     sheetElement.append(data);
-    sheetElement.append(cellSelector);
     sheetElement.append(corner);
+    sheetElement.append(cellSelector);
+    sheetElement.append(fillHandle);
+    sheetElement.append(selectionBorder);
 
     // Support for scrolling behaviour
     sheetElement.onScroll.listen((Event scrollEvent) => scrollListener(scrollEvent));
@@ -109,14 +120,19 @@ class SheetView {
   showCellSelector() {
     cellSelector.style
       ..visibility = 'visible'
-      ..top = '${selectedCell.cellElement.offset.top + 20}px'
-      ..left = '${selectedCell.cellElement.offset.left + 30}px'
-      ..width = '${selectedCell.cellElement.client.width}px'
-      ..height = '${selectedCell.cellElement.client.height}px';
+      ..top = '${selectedCell.cellElement.offset.top + 21}px'
+      ..left = '${selectedCell.cellElement.offset.left + 31}px'
+      ..width = '${selectedCell.cellElement.client.width - 2}px'
+      ..height = '${selectedCell.cellElement.client.height - 2}px';
+    fillHandle.style
+      ..visibility = 'visible'
+      ..top = '${selectedCell.cellElement.offset.top + 20 + selectedCell.cellElement.client.height - 2}px'
+      ..left = '${selectedCell.cellElement.offset.left + 30 + selectedCell.cellElement.client.width - 2}px';
   }
 
   hideCellSelector() {
     cellSelector.style.visibility = 'hidden';
+    fillHandle.style.visibility = 'hidden';
   }
 }
 

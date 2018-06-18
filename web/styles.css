@@ -212,6 +212,23 @@ td.index {
   visibility: hidden;
 }
 
+.cell-selector-corner {
+  position: absolute;
+  z-index: 30;
+  border: 1px solid white;
+  background: dodgerblue;
+  visibility: hidden;
+  width: 6px;
+  height: 6px;
+}
+
+.fill-selection-border {
+  position: absolute;
+  z-index: 20;
+  border: 1px dashed #444444;
+  visibility: hidden;
+}
+
 /**
  * Cell input box
  */

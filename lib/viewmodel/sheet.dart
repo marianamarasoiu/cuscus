@@ -49,6 +49,23 @@ abstract class SheetViewModel extends ObjectWithId {
     selectCellAtCoords(cell.row, math.max(0, cell.column - 1));
   }
 
+  void fillInCellsWithCell(Map<int, List<int>> cellsToFillIn, CellViewModel sourceCell) {
+    cellsToFillIn.forEach((row, columns) {
+      columns.forEach((column) {
+        CellViewModel cellToFillIn = cells[row][column];
+        engine.CellContents cellContents = sourceCell.cellContents;
+        engine.CellContents newCellContents = makeRelativeCellContents(
+          cellContents,
+          new engine.CellCoordinates(sourceCell.row, sourceCell.column, sourceCell.sheetViewModel.id),
+          new engine.CellCoordinates(cellToFillIn.row, cellToFillIn.column, cellToFillIn.sheetViewModel.id),
+          spreadsheetEngine);
+
+        cellToFillIn.commitFormula(newCellContents);
+        // cellToFillIn.update();
+      });
+    });
+  }
+
   String toString() {
     return '$name:$id';
   }
@@ -93,10 +110,11 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
     super.deselectCell();
   }
 
-  void fillInRow(CellViewModel cell) {
+  void fillInRowWithAlreadyFilledInCells(int row, List<int> alreadyFilledInCollumns) {
+    print ('fillInRowWithAlreadyFilledInCells $row $alreadyFilledInCollumns');
     List<CellViewModel> firstRowOfCells = cells[0];
-    List<CellViewModel> newRowOfCells = cells[cell.row];
-    newRowOfCells.where((c) => c != cell).forEach((emptyCell) {
+    List<CellViewModel> newRowOfCells = cells[row];
+    newRowOfCells.where((c) => !alreadyFilledInCollumns.contains(c.column)).forEach((emptyCell) {
       int index = newRowOfCells.indexOf(emptyCell);
       CellViewModel templateCell = firstRowOfCells[index];
       engine.CellContents cellContents = firstRowOfCells[index].cellContents;
@@ -108,9 +126,17 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
 
       emptyCell.commitFormula(newCellContents);
     });
-    updateRow(cell.row);
+    // updateRow(cell.row);
 
-    layerViewModel.addShapeFromRow(cell.row);
+    layerViewModel.addShapeFromRow(row);
+  }
+
+  void fillInCellsWithCell(Map<int, List<int>> cellsToFillIn, CellViewModel sourceCell) {
+    print (cellsToFillIn);
+    super.fillInCellsWithCell(cellsToFillIn, sourceCell);
+    cellsToFillIn.forEach((row, columns) {
+      fillInRowWithAlreadyFilledInCells(row, columns);
+    });
   }
 }
 

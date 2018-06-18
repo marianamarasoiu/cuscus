@@ -69,6 +69,7 @@ enum InteractionAction { // Rename to uiAction
   arrowUp,
   arrowDown,
   otherKey,
+  mouseDownOnFillHandle,
 }
 
 enum DrawingTool {
@@ -328,6 +329,62 @@ command(InteractionAction action, var data) {
           cellInputBoxViewModel.show(activeSheet.selectedCell);
           cellInputBoxViewModel.enterKey(keyboardEvent.key);
           cellInputBoxViewModel.positionCursorAtEnd();
+          break;
+
+        case InteractionAction.mouseDownOnFillHandle:
+          MouseEvent mouseDown = data;
+          stopDefaultBehaviour(mouseDown);
+
+          DivElement fillHandle = mouseDown.target;
+          DivElement selectionBorder = fillHandle.nextElementSibling;
+          int startPositionY = mouseDown.client.y;
+          int cellWidth = activeSheet.selectedCell.cellView.cellElement.client.width;
+          int cellHeight = activeSheet.selectedCell.cellView.cellElement.client.height;
+
+          selectionBorder.style
+            ..visibility = 'visible'
+            ..top = '${activeSheet.selectedCell.cellView.cellElement.offset.top + 21}px'
+            ..left = '${activeSheet.selectedCell.cellView.cellElement.offset.left + 31}px'
+            ..width = '${cellWidth}px';
+
+          StreamSubscription dragMoveSub;
+          StreamSubscription dragEndSub;
+
+          dragMoveSub = document.onMouseMove.listen((MouseEvent mouseMove) {
+            int yDelta = mouseMove.client.y - startPositionY;
+            if (yDelta < 0) {
+              selectionBorder.style.height = '${cellHeight}px';
+              return;
+            }
+
+            int rowsDown = (yDelta.toDouble() / cellHeight.toDouble()).floor() + 2;
+
+            selectionBorder.style.height = '${(cellHeight + 1) * rowsDown - 1}px';
+          });
+
+          dragEndSub = document.onMouseUp.listen((MouseEvent mouseUp) {
+            int yDelta = mouseUp.client.y - startPositionY;
+            selectionBorder.style.visibility = 'hidden';
+
+            if (yDelta < 0) {
+              return;
+            }
+
+            int rowsDown = (yDelta.toDouble() / cellHeight.toDouble()).floor() + 2;
+            Map<int, List<int>> cellsToFillIn = {};
+            for (int row = activeSheet.selectedCell.row + 1; row < activeSheet.selectedCell.row + rowsDown; row++) {
+              cellsToFillIn[row] = [activeSheet.selectedCell.column];
+            }
+
+            selectionBorder.style.height = '0px';
+
+            activeSheet.fillInCellsWithCell(cellsToFillIn, activeSheet.selectedCell);
+            activeSheet.selectCellAtCoords(activeSheet.selectedCell.row + rowsDown - 1, activeSheet.selectedCell.column);
+
+            dragMoveSub.cancel();
+            dragEndSub.cancel();
+          });
+
           break;
 
         default:
