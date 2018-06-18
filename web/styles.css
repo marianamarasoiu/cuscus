@@ -178,7 +178,8 @@ table {
 
 td {
   min-width: 100px;
-  width: 100px;
+  max-width: 100px;
+  overflow: hidden;
   padding: 0;
   height: 20px;
   border: 1px double #BBB;

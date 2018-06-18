@@ -165,6 +165,7 @@ class LiteralDoubleValue extends LiteralValue {
   double value;
   LiteralDoubleValue(this.value);
   LiteralDoubleValue clone() => new LiteralDoubleValue(value);
+  toString() => (value is int) ? value.toString() : value.toStringAsFixed(2);
 }
 
 class LiteralStringValue extends LiteralValue {

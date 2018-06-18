@@ -81,7 +81,8 @@ enum DrawingTool {
 }
 
 enum Shape {
-  rect
+  rect,
+  line
 }
 
 List<SheetViewModel> sheets = [];
@@ -369,11 +370,30 @@ command(InteractionAction action, var data) {
         case InteractionAction.mouseUpOnCanvas:
           Map shapeData = data;
 
-          LayerSheetFactory layerSheetFactory = new LayerSheetFactory(selectedDrawingTool == DrawingTool.rectangleTool ? Shape.rect : null);
+          Shape shape;
+          switch (selectedDrawingTool) {
+            case DrawingTool.rectangleTool:
+              shape = Shape.rect;
+              break;
+            case DrawingTool.lineTool:
+              shape = Shape.line;
+              break;
+            default:
+              throw "Shape tool unsupported, got: $selectedDrawingTool";
+          }
+
+          LayerSheetFactory layerSheetFactory = new LayerSheetFactory(shape);
           GraphicsSheetViewModel sheet = layerSheetFactory.sheet;
           LayerViewModel layer = layerSheetFactory.layer;
 
-          layer.addShape(0, {Rect.x: shapeData['x'], Rect.y: shapeData['y'], Rect.width: shapeData['width'], Rect.height: shapeData['height']});
+          switch (shape) {
+            case Shape.rect:
+              layer.addShape(0, {Rect.x: shapeData['x'], Rect.y: shapeData['y'], Rect.width: shapeData['width'], Rect.height: shapeData['height']});
+              break;
+            case Shape.line:
+              layer.addShape(0, {Line.x1: shapeData['x1'], Line.y1: shapeData['y1'], Line.x2: shapeData['x2'], Line.y2: shapeData['y2']});
+              break;
+          }
 
           sheet.updateRow(0); // TODO: this is a hack
           layer.selectShapeAtIndex(0);
@@ -559,7 +579,7 @@ const Map<Rect, String> rectPropertyToColumnName = const {
   Rect.fillOpacity: 'Fill Opacity',
   Rect.strokeColor: 'Border Color',
   Rect.strokeWidth: 'Border Width',
-  Rect.strokeOpacity: 'BorderOpacity',
+  Rect.strokeOpacity: 'Border Opacity',
   Rect.opacity: 'Opacity'
 };
 
@@ -592,4 +612,52 @@ Map<String, Rect> get svgPropertyToRectProperty {
     rectPropertyToSvgProperty.forEach((rect, property) => _svgPropertyToRectProperty[property] = rect);
   }
   return _svgPropertyToRectProperty;
+}
+
+/**** Line */
+
+enum Line {
+  x1,
+  y1,
+  x2,
+  y2,
+  strokeColor,
+  strokeWidth,
+  strokeOpacity,
+}
+
+const Map<Line, String> linePropertyToColumnName = const {
+  Line.x1: 'Start X',
+  Line.y1: 'Start Y',
+  Line.x2: 'End X',
+  Line.y2: 'End Y',
+  Line.strokeColor: 'Color',
+  Line.strokeWidth: 'Width',
+  Line.strokeOpacity: 'Opacity',
+};
+
+Map<String, Line> _columnNameToLineProperty = {};
+Map<String, Line> get columnNameToLineProperty {
+  if (_columnNameToLineProperty.isEmpty) {
+    linePropertyToColumnName.forEach((line, column) => _columnNameToLineProperty[column] = line);
+  }
+  return _columnNameToLineProperty;
+}
+
+const Map<Line, String> linePropertyToSvgProperty = const {
+  Line.x1: 'x1',
+  Line.y1: 'y1',
+  Line.x2: 'x2',
+  Line.y2: 'y2',
+  Line.strokeColor: 'stroke',
+  Line.strokeWidth: 'stroke-width',
+  Line.strokeOpacity: 'stroke-opacity',
+};
+
+Map<String, Line> _svgPropertyToLineProperty = {};
+Map<String, Line> get svgPropertyToLineProperty {
+  if (_svgPropertyToLineProperty.isEmpty) {
+    linePropertyToSvgProperty.forEach((line, property) => _svgPropertyToLineProperty[property] = line);
+  }
+  return _svgPropertyToLineProperty;
 }

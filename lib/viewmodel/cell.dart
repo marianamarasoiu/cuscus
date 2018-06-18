@@ -75,7 +75,7 @@ class CellViewModel {
     engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
     cellContents = node.value;
 
-    _text = node.computedValue.value.toString();
+    _text = node.computedValue.toString();
     _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
 
     // This is when the node has been changed due to value propagation in the engine.
@@ -83,7 +83,7 @@ class CellViewModel {
       engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
       cellContents = node.value;
 
-      _text = node.computedValue.value.toString();
+      _text = node.computedValue.toString();
       _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
 
       cellView.cellElement.classes.add('flash');

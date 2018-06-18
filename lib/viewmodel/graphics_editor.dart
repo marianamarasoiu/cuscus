@@ -7,10 +7,12 @@ class GraphicsEditorViewModel extends ObjectWithId {
   List<LayerViewModel> layers = [];
   LayerViewModel selectedLayer;
 
-  ShapeBoundingBoxViewModel shapeBoundingBoxViewModel;
+  RectShapeBoundingBoxViewModel rectShapeBoundingBoxViewModel;
+  LineShapeBoundingBoxViewModel lineShapeBoundingBoxViewModel;
 
   GraphicsEditorViewModel(SheetbookViewModel sheetbook) : super() {
-    this.shapeBoundingBoxViewModel = new ShapeBoundingBoxViewModel();
+    this.rectShapeBoundingBoxViewModel = new RectShapeBoundingBoxViewModel();
+    this.lineShapeBoundingBoxViewModel = new LineShapeBoundingBoxViewModel();
     this.sheetbook = sheetbook;
   }
 
@@ -23,6 +25,9 @@ class GraphicsEditorViewModel extends ObjectWithId {
     switch (type) {
       case 'RectLayer':
         layer = new RectLayer();
+        break;
+      case 'LineLayer':
+        layer = new LineLayer();
         break;
       default:
         throw 'Unrecognised shape type, got $type';

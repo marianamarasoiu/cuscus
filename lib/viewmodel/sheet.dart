@@ -115,8 +115,8 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
 }
 
 class LineSheet extends GraphicsSheetViewModel {
-  LineSheet(rows, name) : super(rows, _lineProperties.length, name) {
-    activeColumnNames = _lineProperties.map((item) => item.first).toList();
+  LineSheet(rows, name) : super(rows, linePropertyToColumnName.length, name) {
+    activeColumnNames = linePropertyToColumnName.values.toList();
     columns = activeColumnNames.length;
   }
 
@@ -188,8 +188,6 @@ final List<List> _lineProperties = [
         ['Start Y'],
         ['End X'],
         ['End Y'],
-        ['Rotation'],
-        ['Stroke Style'],
         ['Stroke Width'],
         ['Stroke Color'],
         ['Stroke Opacity'],

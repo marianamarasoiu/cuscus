@@ -9,7 +9,8 @@ class GraphicsEditorView {
   GraphicsEditorViewModel graphicsEditorViewModel;
 
   DrawingTool selectedTool = DrawingTool.selectionTool;
-  ShapeBoundingBoxView selectionBoundingBox;
+  RectShapeBoundingBoxView selectionRectBoundingBox;
+  LineShapeBoundingBoxView selectionLineBoundingBox;
 
   GraphicsEditorView(this.graphicsEditorViewModel) {
     drawingToolContainer = querySelector("#drawing-tool-container");
@@ -24,13 +25,15 @@ class GraphicsEditorView {
     canvasElement = querySelector("#canvas");
     canvasElement.onMouseDown.listen((mouseDown) => command(InteractionAction.mouseDownOnCanvas, mouseDown));
 
-    selectionBoundingBox = graphicsEditorViewModel.shapeBoundingBoxViewModel.shapeBoundingBoxView;
-    canvasElement.append(selectionBoundingBox.group);
+    selectionRectBoundingBox = graphicsEditorViewModel.rectShapeBoundingBoxViewModel.rectShapeBoundingBoxView;
+    canvasElement.append(selectionRectBoundingBox.group);
+    selectionLineBoundingBox = graphicsEditorViewModel.lineShapeBoundingBoxViewModel.lineShapeBoundingBoxView;
+    canvasElement.append(selectionLineBoundingBox.group);
   }
 
   addLayer(LayerView layer) {
     layers.add(layer);
-    canvasElement.insertBefore(layer.layerElement, selectionBoundingBox.group);
+    canvasElement.insertBefore(layer.layerElement, selectionRectBoundingBox.group);
   }
 
   selectDrawingTool(DrawingTool drawingTool) {
@@ -125,12 +128,27 @@ class GraphicsEditorView {
 
     dragEndSub = canvasElement.onMouseUp.listen((mouseUp) {
       stopDefaultBehaviour(mouseUp);
-      command(InteractionAction.mouseUpOnCanvas, {
-        'x': startPositionX,
-        'y': startPositionY,
-        'width': tentativeWidth,
-        'height': tentativeHeight
-        });
+
+      switch (selectedDrawingTool) {
+        case DrawingTool.rectangleTool:
+          command(InteractionAction.mouseUpOnCanvas, {
+            'x': startPositionX,
+            'y': startPositionY,
+            'width': tentativeWidth,
+            'height': tentativeHeight
+            });
+          break;
+        case DrawingTool.lineTool:
+          command(InteractionAction.mouseUpOnCanvas, {
+            'x1': startPositionX,
+            'y1': startPositionY,
+            'x2': startPositionX + tentativeWidth,
+            'y2': startPositionY + tentativeHeight
+            });
+          break;
+        default:
+          throw "unsupported drawing tool, got $selectedDrawingTool";
+      }
       tentativeElement.remove();
       dragMoveSub.cancel();
       dragEndSub.cancel();

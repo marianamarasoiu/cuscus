@@ -1,15 +1,29 @@
 part of cuscus.viewmodel;
 
-class ShapeBoundingBoxViewModel {
-  view.ShapeBoundingBoxView shapeBoundingBoxView;
+class RectShapeBoundingBoxViewModel {
+  view.RectShapeBoundingBoxView rectShapeBoundingBoxView;
 
-  ShapeBoundingBoxViewModel() {
-    shapeBoundingBoxView = new view.ShapeBoundingBoxView(this);
+  RectShapeBoundingBoxViewModel() {
+    rectShapeBoundingBoxView = new view.RectShapeBoundingBoxView(this);
   }
 
-  set onUpdate(view.UpdateFunction updateFunction) => shapeBoundingBoxView.updateFunction = updateFunction;
+  set onUpdate(view.RectUpdateFunction updateFunction) => rectShapeBoundingBoxView.updateFunction = updateFunction;
 
-  show(ShapeViewModel shape) => shapeBoundingBoxView.showAroundShape(shape.shapeView);
+  show(ShapeViewModel shape) => rectShapeBoundingBoxView.showAroundShape(shape.shapeView);
 
-  hide() => shapeBoundingBoxView.hide();
+  hide() => rectShapeBoundingBoxView.hide();
+}
+
+class LineShapeBoundingBoxViewModel {
+  view.LineShapeBoundingBoxView lineShapeBoundingBoxView;
+
+  LineShapeBoundingBoxViewModel() {
+    lineShapeBoundingBoxView = new view.LineShapeBoundingBoxView(this);
+  }
+
+  set onUpdate(view.LineUpdateFunction updateFunction) => lineShapeBoundingBoxView.updateFunction = updateFunction;
+
+  show(ShapeViewModel shape) => lineShapeBoundingBoxView.showAroundShape(shape.shapeView);
+
+  hide() => lineShapeBoundingBoxView.hide();
 }
