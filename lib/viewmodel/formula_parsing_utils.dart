@@ -230,8 +230,19 @@ String stringifyFormulaRecursive(Map ast, int baseSheetId, engine.SpreadsheetEng
       List args = expressionValue["args"];
       List<String> newArgs = [];
       args.forEach((Map arg) => newArgs.add(stringifyFormulaRecursive(arg, baseSheetId, ss)));
-      String arguments = newArgs.fold('', (prev, arg) => prev == '' ? '$arg' : '$prev, $arg');
-      return '${functionName.toUpperCase()}($arguments)';
+      switch (functionName) {
+        case 'add':
+          return newArgs.fold('', (prev, arg) => prev == '' ? '$arg' : '$prev + $arg');
+        case 'sub':
+          return newArgs.fold('', (prev, arg) => prev == '' ? '$arg' : '$prev - $arg');
+        case 'mul':
+          return newArgs.fold('', (prev, arg) => prev == '' ? '$arg' : '$prev * $arg');
+        case 'div':
+          return newArgs.fold('', (prev, arg) => prev == '' ? '$arg' : '$prev / $arg');
+        default:
+          String arguments = newArgs.fold('', (prev, arg) => prev == '' ? '$arg' : '$prev, $arg');
+          return '${functionName.toUpperCase()}($arguments)';
+      }
       break;
     case "cell-ref":
       engine.CellCoordinates cellRef = expressionValue;
