@@ -103,7 +103,7 @@ class RectViewModel extends RectShapeViewModel {
       shapeView.element.classes.add('animate');
       new Timer(new Duration(seconds: 1), () => shapeView.element.classes.remove('animate'));
 
-      shapeView.setAttribute(rectPropertyToSvgProperty[property], node.computedValue.value.toString());
+      shapeView.setAttribute(rectPropertyToSvgProperty[property], node.computedValue.toString());
     });
 
     // This is when the node has been edited directly, which results in a replacement in the engine.
@@ -120,7 +120,7 @@ class RectViewModel extends RectShapeViewModel {
         setupListenersForCell(property, cell);
       }
 
-      shapeView.setAttribute(rectPropertyToSvgProperty[property], node.computedValue.value.toString());
+      shapeView.setAttribute(rectPropertyToSvgProperty[property], node.computedValue.toString());
 
     });
   }
@@ -226,7 +226,7 @@ class LineViewModel extends LineShapeViewModel {
       shapeView.element.classes.add('animate');
       new Timer(new Duration(seconds: 1), () => shapeView.element.classes.remove('animate'));
 
-      shapeView.setAttribute(linePropertyToSvgProperty[property], node.computedValue.value.toString());
+      shapeView.setAttribute(linePropertyToSvgProperty[property], node.computedValue.toString());
     });
 
     // This is when the node has been edited directly, which results in a replacement in the engine.
@@ -242,7 +242,7 @@ class LineViewModel extends LineShapeViewModel {
         setupListenersForCell(property, cell);
       }
 
-      shapeView.setAttribute(linePropertyToSvgProperty[property], node.computedValue.value.toString());
+      shapeView.setAttribute(linePropertyToSvgProperty[property], node.computedValue.toString());
 
     });
   }

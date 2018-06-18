@@ -127,9 +127,8 @@ class SpreadsheetDepNode extends DepNode<CellContents> {
       print ("Invariant violated: executing clean cell");
     }
 
-    // TODO: this is a hack. Should be replaced with expected types for the dependants of a function call, and then a switch here creating the appropriate [LiteralValue]
     if (value is EmptyValue) {
-      computedValue = new LiteralDoubleValue(0.0);
+      computedValue = value;
 
     } else if (value is LiteralValue) {
       computedValue = value;
@@ -180,10 +179,8 @@ class LiteralBoolValue extends LiteralValue {
   LiteralBoolValue clone() => new LiteralBoolValue(value);
 }
 
-class EmptyValue extends CellContents {
-  final String stringValue = '';
-  final double doubleValue = 0.0;
-  toString() => "<EMPTY>";
+class EmptyValue extends LiteralValue {
+  String value = '';
   EmptyValue clone() => new EmptyValue();
 }
 
