@@ -33,7 +33,7 @@ class CellViewModel {
   void commitFormulaString(String formula, {bool updatedFromDirectEdit = true}) {
     String jsonParseTree = parser.parseFormula(formula);
     Map formulaParseTree = JSON.decode(jsonParseTree);
-    engine.CellContents cellContents = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
+    engine.CellContents cellContents = resolveSymbols(formulaParseTree, sheetViewModel.id, spreadsheetEngine);
 
     commitFormula(cellContents, updatedFromDirectEdit: updatedFromDirectEdit);
 
