@@ -642,13 +642,13 @@ const Map<Rect, String> rectPropertyToColumnName = const {
   Rect.height: 'Height',
   Rect.x: 'X',
   Rect.y: 'Y',
-  Rect.rx: 'Corner Radius X',
-  Rect.ry: 'Corner Radius Y',
-  Rect.fillColor: 'Fill Color',
-  Rect.fillOpacity: 'Fill Opacity',
-  Rect.strokeColor: 'Border Color',
-  Rect.strokeWidth: 'Border Width',
-  Rect.strokeOpacity: 'Border Opacity',
+  Rect.rx: 'CornerRadiusX',
+  Rect.ry: 'CornerRadiusY',
+  Rect.fillColor: 'FillColor',
+  Rect.fillOpacity: 'FillOpacity',
+  Rect.strokeColor: 'BorderColor',
+  Rect.strokeWidth: 'BorderWidth',
+  Rect.strokeOpacity: 'BorderOpacity',
   Rect.opacity: 'Opacity'
 };
 
@@ -696,10 +696,10 @@ enum Line {
 }
 
 const Map<Line, String> linePropertyToColumnName = const {
-  Line.x1: 'Start X',
-  Line.y1: 'Start Y',
-  Line.x2: 'End X',
-  Line.y2: 'End Y',
+  Line.x1: 'StartX',
+  Line.y1: 'StartY',
+  Line.x2: 'EndX',
+  Line.y2: 'EndY',
   Line.strokeColor: 'Color',
   Line.strokeWidth: 'Width',
   Line.strokeOpacity: 'Opacity',
