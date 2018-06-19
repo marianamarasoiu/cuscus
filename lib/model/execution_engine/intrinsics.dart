@@ -351,7 +351,7 @@ LiteralDoubleValue i_min(List<LiteralValue> args) {
   for (LiteralValue arg in args) {
     if (arg is EmptyValue) arg = new LiteralDoubleValue(0.0);
     _checkType(arg, LiteralDoubleValue);
-    minimum = math.max(minimum, arg.value);
+    minimum = math.min(minimum, arg.value);
   }
   return new LiteralDoubleValue(minimum);
 }
