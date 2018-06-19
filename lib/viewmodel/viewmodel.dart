@@ -322,6 +322,18 @@ command(InteractionAction action, var data) {
 
         case InteractionAction.otherKey:
           KeyboardEvent keyboardEvent = data;
+
+          if (keyboardEvent.ctrlKey || keyboardEvent.metaKey) {
+            if (keyboardEvent.metaKey) {
+              if (keyboardEvent.key == 'b') {
+                activeSheet.selectedCell.cellView.cellElement.classes.toggle('bold');
+              }
+              if (keyboardEvent.key == 'i') {
+                activeSheet.selectedCell.cellView.cellElement.classes.toggle('italic');
+              }
+            }
+            return;
+          }
           stopDefaultBehaviour(keyboardEvent);
 
           state = InteractionState.cellEditing;

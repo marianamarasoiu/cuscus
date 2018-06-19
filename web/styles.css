@@ -190,6 +190,14 @@ td.index {
   width: 30px;
 }
 
+.bold {
+  font-weight: bold;
+}
+
+.italic {
+  font-style: italic;
+}
+
 .header,
 .index {
   text-align: center;
