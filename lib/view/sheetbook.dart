@@ -43,15 +43,19 @@ class SheetbookView {
       label.contentEditable = 'true';
       String initialName = label.text;
       String newName = label.text;
+
+      command(InteractionAction.renamingSheet, sheetViewModel);
+
       label.onKeyUp.listen((e) {
         newName = label.text;
       });
+
       label.onKeyDown.listen((KeyboardEvent e) {
         if (e.which == 13 && e.shiftKey == false) { // Enter: rename sheet
           window.getSelection().removeAllRanges();
           label.blur();
           label.contentEditable = 'false';
-          command(InteractionAction.renameSheet, [sheet, newName]);
+          command(InteractionAction.renameSheet, [sheet.sheetViewModel, newName]);
           e.preventDefault();
           e.stopPropagation();
         } else if (e.which == 27) { // Esc: cancel name change
@@ -59,6 +63,7 @@ class SheetbookView {
           label.blur();
           label.contentEditable = 'false';
           label.text = initialName;
+          command(InteractionAction.renameSheet, null);
           e.preventDefault();
           e.stopPropagation();
         }

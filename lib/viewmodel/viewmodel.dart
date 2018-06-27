@@ -37,6 +37,7 @@ enum InteractionState { // Rename to uiState
   readyToDraw,
   drawing,
   cellEditing,
+  renamingSheet,
 }
 enum InteractionAction { // Rename to uiAction
   // actions on the visualisation
@@ -48,6 +49,7 @@ enum InteractionAction { // Rename to uiAction
   // actions on sheets
   createNewSheet,
   selectSheet,
+  renamingSheet,
   renameSheet,
   deleteSheet,
 
@@ -399,6 +401,10 @@ command(InteractionAction action, var data) {
 
           break;
 
+        case InteractionAction.renamingSheet:
+          state = InteractionState.renamingSheet;
+          break;
+
         default:
           break;
       }
@@ -531,6 +537,22 @@ command(InteractionAction action, var data) {
           }
           break;
 
+        default:
+          break;
+      }
+      break;
+
+    case InteractionState.renamingSheet:
+      switch (action) {
+        case InteractionAction.renameSheet:
+          if (data != null) {
+            SheetViewModel sheet = data[0];
+            String newName = data[1];
+
+            sheet.name = newName;
+          }
+          state = InteractionState.idle;
+          break;
         default:
           break;
       }

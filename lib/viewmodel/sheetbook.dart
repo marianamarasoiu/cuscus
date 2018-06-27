@@ -36,6 +36,7 @@ class SheetbookViewModel extends ObjectWithId {
         sheetView = new view.SheetView(sheet);
     }
     sheet.sheetView = sheetView;
+    sheet.sheetbookViewModel = this;
     sheetbookView.addSheet(sheetView);
     selectSheet(sheet);
     return sheet;

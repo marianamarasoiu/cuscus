@@ -1,5 +1,7 @@
 library playground;
 
+import 'dart:html';
+
 import 'package:cuscus/viewmodel/viewmodel.dart' as viewmodel;
 
 void init() => viewmodel.init();
@@ -56,6 +58,9 @@ void setup() {
     sheet.cells[4][sheet.activeColumnNames.indexOf(viewmodel.rectPropertyToColumnName[viewmodel.Rect.width])].commitFormulaString('30');
     sheet.cells[5][sheet.activeColumnNames.indexOf(viewmodel.rectPropertyToColumnName[viewmodel.Rect.width])].commitFormulaString('30');
     sheet.cells[6][sheet.activeColumnNames.indexOf(viewmodel.rectPropertyToColumnName[viewmodel.Rect.width])].commitFormulaString('30');
+
+    sheet.name = 'Bars';
+    querySelector('#sheetbook${sheet.sheetbookViewModel.id}-label${sheet.id}').text = sheet.name;
   }
 
   {
@@ -70,12 +75,20 @@ void setup() {
       viewmodel.Line.y2: 115});
     sheet.updateRow(0);
 
-    sheet.cells[0][sheet.activeColumnNames.indexOf(viewmodel.linePropertyToColumnName[viewmodel.Line.x1])].commitFormulaString('=Rect3!X1 + Rect3!Width1 / 2');
+    sheet.cells[0][sheet.activeColumnNames.indexOf(viewmodel.linePropertyToColumnName[viewmodel.Line.x1])].commitFormulaString('=Bars!X1 + Bars!Width1 / 2');
     sheet.cells[0][sheet.activeColumnNames.indexOf(viewmodel.linePropertyToColumnName[viewmodel.Line.x2])].commitFormulaString('=StartX1');
     sheet.cells[0][sheet.activeColumnNames.indexOf(viewmodel.linePropertyToColumnName[viewmodel.Line.y1])].commitFormulaString('=300 - Sheet2!D2 * 5');
     sheet.cells[0][sheet.activeColumnNames.indexOf(viewmodel.linePropertyToColumnName[viewmodel.Line.y2])].commitFormulaString('=300 - Sheet2!E2 * 5');
     sheet.cells[0][sheet.activeColumnNames.indexOf(viewmodel.linePropertyToColumnName[viewmodel.Line.strokeWidth])].commitFormulaString('2');
+
+    sheet.name = 'Lines';
+    querySelector('#sheetbook${sheet.sheetbookViewModel.id}-label${sheet.id}').text = sheet.name;
   }
+
+  viewmodel.sheetbooks[0].selectedSheet.name = 'DataSheet1';
+  querySelector('#sheetbook${viewmodel.sheetbooks[0].id}-label${viewmodel.sheetbooks[0].selectedSheet.id}').text = viewmodel.sheetbooks[0].selectedSheet.name;
+  viewmodel.sheetbooks[1].selectedSheet.name = 'DataSheet2';
+  querySelector('#sheetbook${viewmodel.sheetbooks[1].id}-label${viewmodel.sheetbooks[1].selectedSheet.id}').text = viewmodel.sheetbooks[1].selectedSheet.name;
 }
 
 final List<List> inputData = [
