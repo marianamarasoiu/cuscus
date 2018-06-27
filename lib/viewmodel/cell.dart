@@ -4,7 +4,6 @@ class CellViewModel {
   int row;
   int column;
 
-  String _userEnteredFormula = '';
   engine.CellContents cellContents = null;
   String _value = '';
 
@@ -24,7 +23,13 @@ class CellViewModel {
   }
 
   String get value => _value;
-  String get formula => _userEnteredFormula;
+  String get formula {
+    if (cellContents == null) {
+      return '';
+    } else {
+      return stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
+    }
+  }
 
   /// When the shape is changed directly, the node in the engine is replaced. For this case,
   /// we don't want to duplicate the number of listeners on the node by adding another listener on the node in the whenDone event.
@@ -48,6 +53,11 @@ class CellViewModel {
 
   void commitFormula(engine.CellContents cellContents, {bool updatedFromDirectEdit = true}) {
     print ("commit formula");
+    if (this.cellContents == null) {
+      this.updatedFromDirectEdit = false;
+    } else {
+      this.updatedFromDirectEdit = updatedFromDirectEdit;
+    }
     this.cellContents = cellContents;
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
     addNodeToSpreadsheetEngine(cellContents, cell, spreadsheetEngine);
@@ -55,7 +65,6 @@ class CellViewModel {
     // Propagate the changes in the dependency graph.
     spreadsheetEngine.depGraph.update();
 
-    this.updatedFromDirectEdit = updatedFromDirectEdit;
     // Update contents of current cell and set listeners
     setupListenersForCell();
   }
@@ -66,6 +75,7 @@ class CellViewModel {
     engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
     cellContents = node.value;
 
+    updatedFromDirectEdit = false;
     setupListenersForCell();
 
     cellView.cellElement.classes.add('flash');
@@ -78,7 +88,6 @@ class CellViewModel {
     cellContents = node.value;
 
     _text = node.computedValue.toString();
-    _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
 
     // This is when the node has been changed due to value propagation in the engine.
     node.onChange.listen((_) {
@@ -86,7 +95,6 @@ class CellViewModel {
       cellContents = node.value;
 
       _text = node.computedValue.toString();
-      _userEnteredFormula = stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
 
       print('on change');
       cellView.cellElement.classes.add('flash');
@@ -95,6 +103,7 @@ class CellViewModel {
 
     // This is when the node has been edited directly, which results in a replacement in the engine.
     node.whenDone.then((_) {
+      print('when done cell before if');
       if (!updatedFromDirectEdit) {
         setupListenersForCell();
         print('when done cell');
