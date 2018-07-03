@@ -54,11 +54,10 @@ abstract class SheetViewModel extends ObjectWithId {
       columns.forEach((column) {
         CellViewModel cellToFillIn = cells[row][column];
         engine.CellContents cellContents = sourceCell.cellContents;
-        engine.CellContents newCellContents = makeRelativeCellContents(
+        engine.CellContents newCellContents = spreadsheetEngineViewModel.makeRelativeCellContents(
           cellContents,
           new engine.CellCoordinates(sourceCell.row, sourceCell.column, sourceCell.sheetViewModel.id),
-          new engine.CellCoordinates(cellToFillIn.row, cellToFillIn.column, cellToFillIn.sheetViewModel.id),
-          spreadsheetEngine);
+          new engine.CellCoordinates(cellToFillIn.row, cellToFillIn.column, cellToFillIn.sheetViewModel.id));
 
         cellToFillIn.commitFormula(newCellContents);
         // cellToFillIn.update();
@@ -118,11 +117,10 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
       int index = newRowOfCells.indexOf(emptyCell);
       CellViewModel templateCell = firstRowOfCells[index];
       engine.CellContents cellContents = firstRowOfCells[index].cellContents;
-      engine.CellContents newCellContents = makeRelativeCellContents(
+      engine.CellContents newCellContents = spreadsheetEngineViewModel.makeRelativeCellContents(
         cellContents,
         new engine.CellCoordinates(templateCell.row, templateCell.column, templateCell.sheetViewModel.id),
-        new engine.CellCoordinates(emptyCell.row, emptyCell.column, emptyCell.sheetViewModel.id),
-        spreadsheetEngine);
+        new engine.CellCoordinates(emptyCell.row, emptyCell.column, emptyCell.sheetViewModel.id));
 
       emptyCell.commitFormula(newCellContents);
     });

@@ -162,6 +162,8 @@ html, body{
 table {
   border-collapse: collapse;
   display: block;
+  table-layout: fixed;
+  white-space: nowrap;
 }
 
 .corner,
