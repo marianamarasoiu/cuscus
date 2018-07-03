@@ -23,13 +23,7 @@ class CellViewModel {
   }
 
   String get value => _value;
-  String get formula {
-    if (cellContents == null) {
-      return '';
-    } else {
-      return stringifyFormula(cellContents, sheetViewModel.id, spreadsheetEngine);
-    }
-  }
+  String get formula => spreadsheetEngineViewModel.stringifyFormula(cellContents, sheetViewModel.id);
 
   /// When the shape is changed directly, the node in the engine is replaced. For this case,
   /// we don't want to duplicate the number of listeners on the node by adding another listener on the node in the whenDone event.
@@ -38,7 +32,7 @@ class CellViewModel {
   void commitFormulaString(String formula, {bool updatedFromDirectEdit = true}) {
     String jsonParseTree = parser.parseFormula(formula);
     Map formulaParseTree = JSON.decode(jsonParseTree);
-    engine.CellContents cellContents = resolveSymbols(formulaParseTree, sheetViewModel.id, spreadsheetEngine);
+    engine.CellContents cellContents = spreadsheetEngineViewModel.resolveSymbols(formulaParseTree, sheetViewModel.id);
 
     commitFormula(cellContents, updatedFromDirectEdit: updatedFromDirectEdit);
 
@@ -60,10 +54,8 @@ class CellViewModel {
     }
     this.cellContents = cellContents;
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
-    addNodeToSpreadsheetEngine(cellContents, cell, spreadsheetEngine);
-
-    // Propagate the changes in the dependency graph.
-    spreadsheetEngine.depGraph.update();
+    spreadsheetEngineViewModel.setNode(cellContents, cell);
+    spreadsheetEngineViewModel.updateDependencyGraph();
 
     // Update contents of current cell and set listeners
     setupListenersForCell();
@@ -72,7 +64,7 @@ class CellViewModel {
   update() {
     print ("update");
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
-    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+    engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
     cellContents = node.value;
 
     updatedFromDirectEdit = false;
@@ -84,14 +76,14 @@ class CellViewModel {
 
   setupListenersForCell() {
     engine.CellCoordinates cell = new engine.CellCoordinates(row, column, sheetViewModel.id);
-    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+    engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
     cellContents = node.value;
 
     _text = node.computedValue.toString();
 
     // This is when the node has been changed due to value propagation in the engine.
     node.onChange.listen((_) {
-      engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
       cellContents = node.value;
 
       _text = node.computedValue.toString();

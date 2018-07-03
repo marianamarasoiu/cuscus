@@ -4,6 +4,7 @@
  */
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:possum/deps_map.dart';
 
@@ -79,37 +80,6 @@ class SpreadsheetEngine {
 
     cells.remove(coords);
   }
-
-  /// Turns a range of cells into a list of cells.
-  List<CellCoordinates> getCellsBetween(CellCoordinates topLeft, CellCoordinates bottomRight) {
-    if (topLeft.sheetId != bottomRight.sheetId) {
-      throw "Ranges across sheets not supported!";
-    }
-
-    List<List<CellCoordinates>> cellMatrix = [];
-    for (int row = topLeft.row; row <= bottomRight.row; row++) {
-      cellMatrix.add(new List(bottomRight.col - topLeft.col + 1));
-    }
-
-    for (CellCoordinates cell in spreadsheetEngine.cells.keys.where((CellCoordinates loc) => loc is CellCoordinates)) {
-      if (cell.sheetId == topLeft.sheetId &&
-          topLeft.row <= cell.row && cell.row <= bottomRight.row &&
-          topLeft.col <= cell.col && cell.col <= bottomRight.col) {
-        cellMatrix[cell.row - topLeft.row][cell.col - topLeft.col] = cell;
-      }
-    }
-
-    for (int row = topLeft.row; row <= bottomRight.row; row++) {
-      for (int col = topLeft.col; col <= bottomRight.col; col++) {
-        if (cellMatrix[row - topLeft.row][col - topLeft.col] == null) {
-          CellCoordinates cell = new CellCoordinates(row, col, topLeft.sheetId);
-          cellMatrix[row - topLeft.row][col - topLeft.col] = cell;
-          spreadsheetEngine.cells[cell] = new SpreadsheetDepNode(spreadsheetEngine, new EmptyValue());
-        }
-      }
-    }
-    return cellMatrix.fold([], (List<CellCoordinates> cellList, List<CellCoordinates> row) => cellList..addAll(row));
-  }
 }
 
 class SpreadsheetDepNode extends DepNode<CellContents> {
@@ -133,21 +103,69 @@ class SpreadsheetDepNode extends DepNode<CellContents> {
     } else if (value is LiteralValue) {
       computedValue = value;
 
-    } else if (value is FunctionCall) {
-      var functionCall = value as FunctionCall;
-
-      // Look up the values
-      Map<CellCoordinates, LiteralValue> coordsValues = {};
-      for (var coords in functionCall.dependants) {
-        coordsValues[coords] = sheet.cells[coords].computedValue;
-      }
-
-      computedValue = evalFunctionCall(functionCall.ast, coordsValues);
+    } else if (value is FormulaValue) {
+      computedValue = _evalFormula(value);
     }
 
     dirty = false;
     changeController.add('Value Changed');
     return;
+  }
+
+  LiteralValue _evalFormula(FormulaValue formula) {
+
+    // Look up the values
+    Map<CellCoordinates, LiteralValue> coordsToValues = {};
+    for (var coords in formula.dependants) {
+      coordsToValues[coords] = sheet.cells[coords].computedValue;
+    }
+
+    CellContents formulaContent = formula.content;
+    if (formulaContent is LiteralValue) {
+      return formulaContent;
+    }
+    if (formulaContent is CellRange) {
+      if (formulaContent.isRange) throw "A cell cannot reference a range.";
+      return coordsToValues[formulaContent.topLeftCell];
+    }
+    if (formulaContent is FunctionCallOrOperation) {
+      return _evalFunctionCallOrOperation(formulaContent as FunctionCallOrOperation, coordsToValues);
+    }
+
+    throw "Function type not supported: ${formula.runtimeType}";
+  }
+
+  LiteralValue _evalFunctionCallOrOperation(FunctionCallOrOperation functionCallOrOperation, Map<CellCoordinates, LiteralValue> coordsToValues) {
+    List<CellContents> arguments = [];
+    List<LiteralValue> evaluatedArguments = [];
+    String functionName;
+
+    if (functionCallOrOperation is FunctionCall) {
+      arguments = functionCallOrOperation.args;
+      functionName = functionCallOrOperation.functionName;
+    } else if (functionCallOrOperation is BinaryOperation) {
+      arguments = [functionCallOrOperation.lhsOperand, functionCallOrOperation.rhsOperand];
+      functionName = operationToFunctionName(functionCallOrOperation.operation);
+    } else if (functionCallOrOperation is UnaryOperation) {
+      arguments = [functionCallOrOperation.operand];
+      functionName = operationToFunctionName(functionCallOrOperation.operation);
+    } else {
+      throw "Function type not supported: ${functionCallOrOperation.runtimeType}";
+    }
+
+    for (CellContents arg in arguments) {
+      print (arg);
+      if (arg is LiteralValue) {
+        evaluatedArguments.add(arg);
+      } else if (arg is CellRange) {
+        evaluatedArguments.addAll(arg.cellsList.map((cellCoords) => coordsToValues[cellCoords]));
+      } else if (arg is FunctionCallOrOperation) {
+        evaluatedArguments.add(_evalFunctionCallOrOperation(arg as FunctionCallOrOperation, coordsToValues));
+      } else {
+        throw "Function type not supported: ${arg.runtimeType}";
+      }
+    }
+    return evalSimpleFunctionCall(functionName, evaluatedArguments);
   }
 }
 
@@ -157,14 +175,14 @@ abstract class CellContents {
 
 abstract class LiteralValue extends CellContents {
   var value;
-  toString() => "$value";
+  String toString() => "$value";
 }
 
 class LiteralDoubleValue extends LiteralValue {
   double value;
   LiteralDoubleValue(this.value);
   LiteralDoubleValue clone() => new LiteralDoubleValue(value);
-  toString() => (value is int) ? value.toString() : value.toStringAsFixed(2);
+  String toString() => (value is int) ? value.toString() : value.toStringAsFixed(2);
 }
 
 class LiteralStringValue extends LiteralValue {
@@ -184,39 +202,110 @@ class EmptyValue extends LiteralValue {
   EmptyValue clone() => new EmptyValue();
 }
 
-class FunctionCall extends CellContents {
-  Map ast;
+class CellRange extends CellContents {
+  CellCoordinates topLeftCell;
+  CellCoordinates bottomRightCell;
+
+  CellRange.cell(CellCoordinates cell) {
+    topLeftCell = cell;
+    bottomRightCell = cell;
+  }
+
+  CellRange.range(CellCoordinates corner1, CellCoordinates corner2) {
+    if (corner1.sheetId != corner2.sheetId) {
+      throw "Ranges over multiple sheets unsupported!";
+    }
+    topLeftCell = new CellCoordinates(math.min(corner1.row, corner2.row), math.min(corner1.col, corner2.col), corner1.sheetId);
+    bottomRightCell = new CellCoordinates(math.max(corner1.row, corner2.row), math.max(corner1.col, corner2.col), corner1.sheetId);
+    print(this);
+  }
+
+  clone() => new CellRange.range(topLeftCell, bottomRightCell);
+
+  int get sheetId => topLeftCell.sheetId;
+  bool get isCell => topLeftCell == bottomRightCell;
+  bool get isRange => topLeftCell != bottomRightCell;
+
+  /// Turns a range of cells into a list of cells.
+  List<CellCoordinates> get cellsList {
+    List<CellCoordinates> cellList = [];
+    for (int row = topLeftCell.row; row <= bottomRightCell.row; row++) {
+      for (int col = topLeftCell.col; col <= bottomRightCell.col; col++) {
+        CellCoordinates cell = new CellCoordinates(row, col, sheetId);
+        spreadsheetEngine.cells[cell] = new SpreadsheetDepNode(spreadsheetEngine, new EmptyValue());
+        cellList.add(cell);
+      }
+    }
+    return cellList;
+  }
+
+  String toString() {
+    return '$sheetId (col: ${topLeftCell.col}, row: ${topLeftCell.row}) - (col: ${bottomRightCell.col}, row: ${bottomRightCell.row})';
+  }
+}
+
+class FormulaValue extends CellContents {
+  CellContents content;
   List<CellCoordinates> dependants = [];
 
-  FunctionCall(this.ast, this.dependants) { }
-  toString() => "$ast";
-  FunctionCall clone() {
-    Map astClone = cloneAst(ast);
-    List<CellCoordinates> dependantsClone = new List.from(dependants);
-    return new FunctionCall(astClone, dependantsClone);
+  FormulaValue(this.content) {
+    dependants = getDependantsRecursive(content);
   }
 
-  cloneAst(Map ast) {
-    Map newAst = {};
-    String expressionType = ast.keys.first;
-    var expressionValue = ast.values.first;
-    switch (expressionType) {
-      case "literal":
-        newAst = {"literal": (expressionValue as LiteralValue).clone()};
-        break;
-      case "funcCall":
-        String functionName = expressionValue["functionName"];
-        List args = expressionValue["args"];
-        List newArgs = [];
-        args.forEach((Map arg) => newArgs.add(cloneAst(arg)));
-        newAst = {"funcCall": {"functionName": functionName, "args": newArgs}};
-        break;
-      case "cell-ref":
-        newAst = {"cell-ref": expressionValue};
-        break;
+  List<CellCoordinates> getDependantsRecursive(CellContents contents) {
+    if (contents is LiteralValue) {
+      return [];
     }
-    return newAst;
+    if (contents is CellRange) {
+      return contents.cellsList;
+    }
+    if (contents is FunctionCall) {
+      List<CellCoordinates> deps = [];
+      contents.args.forEach((CellContents cell) => deps.addAll(getDependantsRecursive(cell)));
+      return deps;
+    }
+    if (contents is BinaryOperation) {
+      List<CellCoordinates> deps = [];
+      deps.addAll(getDependantsRecursive(contents.lhsOperand));
+      deps.addAll(getDependantsRecursive(contents.rhsOperand));
+      return deps;
+    }
+    if (contents is UnaryOperation) {
+      return getDependantsRecursive(contents.operand);
+    }
+    throw "Unexpected Cell contents, got $contents";
   }
+
+  toString() => "Formula: $content";
+
+  FormulaValue clone() => new FormulaValue(content.clone());
+}
+
+class FunctionCallOrOperation {}
+
+class FunctionCall extends CellContents implements FunctionCallOrOperation {
+  String functionName;
+  List<CellContents> args;
+  FunctionCall(this.functionName, this.args);
+  FunctionCall clone() => new FunctionCall(functionName, args.map((arg) => arg.clone()).toList());
+  toString() => "$functionName$args";
+}
+
+class BinaryOperation extends CellContents implements FunctionCallOrOperation {
+  String operation;
+  CellContents lhsOperand;
+  CellContents rhsOperand;
+  BinaryOperation(this.operation, this.lhsOperand, this.rhsOperand);
+  BinaryOperation clone() => new BinaryOperation(operation, lhsOperand.clone(), rhsOperand.clone());
+  toString() => "$operation($lhsOperand, $rhsOperand)";
+}
+
+class UnaryOperation extends CellContents implements FunctionCallOrOperation {
+  String operation;
+  CellContents operand;
+  UnaryOperation(this.operation, this.operand);
+  UnaryOperation clone() => new UnaryOperation(operation, operand.clone());
+  toString() => "$operation($operand)";
 }
 
 class CellCoordinates {
@@ -234,24 +323,40 @@ class CellCoordinates {
   int get hashCode => 10000000 * sheetId + 10000 * row + col; // TODO: Fix dumb hashcode
 }
 
-LiteralValue evalFunctionCall(Map function, Map<CellCoordinates, LiteralValue> coordsValues) {
-  assert(function.length == 1);
-  String functionType = function.keys.first;
-  var functionContent = function.values.first;
-
-  switch(functionType) {
-    case "literal":
-      assert(functionContent is LiteralValue);
-      return functionContent;
-    case "cell-ref":
-      assert(functionContent is CellCoordinates);
-      return coordsValues[functionContent];
-    case "funcCall":
-      String functionName = functionContent["functionName"];
-      List<LiteralValue> arguments = (functionContent["args"] as List).map((Map arg) => evalFunctionCall(arg, coordsValues)).toList();
-      return evalSimpleFunctionCall(functionName, arguments);
+String operationToFunctionName(String operation) {
+  switch (operation) {
+    case "=":
+      return "eq";
+    case "<>>":
+      return "neq";
+    case "<":
+      return "lt";
+    case ">":
+      return "gt";
+    case "<=":
+      return "le";
+    case ">=":
+      return "ge";
+    case "&":
+      return "concat";
+    case "+":
+      return "add";
+    case "-":
+      return "sub";
+    case "*":
+      return "mul";
+    case "/":
+      return "div";
+    case "^":
+      return "pow";
+    case "%":
+      return "percent";
+    case "-":
+      return "umin";
+    case "+":
+      return "uplus";
   }
-  throw "Function type not supported: $functionType";
+  throw "Operation unsupported, got $operation";
 }
 
 LiteralValue evalSimpleFunctionCall(String functionName, List<LiteralValue> values) {
@@ -352,6 +457,10 @@ LiteralValue evalSimpleFunctionCall(String functionName, List<LiteralValue> valu
       return i_sum(values);
     case "product":
       return i_product(values);
+    case "if":
+      return i_if(values[0], values[1], values[2]);
+    case "nthitemofset":
+      return i_nthItemOfSet(values);
   }
   throw "Function name not supported: $functionName";
 }

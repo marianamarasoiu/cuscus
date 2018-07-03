@@ -29,7 +29,7 @@ part 'graphics_editor.dart';
 
 part 'object_id.dart';
 
-part 'formula_parsing_utils.dart';
+part 'spreadsheet.dart';
 
 
 enum InteractionState { // Rename to uiState
@@ -90,7 +90,7 @@ enum Shape {
 
 List<SheetViewModel> sheets = [];
 List<SheetbookViewModel> sheetbooks = [];
-engine.SpreadsheetEngine spreadsheetEngine = new engine.SpreadsheetEngine();
+SpreadsheetEngineViewModel spreadsheetEngineViewModel = new SpreadsheetEngineViewModel();
 
 CellInputBoxViewModel cellInputBoxViewModel = new CellInputBoxViewModel();
 CellInputFormulaBarViewModel cellInputFormulaBarViewModel = new CellInputFormulaBarViewModel();

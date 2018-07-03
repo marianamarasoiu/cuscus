@@ -54,7 +54,7 @@ class RectViewModel extends RectShapeViewModel {
       List<String> columns = layer.graphicsSheetViewModel.activeColumnNames;
       int column = columns.indexOf(rectPropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
-      engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
       properties[property] = node.computedValue.value;
 
       setupListenersForCell(property, cell);
@@ -83,17 +83,15 @@ class RectViewModel extends RectShapeViewModel {
     engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
     String jsonParseTree = parser.parseFormula(value.toString());
     Map formulaParseTree = JSON.decode(jsonParseTree);
-    engine.CellContents cellContents = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
-    addNodeToSpreadsheetEngine(cellContents, cell, spreadsheetEngine);
-
-    // Propagate the changes in the dependency graph.
-    spreadsheetEngine.depGraph.update();
+    engine.CellContents cellContents = spreadsheetEngineViewModel.resolveSymbols(formulaParseTree, activeSheet.id);
+    spreadsheetEngineViewModel.setNode(cellContents, cell);
+    spreadsheetEngineViewModel.updateDependencyGraph();
 
     setupListenersForCell(property, cell);
   }
 
   setupListenersForCell(Rect property, engine.CellCoordinates cell) {
-    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+    engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
 
     // This is when the node has been changed due to value propagation in the engine.
     node.onChange.listen((_) {
@@ -109,7 +107,7 @@ class RectViewModel extends RectShapeViewModel {
     // This is when the node has been edited directly, which results in a replacement in the engine.
     node.whenDone.then((_) {
       print('when done');
-      engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
       properties[property] = node.computedValue.value;
 
       if (updatedFromDirectEdit[property] == true) {
@@ -178,7 +176,7 @@ class LineViewModel extends LineShapeViewModel {
       List<String> columns = layer.graphicsSheetViewModel.activeColumnNames;
       int column = columns.indexOf(linePropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
-      engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
       properties[property] = node.computedValue.value;
 
       setupListenersForCell(property, cell);
@@ -207,17 +205,15 @@ class LineViewModel extends LineShapeViewModel {
     engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
     String jsonParseTree = parser.parseFormula(value.toString());
     Map formulaParseTree = JSON.decode(jsonParseTree);
-    engine.CellContents cellContents = resolveSymbols(formulaParseTree, activeSheet.id, spreadsheetEngine);
-    addNodeToSpreadsheetEngine(cellContents, cell, spreadsheetEngine);
-
-    // Propagate the changes in the dependency graph.
-    spreadsheetEngine.depGraph.update();
+    engine.CellContents cellContents = spreadsheetEngineViewModel.resolveSymbols(formulaParseTree, activeSheet.id);
+    spreadsheetEngineViewModel.setNode(cellContents, cell);
+    spreadsheetEngineViewModel.updateDependencyGraph();
 
     setupListenersForCell(property, cell);
   }
 
   setupListenersForCell(Line property, engine.CellCoordinates cell) {
-    engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+    engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
 
     // This is when the node has been changed due to value propagation in the engine.
     node.onChange.listen((_) {
@@ -231,7 +227,7 @@ class LineViewModel extends LineShapeViewModel {
 
     // This is when the node has been edited directly, which results in a replacement in the engine.
     node.whenDone.then((_) {
-      engine.SpreadsheetDepNode node = spreadsheetEngine.cells[cell];
+      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
       properties[property] = node.computedValue.value;
 
       if (updatedFromDirectEdit[property] == true) {
