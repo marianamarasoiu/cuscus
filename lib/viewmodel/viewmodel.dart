@@ -135,7 +135,7 @@ init() {
     SheetbookViewModel sheetbook = new SheetbookViewModel();
     sheetbooks.add(sheetbook);
     sheetbook.createView(_spreadsheetsContainer.querySelector('#left-sheet'));
-    activeSheet = sheetbook.addSheet('DataSheet');
+    activeSheet = sheetbook.addSheet(type: 'DataSheet', rows: 1000);
     activeSheet.selectCellAtCoords(0, 0);
   }
 
@@ -144,7 +144,7 @@ init() {
     SheetbookViewModel sheetbook = new SheetbookViewModel();
     sheetbooks.add(sheetbook);
     sheetbook.createView(_spreadsheetsContainer.querySelector('#middle-sheet'));
-    sheetbook.addSheet('WrangleSheet');
+    sheetbook.addSheet(type: 'WrangleSheet', rows: 1000);
   }
 
   // Create the visualisation spreadsheet and initialise the graphics editor with it

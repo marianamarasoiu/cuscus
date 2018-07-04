@@ -11,28 +11,28 @@ class SheetbookViewModel extends ObjectWithId {
     parent.append(sheetbookView.sheetbookElement);
   }
 
-  SheetViewModel addSheet([String type]) { // TODO: replace the type with an enum
+  SheetViewModel addSheet({String type, int rows=100}) { // TODO: replace the type with an enum
     SheetViewModel sheet;
     view.SheetView sheetView;
     switch (type) {
       case 'LineSheet':
-        sheet = new LineSheet(100, 'Line$sheetCounter');
+        sheet = new LineSheet(rows, 'Line$sheetCounter');
         sheetView = new view.GraphicsSheetView(sheet);
         break;
       case 'RectSheet':
-        sheet = new RectSheet(100, 'Rect$sheetCounter');
+        sheet = new RectSheet(rows, 'Rect$sheetCounter');
         sheetView = new view.GraphicsSheetView(sheet);
         break;
       case 'EllipseSheet':
-        sheet = new EllipseSheet(100, 'Ellipse$sheetCounter');
+        sheet = new EllipseSheet(rows, 'Ellipse$sheetCounter');
         sheetView = new view.GraphicsSheetView(sheet);
         break;
       case 'TextSheet':
-        sheet = new TextSheet(100, 'Text$sheetCounter');
+        sheet = new TextSheet(rows, 'Text$sheetCounter');
         sheetView = new view.GraphicsSheetView(sheet);
         break;
       default:
-        sheet = new DataSheet(100, 12, 'Sheet$sheetCounter');
+        sheet = new DataSheet(rows, 10, 'Sheet$sheetCounter');
         sheetView = new view.SheetView(sheet);
     }
     sheet.sheetView = sheetView;
