@@ -380,6 +380,50 @@ LiteralDoubleValue i_product(List<LiteralValue> args) {
   return new LiteralDoubleValue(result);
 }
 
+LiteralValue i_if(LiteralValue condition, LiteralValue ifTrue, LiteralValue ifFalse) {
+  if (condition is EmptyValue) condition = new LiteralBoolValue(false);
+  _checkType(condition, LiteralBoolValue);
+  if (condition.value) {
+    return ifTrue;
+  } else {
+    return ifFalse;
+  }
+}
+
+LiteralDoubleValue i_random() {
+  return new LiteralDoubleValue(new math.Random().nextDouble());
+}
+
+LiteralValue i_median(List<LiteralDoubleValue> list) {
+  list.removeWhere((LiteralValue elem) => elem is EmptyValue);
+  list.removeWhere((LiteralValue elem) => elem is LiteralStringValue);
+  list.sort((LiteralDoubleValue double1, LiteralDoubleValue double2) => double1.value.compareTo(double2.value));
+  var length = list.length;
+  if (length % 2 == 1) {
+    return list[(length/2 + 0.5).toInt()];
+  } else {
+    return new LiteralDoubleValue((list[length~/2].value + list[length~/2 + 1].value) / 2);
+  }
+}
+
+// TODO: this is a bit hacky and simplified, check and fix.
+LiteralValue i_quartile(List<LiteralDoubleValue> list) {
+  LiteralDoubleValue quartile = list.removeLast();
+  list.removeWhere((LiteralValue elem) => elem is EmptyValue);
+  list.removeWhere((LiteralValue elem) => elem is LiteralStringValue);
+  list.sort((LiteralDoubleValue double1, LiteralDoubleValue double2) => double1.value.compareTo(double2.value));
+  switch (quartile.value.toInt()) {
+    case 1:
+      return i_median(list.sublist(0, list.length ~/ 2));
+    case 2:
+      return i_median(list);
+    case 3:
+      return i_median(list.sublist(list.length ~/ 2));
+    default:
+      throw "Median can only be 1, 2 or 3, got ${quartile.value}";
+  }
+}
+
 _checkType(dynamic object, Type expectedType) {
   if (object.runtimeType != expectedType) {
     if (object.runtimeType != EmptyValue) {
