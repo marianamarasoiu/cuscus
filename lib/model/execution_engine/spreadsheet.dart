@@ -457,8 +457,6 @@ LiteralValue evalSimpleFunctionCall(String functionName, List<LiteralValue> valu
       return i_product(values);
     case "if":
       return i_if(values[0], values[1], values[2]);
-    case "nthitemofset":
-      return i_nthItemOfSet(values);
     case "random":
       return i_random();
     case "median":
