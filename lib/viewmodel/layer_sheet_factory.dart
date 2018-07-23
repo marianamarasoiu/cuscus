@@ -7,7 +7,7 @@ class LayerSheetFactory {
   factory LayerSheetFactory(Shape type) {
     switch (type) {
       case Shape.rect:
-        GraphicsSheetViewModel sheet = graphicsSheetbookViewModel.addSheet('RectSheet');
+        GraphicsSheetViewModel sheet = graphicsSheetbookViewModel.addSheet(type: 'RectSheet', rows: 1000);
         RectLayerViewModel layer = graphicsEditorViewModel.addLayer('RectLayer');
 
         sheet.layerViewModel = layer;
@@ -16,7 +16,7 @@ class LayerSheetFactory {
         return new LayerSheetFactory._internal(sheet, layer);
         break;
       case Shape.line:
-        GraphicsSheetViewModel sheet = graphicsSheetbookViewModel.addSheet('LineSheet');
+        GraphicsSheetViewModel sheet = graphicsSheetbookViewModel.addSheet(type: 'LineSheet');
         LineLayerViewModel layer = graphicsEditorViewModel.addLayer('LineLayer');
 
         sheet.layerViewModel = layer;

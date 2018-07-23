@@ -154,7 +154,6 @@ class SpreadsheetDepNode extends DepNode<CellContents> {
     }
 
     for (CellContents arg in arguments) {
-      print (arg);
       if (arg is LiteralValue) {
         evaluatedArguments.add(arg);
       } else if (arg is CellRange) {
@@ -217,7 +216,6 @@ class CellRange extends CellContents {
     }
     topLeftCell = new CellCoordinates(math.min(corner1.row, corner2.row), math.min(corner1.col, corner2.col), corner1.sheetId);
     bottomRightCell = new CellCoordinates(math.max(corner1.row, corner2.row), math.max(corner1.col, corner2.col), corner1.sheetId);
-    print(this);
   }
 
   clone() => new CellRange.range(topLeftCell, bottomRightCell);
@@ -459,8 +457,12 @@ LiteralValue evalSimpleFunctionCall(String functionName, List<LiteralValue> valu
       return i_product(values);
     case "if":
       return i_if(values[0], values[1], values[2]);
-    case "nthitemofset":
-      return i_nthItemOfSet(values);
+    case "random":
+      return i_random();
+    case "median":
+      return i_median(values);
+    case "quartile":
+      return i_quartile(values);
   }
   throw "Function name not supported: $functionName";
 }
