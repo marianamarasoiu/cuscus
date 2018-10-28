@@ -23,17 +23,17 @@ html, body{
   padding: 0;
 }
 
-#vis-canvas {
+#vis-container {
   height: 400px;
 }
 
-#canvas {
+#vis-canvas {
   width: 100%;
   height: 100%;
 }
 
 /* Formula bar */
-#formula-bar {
+#formula-bar-container {
   height: 24px;
   width: 100%;
   border-bottom: 1px solid #cccccc;
@@ -81,7 +81,7 @@ html, body{
 
 /* End formula bar */
 
-#sheets-container {
+#sheebooks-container {
   display: flex;
   justify-content: space-between;
 }
@@ -240,9 +240,9 @@ td.index {
 }
 
 /**
- * Cell input box
+ * Cell input editor
  */
-.input-box {
+#cell-input-editor-container {
   position: absolute;
   padding: 1px 2px;
   margin: 0;
@@ -257,7 +257,7 @@ td.index {
   z-index: 50;
 }
 
-.cell-input {
+#cell-input-editor {
   background-color: rgb(255, 255, 255);
   color: rgb(0, 0, 0);
   font-size: 13px;
@@ -266,6 +266,10 @@ td.index {
   font-style: normal;
   outline: none;
 }
+
+/**
+ * Drawing tool container
+ */
 
 #drawing-tool-container {
   position: absolute;
@@ -282,40 +286,58 @@ td.index {
   padding: 8px;
   font-weight: normal;
 }
-.drawing-tool-button {
+.button {
   fill:#666666;
   stroke: none;
   display: inline-block;
   padding: 8px;
 }
 
-.drawing-tool-button:hover {
+.button:hover {
   background: #dddddd;
   cursor: pointer;
 }
 
-.drawing-tool-button:active {
+.button:active {
   background: #aaaaaa;
 }
 
-.drawing-tool-button.selected {
+.button.selected {
   background: #bbbbbb;
 }
 
-.drawing-tool-button[disabled],
-.drawing-tool-button[disabled]:hover,
-.drawing-tool-button[disabled]:active {
+.button[disabled],
+.button[disabled]:hover,
+.button[disabled]:active {
   fill: #cccccc;
   background: none;
 }
 
-.drawing-tool-button svg {
+.button svg {
   display: block;
 }
 
+.file-tool.button {
+  position: relative;
+}
+
+.file-tool.button input {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  background: white;
+  outline: none;
+  cursor: pointer;
+  display: block;
+}
+
+
 .tentative-shape {
   fill: none;
-  stroke: dodgerblue;
+  stroke: #444444;
   stroke-width: 1;
 }
 
@@ -337,4 +359,21 @@ rect.animate {
 
 tr.selected {
   background: rgba(30, 143, 255, 0.15);
+}
+
+.bounding-box-border {
+  fill-opacity: 0;
+  stroke-width: 1;
+  stroke: rgba(30, 144, 255, 1);
+}
+
+.shape-outline {
+  stroke-width: 3;
+  stroke: rgba(30, 144, 255, 0.5);
+}
+
+.bounding-box-handle {
+  fill: #FFFFFF;
+  stroke-width: 1;
+  stroke: rgba(30, 144, 255, 1);
 }

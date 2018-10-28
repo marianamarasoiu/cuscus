@@ -1,69 +1,74 @@
 part of cuscus.viewmodel;
 
-abstract class LayerViewModel {
-  view.LayerView layerView;
-  Map<int, ShapeViewModel> shapes;
+abstract class LayerViewModel extends ObjectWithId {
+  static List<LayerViewModel> layers = [];
+  static LayerViewModel layerWithId(int id) => layers.singleWhere((layer) => layer.id == id);
+  static void clear() => layers.clear();
 
+  LayerbookViewModel layerbook;
   GraphicsSheetViewModel graphicsSheetViewModel;
+  view.LayerView layerView;
 
-  LayerViewModel();
-
+  Map<int, ShapeViewModel> shapes = {};
   ShapeViewModel selectedShape;
 
-  void selectShapeAtIndex(int index);
-
-  void deselectShape();
+  LayerViewModel._(this.layerbook, [int id]) : super(id) {
+    layerView = new view.LayerView(this);
+  }
+  factory LayerViewModel(LayerbookViewModel layerbook, GraphicMarkType type) {
+    LayerViewModel layer;
+    switch (type) {
+      case GraphicMarkType.line:
+        layer = new LineLayerViewModel._(layerbook);
+        break;
+      case GraphicMarkType.rect:
+        layer = new RectLayerViewModel._(layerbook);
+        break;
+      // TODO: implement ellipse and text layers
+      // case GraphicMarkType.ellipse:
+      //   layer = new EllipseLayerViewModel._(layerbook);
+      //   break;
+      // case GraphicMarkType.text:
+      //   layer = new TextLayerViewModel._(layerbook);
+      //   break;
+      default:
+        throw "Unsupported type $type.";
+    }
+    layers.add(layer);
+    return layer;
+  }
 
   ShapeViewModel addShape(int index, Map properties);
   ShapeViewModel addShapeFromRow(int index);
-}
 
-abstract class RectLayerViewModel extends LayerViewModel {
-  Map<int, RectShapeViewModel> shapes = {};
-  RectShapeViewModel selectedShape;
+  // State data for the active sheet
+  static LayerViewModel _activeLayer;
+  static LayerViewModel get activeLayer => _activeLayer;
 
-  void selectShapeAtIndex(int index) {
-    deselectShape();
-
-    selectedShape = shapes[index];
-    if (selectedShape == null) {
-      print("Trying to select shape at row $index that doesn't exist yet.");
-      graphicsEditorViewModel.rectShapeBoundingBoxViewModel.hide();
-      graphicsEditorViewModel.lineShapeBoundingBoxViewModel.hide();
-      return;
-    }
-
-    graphicsEditorViewModel.rectShapeBoundingBoxViewModel.show(selectedShape);
-    graphicsEditorViewModel.rectShapeBoundingBoxViewModel.onUpdate = ({num x, num y, num width, num height}) {
-      if (x != null) {
-        selectedShape.x = x;
-      }
-      if (y != null) {
-        selectedShape.y = y;
-      }
-      if (width != null) {
-        selectedShape.width = width;
-      }
-      if (height != null) {
-        selectedShape.height = height;
-      }
-    };
-
-    graphicsSheetViewModel.selectRow(index);
+  void focus() {
+    if (activeLayer == this) return;
+    _activeLayer?.blur();
+    _activeLayer = this;
   }
 
-  void deselectShape() {
-    if (selectedShape != null) {
-      graphicsEditorViewModel.rectShapeBoundingBoxViewModel.hide();
-      graphicsSheetViewModel.deselectRow(selectedShape.index);
-      selectedShape = null;
+  void blur() {
+    _activeLayer = null;
+  }
+
+  void update() {
+    for (int i = 0; i < graphicsSheetViewModel.cells.length; i++) {
+      if (graphicsSheetViewModel.cells[i].first.cellContents != null) {
+        addShapeFromRow(i);
+      }
     }
   }
 }
 
-class RectLayer extends RectLayerViewModel {
+class RectLayerViewModel extends LayerViewModel {
 
-  RectViewModel addShape(int index, Map<Rect, dynamic> properties) {
+  RectLayerViewModel._(LayerbookViewModel layerbook, [int id]) : super._(layerbook, id);
+
+  ShapeViewModel addShape(int index, Map properties) {
     RectViewModel rectViewModel = new RectViewModel(this, index, properties);
     rectViewModel.commit();
 
@@ -81,9 +86,9 @@ class RectLayer extends RectLayerViewModel {
   }
 }
 
-abstract class LineLayerViewModel extends LayerViewModel {
-  Map<int, LineShapeViewModel> shapes = {};
-  LineShapeViewModel selectedShape;
+class LineLayerViewModel extends LayerViewModel {
+
+  LineLayerViewModel._(LayerbookViewModel layerbook, [int id]) : super._(layerbook, id);
 
   void selectShapeAtIndex(int index) {
     deselectShape();
@@ -91,23 +96,24 @@ abstract class LineLayerViewModel extends LayerViewModel {
     selectedShape = shapes[index];
     if (selectedShape == null) {
       print("Trying to select shape at row $index that doesn't exist yet.");
-      graphicsEditorViewModel.lineShapeBoundingBoxViewModel.hide();
+      LineShapeBoundingBoxViewModel.hide();
       return;
     }
 
-    graphicsEditorViewModel.lineShapeBoundingBoxViewModel.show(selectedShape);
-    graphicsEditorViewModel.lineShapeBoundingBoxViewModel.onUpdate = ({num x1, num y1, num x2, num y2}) {
+    LineShapeBoundingBoxViewModel.show(selectedShape);
+    LineShapeBoundingBoxViewModel.onUpdate = ({num x1, num y1, num x2, num y2}) {
+      LineShapeViewModel line = selectedShape;
       if (x1 != null) {
-        selectedShape.x1 = x1;
+        line.x1 = x1;
       }
       if (y1 != null) {
-        selectedShape.y1 = y1;
+        line.y1 = y1;
       }
       if (x2 != null) {
-        selectedShape.x2 = x2;
+        line.x2 = x2;
       }
       if (y2 != null) {
-        selectedShape.y2 = y2;
+        line.y2 = y2;
       }
     };
 
@@ -116,16 +122,13 @@ abstract class LineLayerViewModel extends LayerViewModel {
 
   void deselectShape() {
     if (selectedShape != null) {
-      graphicsEditorViewModel.lineShapeBoundingBoxViewModel.hide();
+      LineShapeBoundingBoxViewModel.hide();
       graphicsSheetViewModel.deselectRow(selectedShape.index);
       selectedShape = null;
     }
   }
-}
 
-class LineLayer extends LineLayerViewModel {
-
-  LineViewModel addShape(int index, Map<Line, dynamic> properties) {
+  ShapeViewModel addShape(int index, Map properties) {
     LineViewModel lineViewModel = new LineViewModel(this, index, properties);
     lineViewModel.commit();
 

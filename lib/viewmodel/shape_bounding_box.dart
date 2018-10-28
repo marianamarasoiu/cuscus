@@ -1,29 +1,33 @@
 part of cuscus.viewmodel;
 
+RectShapeBoundingBoxViewModel selectionRectBoundingBox;
+LineShapeBoundingBoxViewModel selectionLineBoundingBox;
+
+void setupBoundingBox() {
+  selectionRectBoundingBox = new RectShapeBoundingBoxViewModel._();
+  selectionLineBoundingBox = new LineShapeBoundingBoxViewModel._();
+}
+
 class RectShapeBoundingBoxViewModel {
-  view.RectShapeBoundingBoxView rectShapeBoundingBoxView;
+  static view.RectShapeBoundingBoxView boundingBoxView = new view.RectShapeBoundingBoxView();
 
-  RectShapeBoundingBoxViewModel() {
-    rectShapeBoundingBoxView = new view.RectShapeBoundingBoxView(this);
-  }
+  RectShapeBoundingBoxViewModel._();
 
-  set onUpdate(view.RectUpdateFunction updateFunction) => rectShapeBoundingBoxView.updateFunction = updateFunction;
+  static set onUpdate(view.RectUpdateFunction updateFunction) => boundingBoxView.updateFunction = updateFunction;
 
-  show(ShapeViewModel shape) => rectShapeBoundingBoxView.showAroundShape(shape.shapeView);
+  static show(ShapeViewModel shape) => boundingBoxView.showAroundShape(shape.shapeView);
 
-  hide() => rectShapeBoundingBoxView.hide();
+  static hide() => boundingBoxView.hide();
 }
 
 class LineShapeBoundingBoxViewModel {
-  view.LineShapeBoundingBoxView lineShapeBoundingBoxView;
+  static view.LineShapeBoundingBoxView boundingBoxView = new view.LineShapeBoundingBoxView();
 
-  LineShapeBoundingBoxViewModel() {
-    lineShapeBoundingBoxView = new view.LineShapeBoundingBoxView(this);
-  }
+  LineShapeBoundingBoxViewModel._();
 
-  set onUpdate(view.LineUpdateFunction updateFunction) => lineShapeBoundingBoxView.updateFunction = updateFunction;
+  static set onUpdate(view.LineUpdateFunction updateFunction) => boundingBoxView.updateFunction = updateFunction;
 
-  show(ShapeViewModel shape) => lineShapeBoundingBoxView.showAroundShape(shape.shapeView);
+  static show(ShapeViewModel shape) => boundingBoxView.showAroundShape(shape.shapeView);
 
-  hide() => lineShapeBoundingBoxView.hide();
+  static hide() => boundingBoxView.hide();
 }

@@ -270,7 +270,7 @@ LiteralDoubleValue i_power(LiteralValue x, LiteralValue y) {
 LiteralDoubleValue i_radians(LiteralValue x) {
   if (x is EmptyValue) x = new LiteralDoubleValue(0.0);
   _checkType(x, LiteralDoubleValue);
-  return new LiteralDoubleValue(x.value * math.PI / 180);
+  return new LiteralDoubleValue(x.value * math.pi / 180);
 }
 LiteralDoubleValue i_round(LiteralValue x) {
   if (x is EmptyValue) x = new LiteralDoubleValue(0.0);

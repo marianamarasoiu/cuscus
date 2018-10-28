@@ -1,11 +1,15 @@
 part of cuscus.viewmodel;
 
 class SpreadsheetEngineViewModel {
+  static SpreadsheetEngineViewModel spreadsheet;
   engine.SpreadsheetEngine spreadsheetEngine;
 
-  SpreadsheetEngineViewModel() {
+  SpreadsheetEngineViewModel._() {
     spreadsheetEngine = new engine.SpreadsheetEngine();
   }
+
+  static void init() => spreadsheet = new SpreadsheetEngineViewModel._();
+  static void clear() => spreadsheet.spreadsheetEngine.clearAll();
 
   setNode(engine.CellContents newCellContents, engine.CellCoordinates cell) {
     if (newCellContents is engine.EmptyValue) {
@@ -93,22 +97,18 @@ class SpreadsheetEngineViewModel {
         String functionName = expressionContent["functionName"];
         List jsonArgs = expressionContent["args"];
         List args = [];
-        jsonArgs.forEach((Map arg) {
+        jsonArgs.forEach((arg) {
           var elementsResolvedTree = resolveSymbolsRecursive(arg, baseSheetId);
-          if (elementsResolvedTree is List) { // if list, then it's a list of cells coming from a range, and should be listed as arguments
-            args.addAll(elementsResolvedTree);
-          } else {
-            args.add(elementsResolvedTree);
-          }
+          args.add(elementsResolvedTree);
         });
         return new engine.FunctionCall(functionName, args);
       case "cellRange":
         // Get the sheet
         SheetViewModel sheet;
         if (expressionContent["sheetName"] == "") {
-          sheet = sheets.singleWhere((s) => s.id == baseSheetId);
+          sheet = SheetViewModel.sheetWithId(baseSheetId);
         } else {
-          sheet = sheets.singleWhere((s) => s.name == expressionContent["sheetName"]);
+          sheet = SheetViewModel.sheetWithName(expressionContent["sheetName"]);
         }
         // Get the columns
         int columnStart;
@@ -243,7 +243,7 @@ class SpreadsheetEngineViewModel {
       return '${functionName.toUpperCase()}($arguments)';
     }
     if (contents is engine.CellRange) {
-      SheetViewModel refSheet = sheets.singleWhere((s) => s.id == contents.sheetId);
+      SheetViewModel refSheet = SheetViewModel.sheetWithId(contents.sheetId);
 
       String sheetRef = '';
 

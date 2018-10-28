@@ -80,6 +80,11 @@ class SpreadsheetEngine {
 
     cells.remove(coords);
   }
+
+  clearAll() {
+    cells.clear();
+    depGraph.nodes.clear();
+  }
 }
 
 class SpreadsheetDepNode extends DepNode<CellContents> {
@@ -178,26 +183,31 @@ abstract class LiteralValue extends CellContents {
 }
 
 class LiteralDoubleValue extends LiteralValue {
-  double value;
-  LiteralDoubleValue(this.value);
+  LiteralDoubleValue(double v) {
+    value = v;
+  }
   LiteralDoubleValue clone() => new LiteralDoubleValue(value);
   String toString() => (value is int) ? value.toString() : value.toStringAsFixed(2);
 }
 
 class LiteralStringValue extends LiteralValue {
-  String value;
-  LiteralStringValue(this.value);
+  LiteralStringValue(String v) {
+    value = v;
+  }
   LiteralStringValue clone() => new LiteralStringValue(value);
 }
 
 class LiteralBoolValue extends LiteralValue {
-  bool value;
-  LiteralBoolValue(this.value);
+  LiteralBoolValue(bool v) {
+    value = v;
+  }
   LiteralBoolValue clone() => new LiteralBoolValue(value);
 }
 
 class EmptyValue extends LiteralValue {
-  String value = '';
+  EmptyValue() {
+    value = '';
+  }
   EmptyValue clone() => new EmptyValue();
 }
 
@@ -314,11 +324,22 @@ class CellCoordinates {
   CellCoordinates(this.row, this.col, this.sheetId);
   toString() => "$sheetId!R${row}C${col}";
 
-  bool operator ==(CellCoordinates other) {
-    return row == other.row && col == other.col && sheetId == other.sheetId;
+  bool operator ==(Object other) {
+    return
+      other is CellCoordinates &&
+      row == other.row &&
+      col == other.col &&
+      sheetId == other.sheetId;
   }
 
-  int get hashCode => 10000000 * sheetId + 10000 * row + col; // TODO: Fix dumb hashcode
+  // hash code implementation from Josh Bloch's Effective Java, Item 8 (second edition)
+  int get hashCode {
+    int result = 7;
+    result = 37 * result + row;
+    result = 37 * result + col;
+    result = 37 * result + sheetId;
+    return result;
+  }
 }
 
 String operationToFunctionName(String operation) {

@@ -1,11 +1,33 @@
 part of cuscus.viewmodel;
 
 abstract class ShapeViewModel {
+  static ShapeViewModel _selectedShape;
+  static ShapeViewModel get selectedShape => _selectedShape;
+  static void clear() => _selectedShape = null;
+
   view.ShapeView shapeView;
   LayerViewModel layer;
   int index;
 
   Map properties;
+
+  void select() {
+    if (_selectedShape == this) return;
+    _selectedShape?.deselect();
+    _selectedShape = this;
+    _selectedShape.showBoundingBox();
+    layer.graphicsSheetViewModel.selectRow(_selectedShape.index);
+  }
+  void deselect() {
+    RectShapeBoundingBoxViewModel.hide();
+    LineShapeBoundingBoxViewModel.hide();
+    
+    if (_selectedShape == null) return;
+    layer.graphicsSheetViewModel.deselectRow(_selectedShape.index);
+    _selectedShape = null;
+  }
+
+  void showBoundingBox();
 }
 
 abstract class RectShapeViewModel extends ShapeViewModel {
@@ -23,7 +45,7 @@ abstract class LineShapeViewModel extends ShapeViewModel {
 }
 
 class RectViewModel extends RectShapeViewModel {
-  Map<Rect, dynamic> properties = {
+  Map properties = <Rect, dynamic>{
     Rect.x: 100,
     Rect.y: 100,
     Rect.width: 50,
@@ -38,10 +60,10 @@ class RectViewModel extends RectShapeViewModel {
     Rect.opacity: 1.0
   };
 
-  RectViewModel(LayerViewModel layer, int index, Map<Rect, dynamic> properties) {
+  RectViewModel(LayerViewModel layer, int index, Map properties) {
     this.layer = layer;
     this.index = index;
-    properties.forEach((Rect property, var value) => this.properties[property] = value);
+    properties.forEach((property, value) => this.properties[property as Rect] = value);
 
     shapeView = new view.RectView(this);
   }
@@ -50,11 +72,11 @@ class RectViewModel extends RectShapeViewModel {
     this.layer = layer;
     this.index = index;
 
-    properties.forEach((Rect property, var value) {
+    properties.forEach((property, value) {
       List<String> columns = layer.graphicsSheetViewModel.activeColumnNames;
       int column = columns.indexOf(rectPropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
-      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
+      engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
       properties[property] = node.computedValue.value;
 
       setupListenersForCell(property, cell);
@@ -64,7 +86,7 @@ class RectViewModel extends RectShapeViewModel {
   }
 
   commit() {
-    properties.forEach((Rect property, var value) => commitProperty(property, value));
+    properties.forEach((property, value) => commitProperty(property, value));
   }
 
   /// When the shape is changed directly, the node in the engine is replaced. For this case,
@@ -82,16 +104,16 @@ class RectViewModel extends RectShapeViewModel {
 
     engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
     String jsonParseTree = parser.parseFormula(value.toString());
-    Map formulaParseTree = JSON.decode(jsonParseTree);
-    engine.CellContents cellContents = spreadsheetEngineViewModel.resolveSymbols(formulaParseTree, activeSheet.id);
-    spreadsheetEngineViewModel.setNode(cellContents, cell);
-    spreadsheetEngineViewModel.updateDependencyGraph();
+    Map formulaParseTree = jsonDecode(jsonParseTree);
+    engine.CellContents cellContents = SpreadsheetEngineViewModel.spreadsheet.resolveSymbols(formulaParseTree, SheetViewModel.activeSheet.id);
+    SpreadsheetEngineViewModel.spreadsheet.setNode(cellContents, cell);
+    SpreadsheetEngineViewModel.spreadsheet.updateDependencyGraph();
 
     setupListenersForCell(property, cell);
   }
 
   setupListenersForCell(Rect property, engine.CellCoordinates cell) {
-    engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
+    engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
 
     // This is when the node has been changed due to value propagation in the engine.
     node.onChange.listen((_) {
@@ -107,7 +129,7 @@ class RectViewModel extends RectShapeViewModel {
     // This is when the node has been edited directly, which results in a replacement in the engine.
     node.whenDone.then((_) {
       print('when done');
-      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
+      engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
       properties[property] = node.computedValue.value;
 
       if (updatedFromDirectEdit[property] == true) {
@@ -147,10 +169,29 @@ class RectViewModel extends RectShapeViewModel {
     updatedFromDirectEdit[Rect.height] = true;
     commitProperty(Rect.height, value);
   }
+
+  void showBoundingBox() {
+    RectShapeBoundingBoxViewModel.show(this);
+    RectShapeBoundingBoxViewModel.onUpdate = ({num x, num y, num width, num height}) {
+      RectShapeViewModel rect = this;
+      if (x != null) {
+        rect.x = x;
+      }
+      if (y != null) {
+        rect.y = y;
+      }
+      if (width != null) {
+        rect.width = width;
+      }
+      if (height != null) {
+        rect.height = height;
+      }
+    };
+  }
 }
 
 class LineViewModel extends LineShapeViewModel {
-  Map<Line, dynamic> properties = {
+  Map properties = <Line, dynamic>{
     Line.x1: 100,
     Line.y1: 100,
     Line.x2: 150,
@@ -160,10 +201,10 @@ class LineViewModel extends LineShapeViewModel {
     Line.strokeOpacity: 1.0,
   };
 
-  LineViewModel(LayerViewModel layer, int index, Map<Line, dynamic> properties) {
+  LineViewModel(LayerViewModel layer, int index, Map properties) {
     this.layer = layer;
     this.index = index;
-    properties.forEach((Line property, var value) => this.properties[property] = value);
+    properties.forEach((property, value) => this.properties[property as Line] = value);
 
     shapeView = new view.LineView(this);
   }
@@ -172,11 +213,11 @@ class LineViewModel extends LineShapeViewModel {
     this.layer = layer;
     this.index = index;
 
-    properties.forEach((Line property, var value) {
+    properties.forEach((property, var value) {
       List<String> columns = layer.graphicsSheetViewModel.activeColumnNames;
       int column = columns.indexOf(linePropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
-      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
+      engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
       properties[property] = node.computedValue.value;
 
       setupListenersForCell(property, cell);
@@ -186,7 +227,7 @@ class LineViewModel extends LineShapeViewModel {
   }
 
   commit() {
-    properties.forEach((Line property, var value) => commitProperty(property, value));
+    properties.forEach((property, var value) => commitProperty(property, value));
   }
 
   /// When the shape is changed directly, the node in the engine is replaced. For this case,
@@ -204,16 +245,16 @@ class LineViewModel extends LineShapeViewModel {
 
     engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
     String jsonParseTree = parser.parseFormula(value.toString());
-    Map formulaParseTree = JSON.decode(jsonParseTree);
-    engine.CellContents cellContents = spreadsheetEngineViewModel.resolveSymbols(formulaParseTree, activeSheet.id);
-    spreadsheetEngineViewModel.setNode(cellContents, cell);
-    spreadsheetEngineViewModel.updateDependencyGraph();
+    Map formulaParseTree = jsonDecode(jsonParseTree);
+    engine.CellContents cellContents = SpreadsheetEngineViewModel.spreadsheet.resolveSymbols(formulaParseTree, SheetViewModel.activeSheet.id);
+    SpreadsheetEngineViewModel.spreadsheet.setNode(cellContents, cell);
+    SpreadsheetEngineViewModel.spreadsheet.updateDependencyGraph();
 
     setupListenersForCell(property, cell);
   }
 
   setupListenersForCell(Line property, engine.CellCoordinates cell) {
-    engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
+    engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
 
     // This is when the node has been changed due to value propagation in the engine.
     node.onChange.listen((_) {
@@ -227,7 +268,7 @@ class LineViewModel extends LineShapeViewModel {
 
     // This is when the node has been edited directly, which results in a replacement in the engine.
     node.whenDone.then((_) {
-      engine.SpreadsheetDepNode node = spreadsheetEngineViewModel.cells[cell];
+      engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
       properties[property] = node.computedValue.value;
 
       if (updatedFromDirectEdit[property] == true) {
@@ -266,5 +307,24 @@ class LineViewModel extends LineShapeViewModel {
     properties[Line.y2] = value;
     updatedFromDirectEdit[Line.y2] = true;
     commitProperty(Line.y2, value);
+  }
+
+  void showBoundingBox() {
+    LineShapeBoundingBoxViewModel.show(this);
+    LineShapeBoundingBoxViewModel.onUpdate = ({num x1, num y1, num x2, num y2}) {
+      LineShapeViewModel line = this;
+      if (x1 != null) {
+        line.x1 = x1;
+      }
+      if (y1 != null) {
+        line.y1 = y1;
+      }
+      if (x2 != null) {
+        line.x2 = x2;
+      }
+      if (y2 != null) {
+        line.y2 = y2;
+      }
+    };
   }
 }

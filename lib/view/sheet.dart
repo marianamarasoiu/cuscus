@@ -1,7 +1,7 @@
 part of cuscus.view;
 
 class SheetView {
-  SheetViewModel sheetViewModel;
+  viewmodel.SheetViewModel sheetViewModel;
   DivElement sheetElement;
 
   TableElement header;
@@ -59,7 +59,7 @@ class SheetView {
       for (int r = 0; r < sheetViewModel.rows; r++) {
         TableRowElement row = data.addRow();
         for (int c = 0; c < sheetViewModel.columns; c++) {
-          sheetViewModel.cells[r][c].createView(row);
+          row.append(sheetViewModel.cells[r][c].cellView.uiElement);
         }
       }
     }
@@ -75,7 +75,7 @@ class SheetView {
 
     fillHandle = new DivElement();
     fillHandle.classes.add("cell-selector-corner");
-    fillHandle.onMouseDown.listen((mouseDown) => command(InteractionAction.mouseDownOnFillHandle, mouseDown));
+    fillHandle.onMouseDown.listen((mouseDown) => viewmodel.appController.command(viewmodel.UIAction.mouseDownOnFillHandle, mouseDown));
 
     selectionBorder = new DivElement();
     selectionBorder.classes.add("fill-selection-border");
@@ -90,6 +90,9 @@ class SheetView {
 
     // Support for scrolling behaviour
     sheetElement.onScroll.listen((Event scrollEvent) => scrollListener(scrollEvent));
+
+    // Add to parent
+    sheetViewModel.sheetbook.sheetbookView.addSheet(this);
   }
 
   remove() {
@@ -120,14 +123,14 @@ class SheetView {
   showCellSelector() {
     cellSelector.style
       ..visibility = 'visible'
-      ..top = '${selectedCell.cellElement.offset.top + 21}px'
-      ..left = '${selectedCell.cellElement.offset.left + 31}px'
-      ..width = '${selectedCell.cellElement.client.width - 2}px'
-      ..height = '${selectedCell.cellElement.client.height - 2}px';
+      ..top = '${selectedCell.uiElement.offset.top + 21}px'
+      ..left = '${selectedCell.uiElement.offset.left + 31}px'
+      ..width = '${selectedCell.uiElement.client.width - 2}px'
+      ..height = '${selectedCell.uiElement.client.height - 2}px';
     fillHandle.style
       ..visibility = 'visible'
-      ..top = '${selectedCell.cellElement.offset.top + 20 + selectedCell.cellElement.client.height - 2}px'
-      ..left = '${selectedCell.cellElement.offset.left + 30 + selectedCell.cellElement.client.width - 2}px';
+      ..top = '${selectedCell.uiElement.offset.top + 20 + selectedCell.uiElement.client.height - 2}px'
+      ..left = '${selectedCell.uiElement.offset.left + 30 + selectedCell.uiElement.client.width - 2}px';
   }
 
   hideCellSelector() {
@@ -138,7 +141,7 @@ class SheetView {
 
 class GraphicsSheetView extends SheetView {
 
-  GraphicsSheetView(SheetViewModel sheetViewModel) : super(sheetViewModel);
+  GraphicsSheetView(viewmodel.SheetViewModel sheetViewModel) : super(sheetViewModel);
 
   showRowSelector(int index) {
     data.rows[index].classes.add('selected');

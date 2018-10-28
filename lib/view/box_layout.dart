@@ -9,7 +9,7 @@ import 'dart:math';
 class Box {
   DivElement element;
 
-  List<DivElement> innerBoxes = [];
+  List<Element> innerBoxes = [];
   List<Splitter> splitters = [];
   int splitterSize = 6;
 
@@ -53,7 +53,7 @@ class Box {
     num innerBoxWidthPercent = innerBoxWidth / width * 100;
     num innerBoxHeightPercent = innerBoxHeight / height * 100;
 
-    innerBoxes.forEach((DivElement innerBox) {
+    innerBoxes.forEach((Element innerBox) {
       if (isVertical) {
         innerBox.style.height = '${innerBoxHeightPercent}%';
       } else {
@@ -65,31 +65,62 @@ class Box {
   /// Creates a new inner box.
   /// [index] is given relative to the number of inner boxes, not including splitters.
   /// If [index] is negative, it creates a new box it at the beginning.
-  /// If [index] is larger than the list, it creates a new box it at the end.
-  /// TODO: Implementation of [createNewInnerBox] needs to be finished.
-  DivElement createNewInnerBox(int index) {
+  /// If [index] is null or larger than the list, it creates a new box it at the end.
+  DivElement createNewInnerBox([int index]) {
     DivElement innerBox = new DivElement();
     innerBox.classes.add('box');
 
-    index = index < 0 ? 0 : index > innerBoxes.length ? innerBoxes.length : index;
-    if (index == innerBoxes.length) {
+    index = (index == null || index > innerBoxes.length) ? innerBoxes.length : index < 0 ? 0 : index;
+    if (innerBoxes.length == 0) {
+      // add just the inner box
       innerBoxes.add(innerBox);
       element.append(innerBox);
-    } else {
-      innerBoxes.insert(index, innerBox);
-      element.insertBefore(innerBox, innerBoxes[index + 1]);
-    }
-
-    if (innerBoxes.length != 1) { // if it's a single inner box, don't add a splitter
+    } else if (index == 0) {
+      // add the box followed by a splitter
+      innerBoxes.insert(0, innerBox);
       Splitter splitter = isVertical ? new Splitter.horizontal() : new Splitter.vertical();
-      splitters.insert(index, splitter);
-      if (index == innerBoxes.length) {
+      splitters.insert(0, splitter);
+      element.insertAllBefore([innerBox, splitter.element], element.firstChild);
+    } else {
+      // add a splitter followed by a box
+      bool insertAtEnd = index == innerBoxes.length;
+      innerBoxes.insert(index, innerBox);
+      Splitter splitter = isVertical ? new Splitter.horizontal() : new Splitter.vertical();
+      splitters.insert(index - 1, splitter);
+      if (insertAtEnd) {
+        element.append(splitter.element);
         element.append(innerBox);
       } else {
-        element.insertBefore(innerBox, innerBoxes[index + 1]);
+        element.insertAllBefore([splitter.element, innerBox], element.children.elementAt(2*index-1));
       }
     }
-    return null;
+
+    num width = num.parse(element.getComputedStyle().width.replaceAll('px', ''));
+    num height = num.parse(element.getComputedStyle().height.replaceAll('px', ''));
+
+    num innerBoxWidth = (width - splitterSize * splitters.length) / innerBoxes.length;
+    num innerBoxHeight = (height - splitterSize * splitters.length) / innerBoxes.length;
+    num newInnerBoxWidthPercent = innerBoxWidth / width * 100;
+    num newInnerBoxHeightPercent = innerBoxHeight / height * 100;
+    num restInnerBoxesWidthPercent = 100 - newInnerBoxWidthPercent;
+    num restInnerBoxesHeightPercent = 100 - newInnerBoxHeightPercent;
+
+    if (isVertical) {
+      innerBox.style.height = '${newInnerBoxHeightPercent}%';
+    } else {
+      innerBox.style.width = '${newInnerBoxWidthPercent}%';
+    }
+
+    innerBoxes.where((box) => box != innerBox).forEach((Element box) {
+      if (isVertical) {
+        num heightPercent = num.parse(box.style.height.replaceAll('%', ''));
+        box.style.height = '${heightPercent / 100 * restInnerBoxesHeightPercent}%';
+      } else {
+        num widthPercent = num.parse(box.style.width.replaceAll('%', ''));
+        box.style.width = '${widthPercent / 100 * restInnerBoxesWidthPercent}%';
+      }
+    });
+    return innerBox;
   }
 }
 

@@ -1,7 +1,7 @@
 library cuscus.viewmodel;
 
 import 'dart:async';
-import 'dart:convert' show JSON;
+import 'dart:convert';
 import 'dart:html';
 import 'dart:math' as math;
 import 'dart:svg' as svg;
@@ -12,66 +12,87 @@ import 'package:cuscus/model/formula_parser/formula_parser.dart' as parser;
 
 // Import the view
 import 'package:cuscus/view/view.dart' as view;
-import 'package:cuscus/view/box_layout.dart' as box_layout;
+
+// Import the utils
+import 'package:cuscus/utils/utils.dart' as utils;
 
 part 'cell.dart';
 part 'sheet.dart';
 part 'sheetbook.dart';
-part 'cell_input_box.dart';
-part 'cell_input_formula_bar.dart';
-part 'shape_bounding_box.dart';
-
-part 'layer_sheet_factory.dart';
+part 'sheetbooks_manager.dart';
 
 part 'shape.dart';
 part 'layer.dart';
-part 'graphics_editor.dart';
+part 'layerbook.dart';
+part 'layerbooks_manager.dart';
+
+part 'cell_input.dart';
+part 'shape_bounding_box.dart';
 
 part 'object_id.dart';
 
-part 'spreadsheet.dart';
+part 'spreadsheet_engine.dart';
+
+part 'shape_properties_helper.dart';
 
 
-enum InteractionState { // Rename to uiState
+enum UIState {
   idle,
   readyToDraw,
   drawing,
   cellEditing,
   renamingSheet,
 }
-enum InteractionAction { // Rename to uiAction
+
+enum UIAction {
   // actions on the visualisation
-  clickInToolPanel,
-  mouseDownOnCanvas,
-  mouseUpOnCanvas,
-  selectShape,
+  selectGraphicsTool,
+  startDrawing,
+  endDrawing,
+  clickOnShape,
+  clickOnCanvas,
+  mouseDownOnFillHandle,
 
   // actions on sheets
   createNewSheet,
   selectSheet,
-  renamingSheet,
-  renameSheet,
+  startRenameSheet,
+  endRenameSheet,
   deleteSheet,
 
   // actions on spreadsheet cells
-  click,
-  doubleClick,
+  clickOnCell,
+  doubleClickOnCell,
+
+  clickOnFormulaBar,
+
+  // keyboard actions
   enter,
   escape,
-  shift,
-  alt,
-  control,
-  meta,
   backspace,
   delete,
-  capsLock,
   tab,
   arrowRight,
   arrowLeft,
   arrowUp,
   arrowDown,
   otherKey,
-  mouseDownOnFillHandle,
+}
+
+enum SheetbookType {
+  data,
+  graphics,
+}
+
+SheetbookType getSheetbookType(String type) {
+  switch(type) {
+    case 'SheetbookType.data':
+      return SheetbookType.data;
+    case 'SheetbookType.graphics':
+      return SheetbookType.graphics;
+    default:
+      throw 'Unknown sheetbook type: $type';
+  }
 }
 
 enum DrawingTool {
@@ -83,672 +104,586 @@ enum DrawingTool {
   textTool,
 }
 
-enum Shape {
+enum GraphicMarkType {
   rect,
-  line
+  ellipse,
+  line,
+  text,
 }
 
-List<SheetViewModel> sheets = [];
-List<SheetbookViewModel> sheetbooks = [];
-SpreadsheetEngineViewModel spreadsheetEngineViewModel = new SpreadsheetEngineViewModel();
-
-CellInputBoxViewModel cellInputBoxViewModel = new CellInputBoxViewModel();
-CellInputFormulaBarViewModel cellInputFormulaBarViewModel = new CellInputFormulaBarViewModel();
-
-SheetbookViewModel graphicsSheetbookViewModel;
-GraphicsEditorViewModel graphicsEditorViewModel;
-
-DivElement get _mainContainer => querySelector('#main-container'); // TODO: rename element to #main-container
-DivElement get _spreadsheetsContainer => querySelector('#sheets-container'); // TODO: rename element to #spreadsheets-container
-
-InteractionState _state = InteractionState.idle;
-InteractionState get state => _state;
-set state(InteractionState newState) {
-  print('New state: $newState');
-  _state = newState;
+GraphicMarkType getGraphicMarkType(String type) {
+  switch(type) {
+    case 'GraphicMarkType.rect':
+      return GraphicMarkType.rect;
+    case 'GraphicMarkType.ellipse':
+      return GraphicMarkType.ellipse;
+    case 'GraphicMarkType.line':
+      return GraphicMarkType.line;
+    case 'GraphicMarkType.text':
+      return GraphicMarkType.text;
+    default:
+      throw 'Unknown graphic mark type: $type';
+  }
 }
 
-// State data
-// For selecting a cell
-SheetViewModel _activeSheet;
-SheetViewModel get activeSheet => _activeSheet;
-void set activeSheet(SheetViewModel sheet) {
-  _activeSheet?.deselectCell();
-  _activeSheet = sheet;
+final Map<DrawingTool, GraphicMarkType> toolToGraphicMark = {
+  DrawingTool.rectangleTool: GraphicMarkType.rect,
+  DrawingTool.ellipseTool: GraphicMarkType.ellipse,
+  DrawingTool.lineTool: GraphicMarkType.line,
+  DrawingTool.textTool: GraphicMarkType.text,
+};
+
+final Map<GraphicMarkType, DrawingTool> graphicMarkToTool = {
+  GraphicMarkType.rect: DrawingTool.rectangleTool,
+  GraphicMarkType.ellipse: DrawingTool.ellipseTool,
+  GraphicMarkType.line: DrawingTool.lineTool,
+  GraphicMarkType.text: DrawingTool.textTool,
+};
+
+AppController get appController => _appController;
+
+AppController _appController;
+
+void init() {
+  view.init();
+  SpreadsheetEngineViewModel.init();
+
+  // Setup singleton widgets
+  setupCellInput();
+  setupBoundingBox();
+
+  _appController = new AppController();
 }
 
-// For drawing
-DrawingTool selectedDrawingTool;
+class AppController {
+  List<SheetbookViewModel> sheetbooks = [];
+  List<SheetbookViewModel> get graphicsSheetbooks => sheetbooks.where((sheetbook) => sheetbook.type == SheetbookType.graphics).toList();
+  List<LayerbookViewModel> get graphicsLayerbooks => graphicsSheetbooks.map((sheetbook) => sheetbook.layerbook).toList();
 
-init() {
-  // Init layout elements.
-  new box_layout.Box(_mainContainer);
-  new box_layout.Box(querySelector("#spreadsheets-container"));
-  new box_layout.Box(_spreadsheetsContainer);
+  // Application state
+  UIState _state = UIState.idle;
+  UIState get state => _state;
+  set state(UIState newState) => _state = newState;
 
-  // Setup listeners to each other for the cell editors
-  cellInputBoxViewModel.setupListeners();
-  cellInputFormulaBarViewModel.setupListeners();
+  AppController() {
+    setupListeners();
+    loadEmptySession();
+  }
 
+  void setupListeners() {
+    // Setup listeners
+    view.loadWorkspaceButton.onChange.listen((event) {
+      utils.stopDefaultBehaviour(event);
+      var fileReader = new FileReader();
+      fileReader.onLoadEnd.listen((event) {
+        var workspaceJson = jsonDecode(fileReader.result);
+        utils.validateWorkspaceSerialisation(workspaceJson);
+        clearWorkspace();
+        loadCuscusWorkspace(workspaceJson);
+      });
+      fileReader.readAsText(view.loadWorkspaceButton.files.first);
+      view.loadWorkspaceButton.value = "";
+    });
+
+    view.saveWorkspaceButton.onClick.listen((event) {
+      utils.stopDefaultBehaviour(event);
+      Map cuscusSession = saveCuscusSession();
+      JsonEncoder encoder = new JsonEncoder.withIndent('  ');
+      Blob blob = new Blob([encoder.convert(cuscusSession)], 'application/json');
+      AnchorElement tempAnchor = new AnchorElement();
+      tempAnchor
+        ..download = 'workspace.json'
+        ..href = Url.createObjectUrlFromBlob(blob);
+      document.body.append(tempAnchor);
+      tempAnchor.click();
+      tempAnchor.remove();
+    });
+
+    view.drawingToolContainer.querySelectorAll(".drawing-tool.button").forEach((toolButton) {
+      if (toolButton.attributes.containsKey('disabled')) return;
+      toolButton.onClick.listen((event) {
+        utils.stopDefaultBehaviour(event);
+        command(UIAction.selectGraphicsTool, view.buttonIdToDrawingTool(toolButton.id));
+      });
+    });
+
+    view.visCanvas.onMouseDown.listen((mouseDown) {
+      command(UIAction.startDrawing, mouseDown);
+    });
+
+    document.onClick.listen((MouseEvent click) {
+      EventTarget mouseTarget = click.target;
+
+      if (mouseTarget is TableCellElement) {
+        utils.stopDefaultBehaviour(click);
+        SheetViewModel sheet = _getSheetOfElement(mouseTarget);
+        if (mouseTarget.attributes.containsKey('data-row') && mouseTarget.attributes.containsKey('data-col')) {
+          int row = int.parse(mouseTarget.attributes['data-row']);
+          int col = int.parse(mouseTarget.attributes['data-col']);
+          command(UIAction.clickOnCell, sheet.cells[row][col]);
+        } else {
+          // TODO: implement column and row selection
+        }
+      } else if (mouseTarget is DivElement && mouseTarget.id == "formula-editor") {
+        utils.stopDefaultBehaviour(click);
+        command(UIAction.clickOnFormulaBar, null);
+      } else if (mouseTarget is svg.GraphicsElement && mouseTarget.classes.contains('shape')) {
+        utils.stopDefaultBehaviour(click);
+        LayerViewModel layer = _getLayerOfElement(mouseTarget);
+        ShapeViewModel shape = layer.shapes[int.parse(mouseTarget.attributes['data-index'])];
+        command(UIAction.clickOnShape, shape);
+      } else if (mouseTarget == view.visCanvas) {
+        utils.stopDefaultBehaviour(click);
+        command(UIAction.clickOnCanvas, null);
+      }
+    });
+    document.onDoubleClick.listen((Event doubleclick) {
+      EventTarget mouseTarget = doubleclick.target;
+      utils.stopDefaultBehaviour(doubleclick);
+      if (mouseTarget is TableCellElement) {
+        if (mouseTarget.attributes.containsKey('data-row') && mouseTarget.attributes.containsKey('data-col')) {
+          command(UIAction.doubleClickOnCell, null);
+        }
+      } else if (mouseTarget is DivElement && mouseTarget.classes.contains('cell-selector')) {
+        command(UIAction.doubleClickOnCell, null);
+      }
+    });
+    document.onKeyDown.listen((KeyboardEvent keyEvent) {
+      if (keyEvent.key == "Enter") {
+        command(UIAction.enter, keyEvent);
+      } else if (keyEvent.key == "Escape") {
+        command(UIAction.escape, keyEvent);
+      } else if (keyEvent.key == "Backspace") {
+        command(UIAction.backspace, keyEvent);
+      } else if (keyEvent.key == "Delete") {
+        command(UIAction.delete, keyEvent);
+      } else if (keyEvent.key == "Tab") {
+        command(UIAction.tab, keyEvent);
+      } else if (keyEvent.key == "ArrowRight") {
+        command(UIAction.arrowRight, keyEvent);
+      } else if (keyEvent.key == "ArrowLeft") {
+        command(UIAction.arrowLeft, keyEvent);
+      } else if (keyEvent.key == "ArrowUp") {
+        command(UIAction.arrowUp, keyEvent);
+      } else if (keyEvent.key == "ArrowDown") {
+        command(UIAction.arrowDown, keyEvent);
+      } else {
+        command(UIAction.otherKey, keyEvent);
+      }
+    });
+  }
+
+  void createNewSheetbook({int index, bool isGraphicsSheetbook: false}) {
+    if (index == null || index > sheetbooks.length) {
+      index = sheetbooks.length;
+    }
+    SheetbookType sheetbookType = isGraphicsSheetbook ? SheetbookType.graphics : SheetbookType.data;
+    sheetbooks.insert(index, new SheetbookViewModel(sheetbookType));
+  }
+
+  void loadSheetbook(Map sheetbookInfo) {
+    sheetbooks.add(new SheetbookViewModel.load(sheetbookInfo));
+  }
+
+  command(UIAction action, var data) {
+    switch (state) {
+      /*
+      * State: idle
+      */
+      case UIState.idle:
+
+        switch (action) {
+          case UIAction.selectGraphicsTool:
+            view.selectedTool = data;
+            if (view.selectedTool == DrawingTool.selectionTool) {
+              state = UIState.idle;
+            } else {
+              state = UIState.readyToDraw;
+            }
+            break;
+
+          case UIAction.clickOnCell:
+            (data as CellViewModel).select();
+            state = UIState.idle;
+            break;
+
+          case UIAction.clickOnFormulaBar:
+            CellInputBoxViewModel.show(CellViewModel.selectedCell);
+            CellInputFormulaBarViewModel.contents = CellViewModel.selectedCell.formula;
+            CellInputFormulaBarViewModel.focus();
+            state = UIState.cellEditing;
+            break;
+
+          case UIAction.clickOnShape:
+            ShapeViewModel shape = data;
+            shape.layer.focus();
+            shape.select();
+
+            GraphicsSheetViewModel sheet = shape.layer.graphicsSheetViewModel;
+            sheet.focus();
+            sheet.cells[shape.index][0].select();
+            break;
+
+          case UIAction.clickOnCanvas:
+            if (ShapeViewModel.selectedShape != null) {
+              ShapeViewModel.selectedShape.layer.graphicsSheetViewModel.deselectRow(ShapeViewModel.selectedShape.index);
+              ShapeViewModel.selectedShape.deselect();
+            }
+            break;
+
+          case UIAction.doubleClickOnCell:
+            CellInputBoxViewModel.show(CellViewModel.selectedCell);
+            CellInputBoxViewModel.focus();
+            CellInputFormulaBarViewModel.contents = CellViewModel.selectedCell.formula;
+            state = UIState.cellEditing;
+            break;
+
+          case UIAction.enter:
+            KeyboardEvent keyboardEvent = data;
+            utils.stopDefaultBehaviour(keyboardEvent);
+            CellInputBoxViewModel.show(CellViewModel.selectedCell);
+            CellInputBoxViewModel.focus();
+            CellInputFormulaBarViewModel.contents = CellViewModel.selectedCell.formula;
+            state = UIState.cellEditing;
+            break;
+
+          case UIAction.backspace:
+            KeyboardEvent keyboardEvent = data;
+            utils.stopDefaultBehaviour(keyboardEvent);
+            CellViewModel.selectedCell.setContentsString('');
+            CellViewModel.selectedCell.commitContents();
+            CellInputFormulaBarViewModel.contents = CellViewModel.selectedCell.formula;
+            break;
+
+          case UIAction.delete:
+            KeyboardEvent keyboardEvent = data;
+            utils.stopDefaultBehaviour(keyboardEvent);
+            CellViewModel.selectedCell.setContentsString('');
+            CellViewModel.selectedCell.commitContents();
+            CellInputFormulaBarViewModel.contents = CellViewModel.selectedCell.formula;
+            break;
+
+          case UIAction.tab:
+          case UIAction.arrowRight:
+            KeyboardEvent keyboardEvent = data;
+            utils.stopDefaultBehaviour(keyboardEvent);
+            CellViewModel.selectedCell.selectCellRight();
+            break;
+
+          case UIAction.arrowLeft:
+            KeyboardEvent keyboardEvent = data;
+            utils.stopDefaultBehaviour(keyboardEvent);
+            CellViewModel.selectedCell.selectCellLeft();
+            break;
+
+          case UIAction.arrowUp:
+            KeyboardEvent keyboardEvent = data;
+            utils.stopDefaultBehaviour(keyboardEvent);
+            CellViewModel.selectedCell.selectCellAbove();
+            break;
+
+          case UIAction.arrowDown:
+            KeyboardEvent keyboardEvent = data;
+            utils.stopDefaultBehaviour(keyboardEvent);
+            CellViewModel.selectedCell.selectCellBelow();
+            break;
+
+          case UIAction.otherKey:
+            KeyboardEvent keyboardEvent = data;
+
+            if (keyboardEvent.ctrlKey || keyboardEvent.metaKey) {
+              if (keyboardEvent.metaKey) {
+                if (keyboardEvent.key == 'b') {
+                  CellViewModel.selectedCell.cellView.uiElement.classes.toggle('bold');
+                }
+                if (keyboardEvent.key == 'i') {
+                  CellViewModel.selectedCell.cellView.uiElement.classes.toggle('italic');
+                }
+              }
+              return;
+            }
+            utils.stopDefaultBehaviour(keyboardEvent);
+
+            state = UIState.cellEditing;
+
+            CellInputBoxViewModel.show(CellViewModel.selectedCell);
+            CellInputBoxViewModel.enterKey(keyboardEvent.key);
+            CellInputBoxViewModel.positionCursorAtEnd();
+            break;
+
+          case UIAction.mouseDownOnFillHandle:
+            MouseEvent mouseDown = data;
+            utils.stopDefaultBehaviour(mouseDown);
+
+            DivElement fillHandle = mouseDown.target;
+            DivElement selectionBorder = fillHandle.nextElementSibling;
+            int startPositionY = mouseDown.client.y;
+            int cellWidth = CellViewModel.selectedCell.cellView.uiElement.client.width;
+            int cellHeight = CellViewModel.selectedCell.cellView.uiElement.client.height;
+
+            selectionBorder.style
+              ..visibility = 'visible'
+              ..top = '${CellViewModel.selectedCell.cellView.uiElement.offset.top + 21}px'
+              ..left = '${CellViewModel.selectedCell.cellView.uiElement.offset.left + 31}px'
+              ..width = '${cellWidth}px';
+
+            StreamSubscription dragMoveSub;
+            StreamSubscription dragEndSub;
+
+            dragMoveSub = document.onMouseMove.listen((MouseEvent mouseMove) {
+              int yDelta = mouseMove.client.y - startPositionY;
+              if (yDelta < 0) {
+                selectionBorder.style.height = '${cellHeight}px';
+                return;
+              }
+
+              int rowsDown = (yDelta.toDouble() / cellHeight.toDouble()).floor() + 2;
+
+              selectionBorder.style.height = '${(cellHeight + 1) * rowsDown - 1}px';
+            });
+
+            dragEndSub = document.onMouseUp.listen((MouseEvent mouseUp) {
+              int yDelta = mouseUp.client.y - startPositionY;
+              selectionBorder.style.visibility = 'hidden';
+
+              if (yDelta < 0) {
+                return;
+              }
+
+              int rowsDown = (yDelta.toDouble() / cellHeight.toDouble()).floor() + 2;
+              Map<int, List<int>> cellsToFillIn = {};
+              for (int row = CellViewModel.selectedCell.row + 1; row < CellViewModel.selectedCell.row + rowsDown; row++) {
+                cellsToFillIn[row] = [CellViewModel.selectedCell.column];
+              }
+
+              selectionBorder.style.height = '0px';
+
+              SheetViewModel.activeSheet.fillInCellsWithCell(cellsToFillIn, CellViewModel.selectedCell);
+              SheetViewModel.activeSheet.cells[CellViewModel.selectedCell.row + rowsDown - 1][CellViewModel.selectedCell.column].select();
+
+              dragMoveSub.cancel();
+              dragEndSub.cancel();
+            });
+
+            break;
+
+          case UIAction.startRenameSheet:
+            state = UIState.renamingSheet;
+            break;
+
+          default:
+            break;
+        }
+        break;
+
+      /*
+      * State: readyToDraw
+      */
+      case UIState.readyToDraw:
+        switch (action) {
+          case UIAction.selectGraphicsTool:
+            view.selectedTool = data;
+            if (view.selectedTool == DrawingTool.selectionTool) {
+              state = UIState.idle;
+            } else {
+              state = UIState.readyToDraw;
+            }
+            break;
+
+          case UIAction.startDrawing:
+            MouseEvent mouseDown = data;
+            utils.stopDefaultBehaviour(mouseDown);
+            view.startDrawing(mouseDown);
+            state = UIState.drawing;
+            break;
+
+          default:
+            break;
+        }
+        break;
+
+      /*
+      * State: drawing
+      */
+      case UIState.drawing:
+        switch (action) {
+          case UIAction.endDrawing:
+            Map shapeData = data;
+
+            GraphicMarkType mark = toolToGraphicMark[view.selectedTool];
+            if (mark == null) {
+              throw "Shape tool unsupported, got: ${view.selectedTool}";
+            }
+
+            if (LayerbookViewModel.activeLayerbook == null) {
+              createNewSheetbook(isGraphicsSheetbook: true);
+            }
+
+            GraphicsSheetViewModel sheet = new SheetViewModel(graphicsSheetbooks.first, mark);
+
+            switch (mark) {
+              case GraphicMarkType.rect:
+                sheet.layerViewModel.addShape(0, {Rect.x: shapeData['x'], Rect.y: shapeData['y'], Rect.width: shapeData['width'], Rect.height: shapeData['height']});
+                break;
+              case GraphicMarkType.line:
+                sheet.layerViewModel.addShape(0, {Line.x1: shapeData['x1'], Line.y1: shapeData['y1'], Line.x2: shapeData['x2'], Line.y2: shapeData['y2']});
+                break;
+              default:
+                break;
+            }
+
+            sheet.updateRow(0); // TODO: this is a hack
+            sheet.layerViewModel.shapes[0].select();
+            sheet.focus();
+            sheet.cells[0][0].select();
+
+            state = UIState.idle;
+            command(UIAction.selectGraphicsTool, DrawingTool.selectionTool);
+            break;
+
+          case UIAction.escape:
+            view.cancelDrawing();
+            state = UIState.idle;
+            command(UIAction.selectGraphicsTool, DrawingTool.selectionTool);
+            break;
+
+          default:
+            break;
+        }
+        break;
+
+      /*
+      * State: cellEditing
+      */
+      case UIState.cellEditing:
+        switch (action) {
+          case UIAction.enter:
+            KeyboardEvent keyEvent = data;
+            utils.stopDefaultBehaviour(keyEvent);
+
+            CellViewModel.selectedCell.setContentsString(CellInputBoxViewModel.contents.trim());
+            CellViewModel.selectedCell.commitContents();
+            CellViewModel.selectedCell.selectCellBelow();
+            CellInputBoxViewModel.hide();
+            CellInputFormulaBarViewModel.unfocus();
+
+            state = UIState.idle;
+            break;
+
+          case UIAction.escape:
+            KeyboardEvent keyEvent = data;
+            utils.stopDefaultBehaviour(keyEvent);
+
+            CellInputBoxViewModel.hide();
+            CellInputFormulaBarViewModel.contents = CellViewModel.selectedCell.formula;
+            CellInputFormulaBarViewModel.unfocus();
+
+            state = UIState.idle;
+            break;
+
+          case UIAction.clickOnCell:
+            CellViewModel.selectedCell.setContentsString(CellInputBoxViewModel.contents.trim());
+            CellViewModel.selectedCell.commitContents();
+            CellInputBoxViewModel.hide();
+            CellInputFormulaBarViewModel.unfocus();
+
+            state = UIState.idle;
+            // Process the click
+            command(UIAction.clickOnCell, data);
+            break;
+
+          default:
+            break;
+        }
+        break;
+
+      case UIState.renamingSheet:
+        switch (action) {
+          case UIAction.endRenameSheet:
+            if (data != null) {
+              SheetViewModel sheet = data[0];
+              String newName = data[1];
+
+              sheet.name = newName;
+            }
+            state = UIState.idle;
+            break;
+          default:
+            break;
+        }
+        break;
+    }
+  }
+
+  LayerViewModel _getLayerOfElement(Element element) {
+    print('asa');
+    svg.GElement layerContainer = _getAncestors(element).firstWhere((ancestor) => ancestor.classes.contains('layer'));
+    print(layerContainer);
+    int layerId = int.parse(layerContainer.getAttribute('data-layer-id'));
+    print(layerId);
+    return LayerViewModel.layers.singleWhere((layer) => layer.id == layerId);
+  }
+
+  SheetViewModel _getSheetOfElement(Element element) {
+    DivElement sheetContainer = _getAncestors(element).firstWhere((ancestor) => ancestor.classes.contains('sheet'));
+    int sheetId = int.parse(sheetContainer.getAttribute('data-sheet-id'));
+    return SheetViewModel.sheets.singleWhere((sheet) => sheet.id == sheetId);
+  }
+
+  List<Element> _getAncestors(Element element) {
+    List<Element> ancestors = [element];
+    while (element != null) {
+      ancestors.add(element);
+      element = element.parent;
+    }
+    return ancestors;
+  }
+
+loadEmptySession() {
   // Create the incoming data spreadsheet
   {
     SheetbookViewModel sheetbook = new SheetbookViewModel();
     sheetbooks.add(sheetbook);
-    sheetbook.createView(_spreadsheetsContainer.querySelector('#left-sheet'));
-    activeSheet = sheetbook.addSheet(type: 'DataSheet', rows: 1000);
-    activeSheet.selectCellAtCoords(0, 0);
+    sheetbook.addSheet();
   }
 
   // Create the data wrangling spreadsheet
   {
     SheetbookViewModel sheetbook = new SheetbookViewModel();
     sheetbooks.add(sheetbook);
-    sheetbook.createView(_spreadsheetsContainer.querySelector('#middle-sheet'));
-    sheetbook.addSheet(type: 'WrangleSheet', rows: 1000);
-  }
-
-  // Create the visualisation spreadsheet and initialise the graphics editor with it
-  {
-    graphicsSheetbookViewModel = new SheetbookViewModel();
-    sheetbooks.add(graphicsSheetbookViewModel);
-    graphicsSheetbookViewModel.createView(_spreadsheetsContainer.querySelector('#right-sheet'));
-
-    graphicsEditorViewModel = new GraphicsEditorViewModel(graphicsSheetbookViewModel);
-    graphicsEditorViewModel.createView();
-    selectedDrawingTool = DrawingTool.selectionTool;
-    graphicsEditorViewModel.graphicsEditorView.selectDrawingTool(selectedDrawingTool);
-  }
-
-  // Init listeners
-  document.onClick.listen((MouseEvent click) => command(InteractionAction.click, click));
-  document.onDoubleClick.listen((MouseEvent doubleclick) => command(InteractionAction.doubleClick, doubleclick));
-  document.onKeyDown.listen((KeyboardEvent keyEvent) {
-    if (keyEvent.key == "Enter") {
-      command(InteractionAction.enter, keyEvent);
-    } else if (keyEvent.key == "Escape") {
-      command(InteractionAction.escape, keyEvent);
-    } else if (keyEvent.key == "Shift") {
-      command(InteractionAction.shift, keyEvent);
-    } else if (keyEvent.key == "Alt") {
-      command(InteractionAction.alt, keyEvent);
-    } else if (keyEvent.key == "Control") {
-      command(InteractionAction.control, keyEvent);
-    } else if (keyEvent.key == "Meta") {
-      command(InteractionAction.meta, keyEvent);
-    } else if (keyEvent.key == "Backspace") {
-      command(InteractionAction.backspace, keyEvent);
-    } else if (keyEvent.key == "Delete") {
-      command(InteractionAction.delete, keyEvent);
-    } else if (keyEvent.key == "CapsLock") {
-      command(InteractionAction.capsLock, keyEvent);
-    } else if (keyEvent.key == "Tab") {
-      command(InteractionAction.tab, keyEvent);
-    } else if (keyEvent.key == "ArrowRight") {
-      command(InteractionAction.arrowRight, keyEvent);
-    } else if (keyEvent.key == "ArrowLeft") {
-      command(InteractionAction.arrowLeft, keyEvent);
-    } else if (keyEvent.key == "ArrowUp") {
-      command(InteractionAction.arrowUp, keyEvent);
-    } else if (keyEvent.key == "ArrowDown") {
-      command(InteractionAction.arrowDown, keyEvent);
-    } else {
-      command(InteractionAction.otherKey, keyEvent);
-    }
-  });
-}
-
-command(InteractionAction action, var data) {
-  switch (state) {
-    /*
-     * State: idle
-     */
-    case InteractionState.idle:
-      switch (action) {
-        case InteractionAction.clickInToolPanel:
-          selectedDrawingTool = data;
-          graphicsEditorViewModel.graphicsEditorView.selectDrawingTool(selectedDrawingTool);
-          if (selectedDrawingTool == DrawingTool.selectionTool) {
-            state = InteractionState.idle;
-          } else {
-            state = InteractionState.readyToDraw;
-          }
-          break;
-
-        case InteractionAction.click:
-          MouseEvent mouseEvent = data;
-          stopDefaultBehaviour(mouseEvent);
-
-          EventTarget mouseTarget = mouseEvent.target;
-          if (mouseTarget is TableCellElement) {
-            TableCellElement cellElement = mouseTarget;
-            SheetViewModel sheet = getSheetOfElement(cellElement);
-            if (cellElement.attributes.containsKey('data-row') && cellElement.attributes.containsKey('data-col')) {
-              int row = int.parse(cellElement.attributes['data-row']);
-              int col = int.parse(cellElement.attributes['data-col']);
-              sheet.selectCellAtCoords(row, col);
-              if (sheet != activeSheet) {
-                activeSheet = sheet;
-              }
-            } else {
-              // TODO: implement column and row selection
-            }
-            state = InteractionState.idle;
-
-          } else if (mouseTarget is DivElement && mouseTarget.id == "formula-editor") {
-            cellInputBoxViewModel.show(activeSheet.selectedCell);
-            cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
-            cellInputFormulaBarViewModel.focus();
-            state = InteractionState.cellEditing;
-
-          } else if (mouseTarget is svg.GeometryElement && mouseTarget.id != 'bounding-box-border') {
-            svg.GeometryElement element = mouseTarget;
-            List coordinates = element.id.split('-');
-            int sheetId = int.parse(coordinates[0]);
-
-            LayerViewModel layer = graphicsEditorViewModel.layers.singleWhere((layer) => layer.graphicsSheetViewModel.id == sheetId);
-            graphicsEditorViewModel.selectLayer(layer);
-            layer.selectShapeAtIndex(int.parse(coordinates[1]));
-
-            SheetViewModel sheet = sheets.singleWhere((sheet) => sheet.id == sheetId);
-            graphicsSheetbookViewModel.selectSheet(sheet);
-            sheet.selectCellAtCoords(int.parse(coordinates[1]), 0);
-            if (sheet != activeSheet) {
-              activeSheet = sheet;
-            }
-          } else if (mouseTarget is svg.SvgSvgElement && mouseTarget.id == 'canvas') {
-            graphicsEditorViewModel.selectedLayer.deselectShape();
-            (graphicsSheetbookViewModel.selectedSheet as GraphicsSheetViewModel).deselectRow(activeSheet.selectedCell.row);
-          }
-          break;
-
-        case InteractionAction.doubleClick:
-          MouseEvent mouseEvent = data;
-          stopDefaultBehaviour(mouseEvent);
-
-          EventTarget eventTarget = mouseEvent.target;
-          if (eventTarget is TableCellElement ||
-            (eventTarget is DivElement && eventTarget.classes.contains('cell-selector'))) {
-            cellInputBoxViewModel.show(activeSheet.selectedCell);
-            cellInputBoxViewModel.focus();
-            cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
-            state = InteractionState.cellEditing;
-          }
-          break;
-
-        case InteractionAction.enter:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-          cellInputBoxViewModel.show(activeSheet.selectedCell);
-          cellInputBoxViewModel.focus();
-          cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
-          state = InteractionState.cellEditing;
-          break;
-
-        case InteractionAction.backspace:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-          activeSheet.selectedCell.commitFormulaString('');
-          cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
-          break;
-
-        case InteractionAction.delete:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-          activeSheet.selectedCell.commitFormulaString('');
-          cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
-          break;
-
-        case InteractionAction.arrowRight:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-          activeSheet.selectCellRight(activeSheet.selectedCell);
-          break;
-
-        case InteractionAction.arrowLeft:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-          activeSheet.selectCellLeft(activeSheet.selectedCell);
-          break;
-
-        case InteractionAction.arrowUp:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-          activeSheet.selectCellAbove(activeSheet.selectedCell);
-          break;
-
-        case InteractionAction.arrowDown:
-          KeyboardEvent keyboardEvent = data;
-          stopDefaultBehaviour(keyboardEvent);
-          activeSheet.selectCellBelow(activeSheet.selectedCell);
-          break;
-
-        case InteractionAction.otherKey:
-          KeyboardEvent keyboardEvent = data;
-
-          if (keyboardEvent.ctrlKey || keyboardEvent.metaKey) {
-            if (keyboardEvent.metaKey) {
-              if (keyboardEvent.key == 'b') {
-                activeSheet.selectedCell.cellView.cellElement.classes.toggle('bold');
-              }
-              if (keyboardEvent.key == 'i') {
-                activeSheet.selectedCell.cellView.cellElement.classes.toggle('italic');
-              }
-            }
-            return;
-          }
-          stopDefaultBehaviour(keyboardEvent);
-
-          state = InteractionState.cellEditing;
-
-          cellInputBoxViewModel.show(activeSheet.selectedCell);
-          cellInputBoxViewModel.enterKey(keyboardEvent.key);
-          cellInputBoxViewModel.positionCursorAtEnd();
-          break;
-
-        case InteractionAction.mouseDownOnFillHandle:
-          MouseEvent mouseDown = data;
-          stopDefaultBehaviour(mouseDown);
-
-          DivElement fillHandle = mouseDown.target;
-          DivElement selectionBorder = fillHandle.nextElementSibling;
-          int startPositionY = mouseDown.client.y;
-          int cellWidth = activeSheet.selectedCell.cellView.cellElement.client.width;
-          int cellHeight = activeSheet.selectedCell.cellView.cellElement.client.height;
-
-          selectionBorder.style
-            ..visibility = 'visible'
-            ..top = '${activeSheet.selectedCell.cellView.cellElement.offset.top + 21}px'
-            ..left = '${activeSheet.selectedCell.cellView.cellElement.offset.left + 31}px'
-            ..width = '${cellWidth}px';
-
-          StreamSubscription dragMoveSub;
-          StreamSubscription dragEndSub;
-
-          dragMoveSub = document.onMouseMove.listen((MouseEvent mouseMove) {
-            int yDelta = mouseMove.client.y - startPositionY;
-            if (yDelta < 0) {
-              selectionBorder.style.height = '${cellHeight}px';
-              return;
-            }
-
-            int rowsDown = (yDelta.toDouble() / cellHeight.toDouble()).floor() + 2;
-
-            selectionBorder.style.height = '${(cellHeight + 1) * rowsDown - 1}px';
-          });
-
-          dragEndSub = document.onMouseUp.listen((MouseEvent mouseUp) {
-            int yDelta = mouseUp.client.y - startPositionY;
-            selectionBorder.style.visibility = 'hidden';
-
-            if (yDelta < 0) {
-              return;
-            }
-
-            int rowsDown = (yDelta.toDouble() / cellHeight.toDouble()).floor() + 2;
-            Map<int, List<int>> cellsToFillIn = {};
-            for (int row = activeSheet.selectedCell.row + 1; row < activeSheet.selectedCell.row + rowsDown; row++) {
-              cellsToFillIn[row] = [activeSheet.selectedCell.column];
-            }
-
-            selectionBorder.style.height = '0px';
-
-            activeSheet.fillInCellsWithCell(cellsToFillIn, activeSheet.selectedCell);
-            activeSheet.selectCellAtCoords(activeSheet.selectedCell.row + rowsDown - 1, activeSheet.selectedCell.column);
-
-            dragMoveSub.cancel();
-            dragEndSub.cancel();
-          });
-
-          break;
-
-        case InteractionAction.renamingSheet:
-          state = InteractionState.renamingSheet;
-          break;
-
-        default:
-          break;
-      }
-      break;
-
-    /*
-     * State: readyToDraw
-     */
-    case InteractionState.readyToDraw:
-      switch (action) {
-        case InteractionAction.clickInToolPanel:
-          selectedDrawingTool = data;
-          graphicsEditorViewModel.graphicsEditorView.selectDrawingTool(selectedDrawingTool);
-          if (selectedDrawingTool == DrawingTool.selectionTool) {
-            state = InteractionState.idle;
-          } else {
-            state = InteractionState.readyToDraw;
-          }
-          break;
-
-        case InteractionAction.mouseDownOnCanvas:
-          MouseEvent mouseDown = data;
-          stopDefaultBehaviour(mouseDown);
-          graphicsEditorViewModel.graphicsEditorView.startDrawing(mouseDown);
-          state = InteractionState.drawing;
-          break;
-
-        default:
-          break;
-      }
-      break;
-
-    /*
-     * State: drawing
-     */
-    case InteractionState.drawing:
-      switch (action) {
-        case InteractionAction.mouseUpOnCanvas:
-          Map shapeData = data;
-
-          Shape shape;
-          switch (selectedDrawingTool) {
-            case DrawingTool.rectangleTool:
-              shape = Shape.rect;
-              break;
-            case DrawingTool.lineTool:
-              shape = Shape.line;
-              break;
-            default:
-              throw "Shape tool unsupported, got: $selectedDrawingTool";
-          }
-
-          LayerSheetFactory layerSheetFactory = new LayerSheetFactory(shape);
-          GraphicsSheetViewModel sheet = layerSheetFactory.sheet;
-          LayerViewModel layer = layerSheetFactory.layer;
-
-          switch (shape) {
-            case Shape.rect:
-              layer.addShape(0, {Rect.x: shapeData['x'], Rect.y: shapeData['y'], Rect.width: shapeData['width'], Rect.height: shapeData['height']});
-              break;
-            case Shape.line:
-              layer.addShape(0, {Line.x1: shapeData['x1'], Line.y1: shapeData['y1'], Line.x2: shapeData['x2'], Line.y2: shapeData['y2']});
-              break;
-          }
-
-          sheet.updateRow(0); // TODO: this is a hack
-          layer.selectShapeAtIndex(0);
-          activeSheet = sheet;
-          activeSheet.selectCellAtCoords(0, 0);
-
-          state = InteractionState.idle;
-          command(InteractionAction.clickInToolPanel, DrawingTool.selectionTool);
-          break;
-
-        case InteractionAction.escape:
-          graphicsEditorViewModel.graphicsEditorView.cancelDrawing();
-          state = InteractionState.idle;
-          command(InteractionAction.clickInToolPanel, DrawingTool.selectionTool);
-          break;
-
-        default:
-          break;
-      }
-      break;
-
-    /*
-     * State: cellEditing
-     */
-    case InteractionState.cellEditing:
-      switch (action) {
-        case InteractionAction.enter:
-          KeyboardEvent keyEvent = data;
-          stopDefaultBehaviour(keyEvent);
-
-          activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
-          activeSheet.selectCellBelow(activeSheet.selectedCell);
-          cellInputBoxViewModel.hide();
-          cellInputFormulaBarViewModel.unfocus();
-
-          state = InteractionState.idle;
-          break;
-
-        case InteractionAction.escape:
-          KeyboardEvent keyEvent = data;
-          stopDefaultBehaviour(keyEvent);
-
-          cellInputBoxViewModel.hide();
-          cellInputFormulaBarViewModel.contents = activeSheet.selectedCell.formula;
-          cellInputFormulaBarViewModel.unfocus();
-
-          state = InteractionState.idle;
-          break;
-
-        case InteractionAction.click:
-          MouseEvent mouseEvent = data;
-          stopDefaultBehaviour(mouseEvent);
-
-          EventTarget eventTarget = mouseEvent.target;
-          if (eventTarget is DivElement && eventTarget.classes.contains('cell-input')) {
-              // Clicking inside the cell being edited => ignore
-          } else if (eventTarget is DivElement && eventTarget.id == 'formula-editor') {
-            // Clicking in the formula bar => ignore
-          } else {
-            activeSheet.selectedCell.commitFormulaString(cellInputBoxViewModel.contents.trim());
-
-            state = InteractionState.idle;
-
-            // Process the click
-            command(InteractionAction.click, data);
-          }
-          break;
-
-        default:
-          break;
-      }
-      break;
-
-    case InteractionState.renamingSheet:
-      switch (action) {
-        case InteractionAction.renameSheet:
-          if (data != null) {
-            SheetViewModel sheet = data[0];
-            String newName = data[1];
-
-            sheet.name = newName;
-          }
-          state = InteractionState.idle;
-          break;
-        default:
-          break;
-      }
-      break;
+    sheetbook.addSheet();
   }
 }
 
-stopDefaultBehaviour(Event event) { // Move to a common utils file
-  event.stopImmediatePropagation();
-  event.stopPropagation();
-  event.preventDefault();
-}
+  clearWorkspace() {
+    sheetbooks?.clear();
+    objectsWithId?.clear();
 
-String propertyFromColumnName(String column) {
-  switch (column) {
-    case 'Width':
-      return 'width';
-      break;
-    case 'Height':
-      return 'height';
-      break;
-    case 'Center X':
-      return 'x';
-      break;
-    case 'Center Y':
-      return 'y';
-      break;
-    case 'Corner Radius X':
-      return 'rx';
-      break;
-    case 'Corner Radius Y':
-      return 'ry';
-      break;
-    case 'Rotation':
-      return 'rotate';
-      break;
-    case 'Fill Color':
-      return 'fill';
-      break;
-    case 'Fill Opacity':
-      return 'fill-opacity';
-      break;
-    case 'Border Style':
-      return 'border';
-      break;
-    case 'Border Width':
-      return 'stroke-width';
-      break;
-    case 'Border Color':
-      return 'stroke';
-      break;
-    case 'Border Opacity':
-      return 'stroke-opacity';
-      break;
-    default:
-      return column;
+    SheetbookViewModel.clear();
+    LayerbookViewModel.clear();
+    SheetViewModel.clear();
+    LayerViewModel.clear();
+    CellViewModel.clear();
+    ShapeViewModel.clear();
+    SpreadsheetEngineViewModel.clear();
+
+    state = UIState.idle;
+    view.sheetbooksContainer.innerHtml = "";
+    view.visCanvas.innerHtml = "";
   }
-}
+  loadCuscusWorkspace(cuscusWorkspace) {
+    cuscusWorkspace["sheetbooks"].forEach((sheetbookInfo) {
+      sheetbooks.add(new SheetbookViewModel.load(sheetbookInfo));
+    });
 
-SheetViewModel getSheetOfElement(Element cell) {
-  DivElement sheetContainer = getParentOfClass(cell, 'sheet');
-  int sheetId = int.parse(sheetContainer.getAttribute('data-sheet-id'));
-  return sheets.singleWhere((sheet) => sheet.id == sheetId);
-}
-
-Element getParentOfType(Element e, Type parentType) {
-  Element parent = e.parent;
-  while (parent != null) {
-    if (parent.runtimeType == parentType) {
-      return parent;
-    } else {
-      parent = parent.parent;
-    }
+    SpreadsheetEngineViewModel.spreadsheet.updateDependencyGraph();
   }
-  return null; // no parent of the given type.
-}
 
-Element getParentOfClass(Element e, String className) {
-  Element parent = e.parent;
-  while (parent != null) {
-    if (parent.classes.contains(className)) {
-      return parent;
-    } else {
-      parent = parent.parent;
-    }
+  Map saveCuscusSession() {
+    Map workspace = {"sheetbooks": []};
+    sheetbooks.forEach((sheetbook) {
+      workspace["sheetbooks"].add(sheetbook.save());
+    });
+    return workspace;
   }
-  return null; // no parent with the given class.
-}
-
-
-// TODO: move to another file
-enum Rect {
-  x,
-  y,
-  width,
-  height,
-  rx,
-  ry,
-  fillColor,
-  fillOpacity,
-  strokeColor,
-  strokeWidth,
-  strokeOpacity,
-  opacity
-}
-
-const Map<Rect, String> rectPropertyToColumnName = const {
-  Rect.width: 'Width',
-  Rect.height: 'Height',
-  Rect.x: 'X',
-  Rect.y: 'Y',
-  Rect.rx: 'CornerRadiusX',
-  Rect.ry: 'CornerRadiusY',
-  Rect.fillColor: 'FillColor',
-  Rect.fillOpacity: 'FillOpacity',
-  Rect.strokeColor: 'BorderColor',
-  Rect.strokeWidth: 'BorderWidth',
-  Rect.strokeOpacity: 'BorderOpacity',
-  Rect.opacity: 'Opacity'
-};
-
-Map<String, Rect> _columnNameToRectProperty = {};
-Map<String, Rect> get columnNameToRectProperty {
-  if (_columnNameToRectProperty.isEmpty) {
-    rectPropertyToColumnName.forEach((rect, column) => _columnNameToRectProperty[column] = rect);
-  }
-  return _columnNameToRectProperty;
-}
-
-const Map<Rect, String> rectPropertyToSvgProperty = const {
-  Rect.width: 'width',
-  Rect.height: 'height',
-  Rect.x: 'x',
-  Rect.y: 'y',
-  Rect.rx: 'rx',
-  Rect.ry: 'ry',
-  Rect.fillColor: 'fill',
-  Rect.fillOpacity: 'fill-opacity',
-  Rect.strokeColor: 'stroke',
-  Rect.strokeWidth: 'stroke-width',
-  Rect.strokeOpacity: 'stroke-opacity',
-  Rect.opacity: 'opacity'
-};
-
-Map<String, Rect> _svgPropertyToRectProperty = {};
-Map<String, Rect> get svgPropertyToRectProperty {
-  if (_svgPropertyToRectProperty.isEmpty) {
-    rectPropertyToSvgProperty.forEach((rect, property) => _svgPropertyToRectProperty[property] = rect);
-  }
-  return _svgPropertyToRectProperty;
-}
-
-/**** Line */
-
-enum Line {
-  x1,
-  y1,
-  x2,
-  y2,
-  strokeColor,
-  strokeWidth,
-  strokeOpacity,
-}
-
-const Map<Line, String> linePropertyToColumnName = const {
-  Line.x1: 'StartX',
-  Line.y1: 'StartY',
-  Line.x2: 'EndX',
-  Line.y2: 'EndY',
-  Line.strokeColor: 'Color',
-  Line.strokeWidth: 'Width',
-  Line.strokeOpacity: 'Opacity',
-};
-
-Map<String, Line> _columnNameToLineProperty = {};
-Map<String, Line> get columnNameToLineProperty {
-  if (_columnNameToLineProperty.isEmpty) {
-    linePropertyToColumnName.forEach((line, column) => _columnNameToLineProperty[column] = line);
-  }
-  return _columnNameToLineProperty;
-}
-
-const Map<Line, String> linePropertyToSvgProperty = const {
-  Line.x1: 'x1',
-  Line.y1: 'y1',
-  Line.x2: 'x2',
-  Line.y2: 'y2',
-  Line.strokeColor: 'stroke',
-  Line.strokeWidth: 'stroke-width',
-  Line.strokeOpacity: 'stroke-opacity',
-};
-
-Map<String, Line> _svgPropertyToLineProperty = {};
-Map<String, Line> get svgPropertyToLineProperty {
-  if (_svgPropertyToLineProperty.isEmpty) {
-    linePropertyToSvgProperty.forEach((line, property) => _svgPropertyToLineProperty[property] = line);
-  }
-  return _svgPropertyToLineProperty;
 }

@@ -2,53 +2,53 @@ part of cuscus.viewmodel;
 
 class SheetbookViewModel extends ObjectWithId {
   view.SheetbookView sheetbookView;
-  SheetViewModel selectedSheet;
 
-  SheetbookViewModel() : super();
+  SheetbookType type;
+  /// This field is set only when the [type] is [SheetbookType.graphics].
+  LayerbookViewModel layerbook;
 
-  createView(Element parent) {
+  List<SheetViewModel> sheets = [];
+
+  static int _sheetNumber = 1;
+  static get _sheetCounter => _sheetNumber++;
+  static void clear() => _sheetNumber = 1;
+
+  SheetbookViewModel([this.type = SheetbookType.data]) : super() {
     sheetbookView = new view.SheetbookView(this);
-    parent.append(sheetbookView.sheetbookElement);
+    if (type == SheetbookType.graphics) {
+      layerbook = new LayerbookViewModel(this);
+      layerbook.focus();
+    }
   }
 
-  SheetViewModel addSheet({String type, int rows=100}) { // TODO: replace the type with an enum
-    SheetViewModel sheet;
-    view.SheetView sheetView;
-    switch (type) {
-      case 'LineSheet':
-        sheet = new LineSheet(rows, 'Line$sheetCounter');
-        sheetView = new view.GraphicsSheetView(sheet);
-        break;
-      case 'RectSheet':
-        sheet = new RectSheet(rows, 'Rect$sheetCounter');
-        sheetView = new view.GraphicsSheetView(sheet);
-        break;
-      case 'EllipseSheet':
-        sheet = new EllipseSheet(rows, 'Ellipse$sheetCounter');
-        sheetView = new view.GraphicsSheetView(sheet);
-        break;
-      case 'TextSheet':
-        sheet = new TextSheet(rows, 'Text$sheetCounter');
-        sheetView = new view.GraphicsSheetView(sheet);
-        break;
-      default:
-        sheet = new DataSheet(rows, 10, 'Sheet$sheetCounter');
-        sheetView = new view.SheetView(sheet);
+  SheetbookViewModel.load(sheetbookInfo) : super(sheetbookInfo["sheetbook-id"]) {
+    type = getSheetbookType(sheetbookInfo['type']);
+    sheetbookView = new view.SheetbookView(this);
+
+    if (type == SheetbookType.graphics) {
+      layerbook = new LayerbookViewModel(this);
+      layerbook.focus();
     }
-    sheet.sheetView = sheetView;
-    sheet.sheetbookViewModel = this;
-    sheetbookView.addSheet(sheetView);
-    selectSheet(sheet);
+
+    sheetbookInfo["sheets"].forEach((sheetInfo) {
+      SheetViewModel sheet = new SheetViewModel.load(sheetInfo, this);
+      sheets.add(sheet);
+      sheet.focus();
+    });
+  }
+
+  SheetViewModel addSheet([GraphicMarkType type]) {
+    SheetViewModel sheet = new SheetViewModel(this, type);
+    sheets.add(sheet);
+    sheet.focus();
     return sheet;
   }
 
-
-  void selectSheet(SheetViewModel sheet) {
-    selectedSheet = sheet;
-    sheetbookView.selectedSheet = sheet.sheetView;
-    sheetbookView.showSelectedSheet();
+  Map save() {
+    return {
+      "sheetbook-id": id,
+      "type": type.toString(),
+      "sheets": sheets.map((sheet) => sheet.save()).toList(),
+    };
   }
 }
-
-int sheetNumber = 1;
-get sheetCounter => sheetNumber++;

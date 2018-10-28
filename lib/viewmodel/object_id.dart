@@ -7,10 +7,19 @@ part of cuscus.viewmodel;
 Map<int, ObjectWithId> objectsWithId = {};
 
 abstract class ObjectWithId {
-  final int id;
+  int _id;
+  int get id => _id;
 
-  ObjectWithId() : id = _generateObjectId() {
-    objectsWithId.putIfAbsent(id, () => this);
+  ObjectWithId([int id]) {
+    if (objectsWithId.containsKey(id)) {
+      throw "Cannot create object: another object with the same ID already exists";
+    } else if (id == null) {
+      _id = _generateObjectId();
+    } else {
+      _id = id;
+    }
+
+    objectsWithId[_id] = this;
   }
 }
 

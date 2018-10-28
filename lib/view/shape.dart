@@ -1,7 +1,7 @@
 part of cuscus.view;
 
 abstract class ShapeView {
-  ShapeViewModel shapeViewModel;
+  viewmodel.ShapeViewModel shapeViewModel;
   svg.SvgElement element;
 
   String getAttribute(String name) => element.getAttribute(name);
@@ -23,35 +23,36 @@ abstract class LineShapeView extends ShapeView {
 }
 
 class RectView extends RectShapeView {
-  RectViewModel shapeViewModel;
-
-  RectView(this.shapeViewModel) {
+  RectView(viewmodel.RectShapeViewModel shapeViewModel) {
+    this.shapeViewModel = shapeViewModel;
     element = new svg.RectElement();
-    element.id = '${shapeViewModel.layer.graphicsSheetViewModel.id}-${shapeViewModel.index}';
+    element.attributes['data-index'] = '${shapeViewModel.index}';
+    element.classes.add('shape');
 
     shapeViewModel.properties.forEach(
-      (Rect property, var value) => element.attributes[rectPropertyToSvgProperty[property]] = value.toString());
+      (property, value) => element.attributes[viewmodel.rectPropertyToSvgProperty[property]] = value.toString());
   }
 
-  int get x => shapeViewModel.properties[Rect.x];
-  int get y => shapeViewModel.properties[Rect.y];
-  int get width => shapeViewModel.properties[Rect.width];
-  int get height => shapeViewModel.properties[Rect.height];
+  int get x => shapeViewModel.properties[viewmodel.Rect.x];
+  int get y => shapeViewModel.properties[viewmodel.Rect.y];
+  int get width => shapeViewModel.properties[viewmodel.Rect.width];
+  int get height => shapeViewModel.properties[viewmodel.Rect.height];
 }
 
 class LineView extends LineShapeView {
-  LineViewModel shapeViewModel;
-
-  LineView(this.shapeViewModel) {
+  LineView(viewmodel.LineShapeViewModel shapeViewModel) {
+    this.shapeViewModel = shapeViewModel;
     element = new svg.LineElement();
-    element.id = '${shapeViewModel.layer.graphicsSheetViewModel.id}-${shapeViewModel.index}';
+    element.attributes['data-index'] = '${shapeViewModel.index}';
+    element.classes.add('shape');
 
-    shapeViewModel.properties.forEach(
-      (Line property, var value) => element.attributes[linePropertyToSvgProperty[property]] = value.toString());
+    shapeViewModel.properties.forEach((property, value) {
+      element.attributes[viewmodel.linePropertyToSvgProperty[property]] = value.toString();
+    });
   }
 
-  int get x1 => shapeViewModel.properties[Line.x1];
-  int get y1 => shapeViewModel.properties[Line.y1];
-  int get x2 => shapeViewModel.properties[Line.x2];
-  int get y2 => shapeViewModel.properties[Line.y2];
+  int get x1 => shapeViewModel.properties[viewmodel.Line.x1];
+  int get y1 => shapeViewModel.properties[viewmodel.Line.y1];
+  int get x2 => shapeViewModel.properties[viewmodel.Line.x2];
+  int get y2 => shapeViewModel.properties[viewmodel.Line.y2];
 }
