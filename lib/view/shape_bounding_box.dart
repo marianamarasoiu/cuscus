@@ -17,15 +17,15 @@ class RectShapeBoundingBoxView {
   svg.GElement handleGroup;
   svg.GElement group;
 
-  int handleWidth = 7;
-  int handleHeight = 7;
+  static const initialHandleSize = 8.0;
+  num handleSize = initialHandleSize;
 
   RectUpdateFunction updateFunction;
 
-  int x;
-  int y;
-  int width;
-  int height;
+  num x = 0;
+  num y = 0;
+  num width = 0;
+  num height = 0;
 
   RectShapeBoundingBoxView() {
     topLeftHandle = _createNewHandle()..id = "top-left-handle";
@@ -38,7 +38,8 @@ class RectShapeBoundingBoxView {
     leftHandle = _createNewHandle()..id = "left-handle";
     boundingBoxBorder = new svg.RectElement()
       ..classes.add("bounding-box-border")
-      ..classes.add("shape-outline");
+      ..classes.add("shape-outline")
+      ..attributes["vector-effect"] = "non-scaling-stroke";
     tentativeShape = new svg.RectElement()
       ..classes.add("tentative-shape");
 
@@ -65,6 +66,12 @@ class RectShapeBoundingBoxView {
     visCanvas.append(group);
 
     initListeners();
+
+    zoomCallbacks.add((double scroll) {
+      var inverseFactor = _group.transform.baseVal.consolidate().matrix.inverse().a;
+      handleSize = inverseFactor * initialHandleSize;
+      _setHandlesAtCoords(x, y, width, height);
+    });
   }
 
   initListeners() {
@@ -73,21 +80,23 @@ class RectShapeBoundingBoxView {
     StreamSubscription escKeySub;
 
     topLeftHandle.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementX = dragMove.client.x - startMouseX;
-        int newX = x + movementX;
-        int newWidth = width - movementX;
-        int movementY = dragMove.client.y - startMouseY;
-        int newY = y + movementY;
-        int newHeight = height - movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x + movementX;
+        num newWidth = width - movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y + movementY;
+        num newHeight = height - movementY;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -100,12 +109,14 @@ class RectShapeBoundingBoxView {
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementX = dragEnd.client.x - startMouseX;
-        int newX = x + movementX;
-        int newWidth = width - movementX;
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY = y + movementY;
-        int newHeight = height - movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x + movementX;
+        num newWidth = width - movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y + movementY;
+        num newHeight = height - movementY;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -141,17 +152,20 @@ class RectShapeBoundingBoxView {
     });
 
     topHandle.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementY = dragMove.client.y - startMouseY;
-        int newY = y + movementY;
-        int newHeight = height - movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y + movementY;
+        num newHeight = height - movementY;
         if (newHeight <= 0) {
           newY = newY + newHeight;
           newHeight = newHeight.abs();
@@ -160,9 +174,11 @@ class RectShapeBoundingBoxView {
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY = y + movementY;
-        int newHeight = height - movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y + movementY;
+        num newHeight = height - movementY;
         if (newHeight <= 0) {
           newY = newY + newHeight;
           newHeight = newHeight.abs();
@@ -191,21 +207,23 @@ class RectShapeBoundingBoxView {
     });
 
     topRightHandle.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementX = dragMove.client.x - startMouseX;
-        int newX = x;
-        int newWidth = width + movementX;
-        int movementY = dragMove.client.y - startMouseY;
-        int newY = y + movementY;
-        int newHeight = height - movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x;
+        num newWidth = width + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y + movementY;
+        num newHeight = height - movementY;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -218,12 +236,14 @@ class RectShapeBoundingBoxView {
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementX = dragEnd.client.x - startMouseX;
-        int newX = x;
-        int newWidth = width + movementX;
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY = y + movementY;
-        int newHeight = height - movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x;
+        num newWidth = width + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y + movementY;
+        num newHeight = height - movementY;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -258,17 +278,21 @@ class RectShapeBoundingBoxView {
     });
 
     rightHandle.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movement = dragMove.client.x - startMouseX;
-        int newX = x;
-        int newWidth = width + movement;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        print(mousePoint.x);
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x;
+        num newWidth = width + movementX;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -277,9 +301,11 @@ class RectShapeBoundingBoxView {
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movement = dragEnd.client.x - startMouseX;
-        int newX = x;
-        int newWidth = width + movement;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x;
+        num newWidth = width + movementX;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -308,21 +334,23 @@ class RectShapeBoundingBoxView {
     });
 
     bottomRightHandle.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementX = dragMove.client.x - startMouseX;
-        int newX = x;
-        int newWidth = width + movementX;
-        int movementY = dragMove.client.y - startMouseY;
-        int newY = y;
-        int newHeight = height + movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x;
+        num newWidth = width + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y;
+        num newHeight = height + movementY;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -335,12 +363,14 @@ class RectShapeBoundingBoxView {
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementX = dragEnd.client.x - startMouseX;
-        int newX = x;
-        int newWidth = width + movementX;
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY = y;
-        int newHeight = height + movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x;
+        num newWidth = width + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y;
+        num newHeight = height + movementY;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -375,17 +405,20 @@ class RectShapeBoundingBoxView {
     });
 
     bottomHandle.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementY = dragMove.client.y - startMouseY;
-        int newY = y;
-        int newHeight = height + movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y;
+        num newHeight = height + movementY;
         if (newHeight <= 0) {
           newY = newY + newHeight;
           newHeight = newHeight.abs();
@@ -394,9 +427,11 @@ class RectShapeBoundingBoxView {
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY = y;
-        int newHeight = height + movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y;
+        num newHeight = height + movementY;
         if (newHeight <= 0) {
           newY = newY + newHeight;
           newHeight = newHeight.abs();
@@ -425,21 +460,23 @@ class RectShapeBoundingBoxView {
     });
 
     bottomLeftHandle.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementX = dragMove.client.x - startMouseX;
-        int newX = x + movementX;
-        int newWidth = width - movementX;
-        int movementY = dragMove.client.y - startMouseY;
-        int newY = y;
-        int newHeight = height + movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x + movementX;
+        num newWidth = width - movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y;
+        num newHeight = height + movementY;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -452,12 +489,14 @@ class RectShapeBoundingBoxView {
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementX = dragEnd.client.x - startMouseX;
-        int newX = x + movementX;
-        int newWidth = width - movementX;
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY = y;
-        int newHeight = height + movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x + movementX;
+        num newWidth = width - movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y;
+        num newHeight = height + movementY;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -492,17 +531,20 @@ class RectShapeBoundingBoxView {
     });
 
     leftHandle.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movement = dragMove.client.x - startMouseX;
-        int newX = x + movement;
-        int newWidth = width - movement;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x + movementX;
+        num newWidth = width - movementX;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -511,9 +553,11 @@ class RectShapeBoundingBoxView {
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movement = dragEnd.client.x - startMouseX;
-        int newX = x + movement;
-        int newWidth = width - movement;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movement = mousePoint.x - startPoint.x;
+        num newX = x + movement;
+        num newWidth = width - movement;
         if (newWidth <= 0) {
           newX = newX + newWidth;
           newWidth = newWidth.abs();
@@ -544,29 +588,32 @@ class RectShapeBoundingBoxView {
     boundingBoxBorder.onMouseDown.listen((MouseEvent dragStart) {
       // Listen only to left clicks.
       if (dragStart.button != 0) return;
+
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        print('mousemove');
-        int movementX = dragMove.client.x - startMouseX;
-        int newX = x + movementX;
-        int movementY = dragMove.client.y - startMouseY;
-        int newY = y + movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y + movementY;
         _setTentativeShapeAtCoords(newX, newY, width, height);
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        print('mouseup');
-        int movementX = dragEnd.client.x - startMouseX;
-        int newX = x + movementX;
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY = y + movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX = x + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY = y + movementY;
         // Commit the resize
         x = newX;
         y = newY;
@@ -581,7 +628,6 @@ class RectShapeBoundingBoxView {
       });
 
       escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
-        print('esc');
         if (keyEvent.key == "Escape") {
           _hideTentativeShape();
 
@@ -616,56 +662,72 @@ class RectShapeBoundingBoxView {
   _hideTentativeShape() {
     tentativeShape.attributes["visibility"] = "hidden";
   }
-  _setTentativeShapeAtCoords(int x, int y, int width, int height) {
+  _setTentativeShapeAtCoords(num x, num y, num width, num height) {
     tentativeShape
-      ..attributes["x"] = "${x-1}"
-      ..attributes["y"] = "${y-1}"
-      ..attributes["width"] = "${width+2}"
-      ..attributes["height"] = "${height+2}";
+      ..attributes["x"] = "${x}"
+      ..attributes["y"] = "${y}"
+      ..attributes["width"] = "${width}"
+      ..attributes["height"] = "${height}";
     group.attributes["visibility"] = "visible";
   }
 
-  _setBoundingBoxsAtCoords(int x, int y, int width, int height) {
+  _setBoundingBoxsAtCoords(num x, num y, num width, num height) {
     boundingBoxBorder
-      ..attributes["x"] = "${x-1}"
-      ..attributes["y"] = "${y-1}"
-      ..attributes["width"] = "${width+2}"
-      ..attributes["height"] = "${height+2}";
+      ..attributes["x"] = "${x}"
+      ..attributes["y"] = "${y}"
+      ..attributes["width"] = "${width}"
+      ..attributes["height"] = "${height}";
     group.attributes["visibility"] = "visible";
   }
 
-  _setHandlesAtCoords(int x, int y, int width, int height) {
+  _setHandlesAtCoords(num x, num y, num width, num height) {
     topLeftHandle
-      ..attributes["x"] = "${x - handleWidth/2}"
-      ..attributes["y"] = "${y - handleHeight/2}";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["x"] = "${x - handleSize/2}"
+      ..attributes["y"] = "${y - handleSize/2}";
 
     topHandle
-      ..attributes["x"] = "${x + width/2 - handleWidth/2}"
-      ..attributes["y"] = "${y - handleHeight/2}";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["x"] = "${x + width/2 - handleSize/2}"
+      ..attributes["y"] = "${y - handleSize/2}";
 
     topRightHandle
-      ..attributes["x"] = "${x + width - handleWidth/2}"
-      ..attributes["y"] = "${y - handleHeight/2}";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["x"] = "${x + width - handleSize/2}"
+      ..attributes["y"] = "${y - handleSize/2}";
 
     rightHandle
-      ..attributes["x"] = "${x + width - handleWidth/2}"
-      ..attributes["y"] = "${y + height/2 - handleHeight/2}";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["x"] = "${x + width - handleSize/2}"
+      ..attributes["y"] = "${y + height/2 - handleSize/2}";
 
     bottomRightHandle
-      ..attributes["x"] = "${x + width - handleWidth/2}"
-      ..attributes["y"] = "${y + height - handleHeight/2}";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["x"] = "${x + width - handleSize/2}"
+      ..attributes["y"] = "${y + height - handleSize/2}";
 
     bottomHandle
-      ..attributes["x"] = "${x + width/2 - handleWidth/2}"
-      ..attributes["y"] = "${y + height - handleHeight/2}";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["x"] = "${x + width/2 - handleSize/2}"
+      ..attributes["y"] = "${y + height - handleSize/2}";
 
     bottomLeftHandle
-      ..attributes["x"] = "${x - handleWidth/2}"
-      ..attributes["y"] = "${y + height - handleHeight/2}";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["x"] = "${x - handleSize/2}"
+      ..attributes["y"] = "${y + height - handleSize/2}";
 
     leftHandle
-      ..attributes["x"] = "${x - handleWidth/2}"
-      ..attributes["y"] = "${y + height/2 - handleHeight/2}";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["x"] = "${x - handleSize/2}"
+      ..attributes["y"] = "${y + height/2 - handleSize/2}";
   }
 
   hide() {
@@ -676,8 +738,9 @@ class RectShapeBoundingBoxView {
   _createNewHandle() {
     return new svg.RectElement()
       ..classes.add('bounding-box-handle')
-      ..attributes["width"] = "$handleWidth"
-      ..attributes["height"] = "$handleHeight";
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
+      ..attributes["vector-effect"] = "non-scaling-stroke";
   }
 }
 
@@ -690,27 +753,27 @@ class LineShapeBoundingBoxView {
   svg.GElement handleGroup;
   svg.GElement group;
 
-  int handleWidth = 7;
-  int handleHeight = 7;
+  static const initialHandleSize = 8.0;
+  num handleSize = initialHandleSize;
 
   LineUpdateFunction updateFunction;
 
-  int x1;
-  int y1;
-  int x2;
-  int y2;
+  num x1 = 0;
+  num y1 = 0;
+  num x2 = 0;
+  num y2 = 0;
 
   LineShapeBoundingBoxView() {
     handle1 = _createNewHandle()..id = "handle-1";
     handle2 = _createNewHandle()..id = "handle-2";
     boundingBoxBorder = new svg.RectElement()
       ..classes.add("bounding-box-border")
-      ..attributes["fill-opacity"] = "0"
-      ..attributes["stroke-width"] = "1"
-      ..attributes["stroke"] = "dodgerblue";
+      ..classes.add("shape-outline")
+      ..attributes["vector-effect"] = "non-scaling-stroke";
     shadowLine = new svg.LineElement()
       ..id = "shadow-line"
-      ..classes.add('shape-outline');
+      ..classes.add('shape-outline')
+      ..attributes["vector-effect"] = "non-scaling-stroke";
     tentativeShape = new svg.LineElement()
       ..classes.add("tentative-shape");
 
@@ -732,6 +795,12 @@ class LineShapeBoundingBoxView {
     visCanvas.append(group);
 
     initListeners();
+
+    zoomCallbacks.add((double scroll) {
+      var inverseFactor = _group.transform.baseVal.consolidate().matrix.inverse().a;
+      handleSize = inverseFactor * initialHandleSize;
+      _setHandlesAtCoords(x1, y1, x2, y2);
+    });
   }
 
   initListeners() {
@@ -740,27 +809,31 @@ class LineShapeBoundingBoxView {
     StreamSubscription escKeySub;
 
     handle1.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementX = dragMove.client.x - startMouseX;
-        int newX1 = x1 + movementX;
-        int movementY = dragMove.client.y - startMouseY;
-        int newY1 = y1 + movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX1 = x1 + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY1 = y1 + movementY;
         _setTentativeShapeAtCoords(newX1, newY1, x2, y2);
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementX = dragEnd.client.x - startMouseX;
-        int newX1 = x1 + movementX;
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY1 = y1 + movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX1 = x1 + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY1 = y1 + movementY;
         // Commit the resize
         x1 = newX1;
         y1 = newY1;
@@ -787,27 +860,31 @@ class LineShapeBoundingBoxView {
     });
 
     handle2.onMouseDown.listen((MouseEvent dragStart) {
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementX = dragMove.client.x - startMouseX;
-        int newX2 = x2 + movementX;
-        int movementY = dragMove.client.y - startMouseY;
-        int newY2 = y2 + movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX2 = x2 + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY2 = y2 + movementY;
         _setTentativeShapeAtCoords(x1, y1, newX2, newY2);
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementX = dragEnd.client.x - startMouseX;
-        int newX2 = x2 + movementX;
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY2 = y2 + movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX2 = x2 + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY2 = y2 + movementY;
         // Commit the resize
         x2 = newX2;
         y2 = newY2;
@@ -834,31 +911,38 @@ class LineShapeBoundingBoxView {
     });
 
     boundingBoxBorder.onMouseDown.listen((MouseEvent dragStart) {
+      // Listen only to left clicks.
+      if (dragStart.button != 0) return;
+
+      utils.stopDefaultBehaviour(dragStart);
       if (updateFunction == null) {
         throw "Function associating dragging with changing the shape properties missing!";
       }
-      int startMouseX = dragStart.client.x;
-      int startMouseY = dragStart.client.y;
+      svg.Point startPoint = getRelativePoint(getSvgPoint(dragStart.client.x, dragStart.client.y));
 
       _showTentativeShape();
 
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
-        int movementX = dragMove.client.x - startMouseX;
-        int newX1 = x1 + movementX;
-        int newX2 = x2 + movementX;
-        int movementY = dragMove.client.y - startMouseY;
-        int newY1 = y1 + movementY;
-        int newY2 = y2 + movementY;
+        utils.stopDefaultBehaviour(dragMove);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX1 = x1 + movementX;
+        num newX2 = x2 + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY1 = y1 + movementY;
+        num newY2 = y2 + movementY;
         _setTentativeShapeAtCoords(newX1, newY1, newX2, newY2);
       });
 
       dragEndSub = document.onMouseUp.listen((MouseEvent dragEnd) {
-        int movementX = dragEnd.client.x - startMouseX;
-        int newX1 = x1 + movementX;
-        int newX2 = x2 + movementX;
-        int movementY = dragEnd.client.y - startMouseY;
-        int newY1 = y1 + movementY;
-        int newY2 = y2 + movementY;
+        utils.stopDefaultBehaviour(dragEnd);
+        svg.Point mousePoint = getRelativePoint(getSvgPoint(dragEnd.client.x, dragEnd.client.y));
+        num movementX = mousePoint.x - startPoint.x;
+        num newX1 = x1 + movementX;
+        num newX2 = x2 + movementX;
+        num movementY = mousePoint.y - startPoint.y;
+        num newY1 = y1 + movementY;
+        num newY2 = y2 + movementY;
         // Commit the resize
         x1 = newX1;
         y1 = newY1;
@@ -871,6 +955,7 @@ class LineShapeBoundingBoxView {
         // Cancel the dragging
         dragMoveSub.cancel();
         dragEndSub.cancel();
+        escKeySub.cancel();
       });
 
       escKeySub = document.onKeyDown.listen((KeyboardEvent keyEvent) {
@@ -880,6 +965,7 @@ class LineShapeBoundingBoxView {
           // Cancel the dragging
           dragMoveSub.cancel();
           dragEndSub.cancel();
+          escKeySub.cancel();
         }
       });
     });
@@ -909,19 +995,20 @@ class LineShapeBoundingBoxView {
     tentativeShape.attributes["visibility"] = "hidden";
   }
 
-  _setTentativeShapeAtCoords(int x1, int y1, int x2, int y2) {
+  _setTentativeShapeAtCoords(num x1, num y1, num x2, num y2) {
     tentativeShape
       ..attributes["x1"] = "$x1"
       ..attributes["y1"] = "$y1"
       ..attributes["x2"] = "$x2"
       ..attributes["y2"] = "$y2";
+    group.attributes["visibility"] = "visible";
   }
   
-  _setBoundingBoxsAtCoords(int x1, int y1, int x2, int y2) {
-    int x = math.min(x1, x2);
-    int y = math.min(y1, y2);
-    int width = (x2 - x1).abs();
-    int height = (y2 - y1).abs();
+  _setBoundingBoxsAtCoords(num x1, num y1, num x2, num y2) {
+    num x = math.min(x1, x2);
+    num y = math.min(y1, y2);
+    num width = (x2 - x1).abs();
+    num height = (y2 - y1).abs();
 
     boundingBoxBorder
       ..attributes["x"] = "$x"
@@ -931,17 +1018,21 @@ class LineShapeBoundingBoxView {
     group.attributes["visibility"] = "visible";
   }
 
-  _setHandlesAtCoords(int x1, int y1, int x2, int y2) {
+  _setHandlesAtCoords(num x1, num y1, num x2, num y2) {
     handle1
-      ..attributes["x"] = "${x1 - handleWidth/2}"
-      ..attributes["y"] = "${y1 - handleHeight/2}";
+      ..attributes["x"] = "${x1 - handleSize/2}"
+      ..attributes["y"] = "${y1 - handleSize/2}"
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize";
 
     handle2
-      ..attributes["x"] = "${x2 - handleWidth/2}"
-      ..attributes["y"] = "${y2 - handleHeight/2}";
+      ..attributes["x"] = "${x2 - handleSize/2}"
+      ..attributes["y"] = "${y2 - handleSize/2}"
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize";
   }
 
-  _setLineAtCoords(int x1, int y1, int x2, int y2) {
+  _setLineAtCoords(num x1, num y1, num x2, num y2) {
     shadowLine
       ..attributes["x1"] = "$x1"
       ..attributes["y1"] = "$y1"
@@ -956,8 +1047,8 @@ class LineShapeBoundingBoxView {
 
   _createNewHandle() {
     return new svg.RectElement()
-      ..attributes["width"] = "$handleWidth"
-      ..attributes["height"] = "$handleHeight"
+      ..attributes["width"] = "$handleSize"
+      ..attributes["height"] = "$handleSize"
       ..attributes["fill"] = "#FFFFFF"
       ..attributes["stroke-width"] = "1"
       ..attributes["stroke"] = "dodgerblue";

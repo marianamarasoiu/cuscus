@@ -9,17 +9,17 @@ abstract class ShapeView {
 }
 
 abstract class RectShapeView extends ShapeView {
-  int get x;
-  int get y;
-  int get width;
-  int get height;
+  num get x;
+  num get y;
+  num get width;
+  num get height;
 }
 
 abstract class LineShapeView extends ShapeView {
-  int get x1;
-  int get y1;
-  int get x2;
-  int get y2;
+  num get x1;
+  num get y1;
+  num get x2;
+  num get y2;
 }
 
 class RectView extends RectShapeView {
@@ -33,10 +33,10 @@ class RectView extends RectShapeView {
       (property, value) => element.attributes[viewmodel.rectPropertyToSvgProperty[property]] = value.toString());
   }
 
-  int get x => shapeViewModel.properties[viewmodel.Rect.x];
-  int get y => shapeViewModel.properties[viewmodel.Rect.y];
-  int get width => shapeViewModel.properties[viewmodel.Rect.width];
-  int get height => shapeViewModel.properties[viewmodel.Rect.height];
+  num get x => shapeViewModel.properties[viewmodel.Rect.x];
+  num get y => shapeViewModel.properties[viewmodel.Rect.y];
+  num get width => shapeViewModel.properties[viewmodel.Rect.width];
+  num get height => shapeViewModel.properties[viewmodel.Rect.height];
 }
 
 class LineView extends LineShapeView {
@@ -51,8 +51,8 @@ class LineView extends LineShapeView {
     });
   }
 
-  int get x1 => shapeViewModel.properties[viewmodel.Line.x1];
-  int get y1 => shapeViewModel.properties[viewmodel.Line.y1];
-  int get x2 => shapeViewModel.properties[viewmodel.Line.x2];
-  int get y2 => shapeViewModel.properties[viewmodel.Line.y2];
+  num get x1 => shapeViewModel.properties[viewmodel.Line.x1];
+  num get y1 => shapeViewModel.properties[viewmodel.Line.y1];
+  num get x2 => shapeViewModel.properties[viewmodel.Line.x2];
+  num get y2 => shapeViewModel.properties[viewmodel.Line.y2];
 }

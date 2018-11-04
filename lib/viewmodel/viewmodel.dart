@@ -47,7 +47,7 @@ enum UIState {
 enum UIAction {
   // actions on the visualisation
   selectGraphicsTool,
-  startDrawing,
+  mouseDownOnCanvas,
   endDrawing,
   clickOnShape,
   clickOnCanvas,
@@ -207,9 +207,11 @@ class AppController {
       });
     });
 
-    view.visCanvas.onMouseDown.listen((mouseDown) {
-      command(UIAction.startDrawing, mouseDown);
+    view.visSvgContainer.onMouseDown.listen((mouseDown) {
+      print(state);
+      command(UIAction.mouseDownOnCanvas, mouseDown);
     });
+    view.visSvgContainer.onMouseWheel.listen(view.startZooming);
 
     document.onClick.listen((MouseEvent click) {
       EventTarget mouseTarget = click.target;
@@ -232,7 +234,7 @@ class AppController {
         LayerViewModel layer = _getLayerOfElement(mouseTarget);
         ShapeViewModel shape = layer.shapes[int.parse(mouseTarget.attributes['data-index'])];
         command(UIAction.clickOnShape, shape);
-      } else if (mouseTarget == view.visCanvas) {
+      } else if (mouseTarget == view.visSvgContainer) {
         utils.stopDefaultBehaviour(click);
         command(UIAction.clickOnCanvas, null);
       }
@@ -471,6 +473,13 @@ class AppController {
             state = UIState.renamingSheet;
             break;
 
+          case UIAction.mouseDownOnCanvas:
+            MouseEvent mouseDown = data;
+            utils.stopDefaultBehaviour(mouseDown);
+            view.startPanning(mouseDown);
+            state = UIState.idle;
+            break;
+
           default:
             break;
         }
@@ -490,7 +499,7 @@ class AppController {
             }
             break;
 
-          case UIAction.startDrawing:
+          case UIAction.mouseDownOnCanvas:
             MouseEvent mouseDown = data;
             utils.stopDefaultBehaviour(mouseDown);
             view.startDrawing(mouseDown);

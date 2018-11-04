@@ -57,37 +57,34 @@ StreamSubscription _dragEndSub;
 svg.SvgElement _tentativeElement;
 
 startDrawing(MouseEvent mouseDown) {
-  int startMouseX = mouseDown.client.x;
-  int startMouseY = mouseDown.client.y;
-  int tentativeX = startMouseX;
-  int tentativeY = startMouseY;
-  int tentativeWidth = startMouseX - startMouseX;
-  int tentativeHeight = startMouseY - startMouseY;
+  svg.Point startPoint = getRelativePoint(getSvgPoint(mouseDown.client.x, mouseDown.client.y));
+  num tentativeWidth = 0.0;
+  num tentativeHeight = 0.0;
 
   switch (selectedTool) {
     case viewmodel.DrawingTool.rectangleTool:
       _tentativeElement = new svg.RectElement();
       _tentativeElement.classes.add('tentative-shape');
-      _tentativeElement.attributes['x'] = '$tentativeX';
-      _tentativeElement.attributes['y'] = '$tentativeY';
+      _tentativeElement.attributes['x'] = '${startPoint.x}';
+      _tentativeElement.attributes['y'] = '${startPoint.y}';
       _tentativeElement.attributes['width'] = '$tentativeWidth';
       _tentativeElement.attributes['height'] = '$tentativeHeight';
       break;
     case viewmodel.DrawingTool.ellipseTool:
       _tentativeElement = new svg.EllipseElement();
       _tentativeElement.classes.add('tentative-shape');
-      _tentativeElement.attributes['cx'] = '${tentativeX + tentativeWidth/2}';
-      _tentativeElement.attributes['cy'] = '${tentativeY + tentativeHeight/2}';
+      _tentativeElement.attributes['cx'] = '${startPoint.x + tentativeWidth/2}';
+      _tentativeElement.attributes['cy'] = '${startPoint.y + tentativeHeight/2}';
       _tentativeElement.attributes['rx'] = '${tentativeWidth/2}';
       _tentativeElement.attributes['ry'] = '${tentativeHeight/2}';
       break;
     case viewmodel.DrawingTool.lineTool:
       _tentativeElement = new svg.LineElement();
       _tentativeElement.classes.add('tentative-shape');
-      _tentativeElement.attributes['x1'] = '$tentativeX';
-      _tentativeElement.attributes['y1'] = '$tentativeY';
-      _tentativeElement.attributes['x2'] = '${tentativeX + tentativeWidth}';
-      _tentativeElement.attributes['y2'] = '${tentativeY + tentativeHeight}';
+      _tentativeElement.attributes['x1'] = '${startPoint.x}';
+      _tentativeElement.attributes['y1'] = '${startPoint.y}';
+      _tentativeElement.attributes['x2'] = '${startPoint.x + tentativeWidth}';
+      _tentativeElement.attributes['y2'] = '${startPoint.y + tentativeHeight}';
       break;
     case viewmodel.DrawingTool.curveTool:
       _tentativeElement = new svg.LineElement(); // TODO: implement [curveTool]
@@ -96,8 +93,8 @@ startDrawing(MouseEvent mouseDown) {
     case viewmodel.DrawingTool.textTool:
       _tentativeElement = new svg.RectElement();
       _tentativeElement.classes.add('tentative-shape');
-      _tentativeElement.attributes['x'] = '$tentativeX';
-      _tentativeElement.attributes['y'] = '$tentativeY';
+      _tentativeElement.attributes['x'] = '${startPoint.x}';
+      _tentativeElement.attributes['y'] = '${startPoint.y}';
       _tentativeElement.attributes['width'] = '$tentativeWidth';
       _tentativeElement.attributes['height'] = '$tentativeHeight';
       break;
@@ -107,17 +104,16 @@ startDrawing(MouseEvent mouseDown) {
 
   visCanvas.append(_tentativeElement);
 
-  _dragMoveSub = visCanvas.onMouseMove.listen((mouseMove) {
+  _dragMoveSub = visSvgContainer.onMouseMove.listen((mouseMove) {
     utils.stopDefaultBehaviour(mouseMove);
-    int tentativeWidth = mouseMove.client.x - startMouseX;
-    int tentativeX = startMouseX;
-    int tentativeHeight = mouseMove.client.y - startMouseY;
-    int tentativeY = startMouseY;
+    svg.Point mousePoint = getRelativePoint(getSvgPoint(mouseMove.client.x, mouseMove.client.y));
+    num tentativeWidth = mousePoint.x - startPoint.x;
+    num tentativeHeight = mousePoint.y - startPoint.y;
     
-    int tentativeAbsWidth = tentativeWidth;
-    int tentativeAbsX = tentativeX;
-    int tentativeAbsHeight = tentativeHeight;
-    int tentativeAbsY = tentativeY;
+    num tentativeAbsWidth = tentativeWidth;
+    num tentativeAbsX = startPoint.x;
+    num tentativeAbsHeight = tentativeHeight;
+    num tentativeAbsY = startPoint.y;
     if (tentativeAbsWidth <= 0) {
       tentativeAbsX = tentativeAbsX + tentativeAbsWidth;
       tentativeAbsWidth = tentativeAbsWidth.abs();
@@ -141,8 +137,8 @@ startDrawing(MouseEvent mouseDown) {
         _tentativeElement.attributes['ry'] = '${tentativeAbsHeight/2}';
         break;
       case viewmodel.DrawingTool.lineTool:
-        _tentativeElement.attributes['x2'] = '${tentativeX + tentativeWidth}';
-        _tentativeElement.attributes['y2'] = '${tentativeY + tentativeHeight}';
+        _tentativeElement.attributes['x2'] = '${startPoint.x + tentativeWidth}';
+        _tentativeElement.attributes['y2'] = '${startPoint.y + tentativeHeight}';
         break;
       case viewmodel.DrawingTool.curveTool:
         break;
@@ -155,17 +151,16 @@ startDrawing(MouseEvent mouseDown) {
     }
   });
 
-  _dragEndSub = visCanvas.onMouseUp.listen((mouseUp) {
+  _dragEndSub = visSvgContainer.onMouseUp.listen((mouseUp) {
     utils.stopDefaultBehaviour(mouseUp);
-    int tentativeWidth = mouseUp.client.x - startMouseX;
-    int tentativeX = startMouseX;
-    int tentativeHeight = mouseUp.client.y - startMouseY;
-    int tentativeY = startMouseY;
+    svg.Point mousePoint = getRelativePoint(getSvgPoint(mouseUp.client.x, mouseUp.client.y));
+    num tentativeWidth = mousePoint.x - startPoint.x;
+    num tentativeHeight = mousePoint.y - startPoint.y;
     
-    int tentativeAbsWidth = tentativeWidth;
-    int tentativeAbsX = tentativeX;
-    int tentativeAbsHeight = tentativeHeight;
-    int tentativeAbsY = tentativeY;
+    num tentativeAbsWidth = tentativeWidth;
+    num tentativeAbsX = startPoint.x;
+    num tentativeAbsHeight = tentativeHeight;
+    num tentativeAbsY = startPoint.y;
     if (tentativeAbsWidth <= 0) {
       tentativeAbsX = tentativeAbsX + tentativeAbsWidth;
       tentativeAbsWidth = tentativeAbsWidth.abs();
@@ -186,10 +181,10 @@ startDrawing(MouseEvent mouseDown) {
         break;
       case viewmodel.DrawingTool.lineTool:
         viewmodel.appController.command(viewmodel.UIAction.endDrawing, {
-          'x1': tentativeX,
-          'y1': tentativeY,
-          'x2': tentativeX + tentativeWidth,
-          'y2': tentativeY + tentativeHeight
+          'x1': startPoint.x,
+          'y1': startPoint.y,
+          'x2': startPoint.x + tentativeWidth,
+          'y2': startPoint.y + tentativeHeight
           });
         break;
       default:

@@ -16,7 +16,11 @@
     <div id="main-container" class="box" layout vertical>
 
       <div id="vis-container" class="box">
-        <svg id="vis-canvas"></svg>
+        <svg id="vis-svg-container">
+          <g id="zoom-pan-wrapper">
+            <g id="vis-canvas"></g>
+          </g>
+        </svg>
 
         <div id="drawing-tool-container">
           <h3>Files</h3>
