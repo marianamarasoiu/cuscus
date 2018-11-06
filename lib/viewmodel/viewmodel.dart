@@ -51,7 +51,6 @@ enum UIAction {
   endDrawing,
   clickOnShape,
   clickOnCanvas,
-  mouseDownOnFillHandle,
 
   // actions on sheets
   createNewSheet,
@@ -63,8 +62,8 @@ enum UIAction {
   // actions on spreadsheet cells
   clickOnCell,
   doubleClickOnCell,
-
   clickOnFormulaBar,
+  mouseDownOnFillHandle,
 
   // keyboard actions
   enter,
@@ -269,6 +268,7 @@ class AppController {
         command(UIAction.arrowUp, keyEvent);
       } else if (keyEvent.key == "ArrowDown") {
         command(UIAction.arrowDown, keyEvent);
+      } else if (keyEvent.key == "Shift") {
       } else {
         command(UIAction.otherKey, keyEvent);
       }
