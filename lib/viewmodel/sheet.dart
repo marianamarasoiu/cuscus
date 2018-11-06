@@ -133,7 +133,7 @@ abstract class SheetViewModel extends ObjectWithId {
 
         cellToFillIn.setContents(newCellContents);
         cellToFillIn.commitContents();
-        // cellToFillIn.update();
+        cellToFillIn.update();
       });
     });
   }
@@ -229,10 +229,20 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
   void fillInCellsWithCell(Map<int, List<int>> cellsToFillIn, CellViewModel sourceCell) {
     cells[sourceCell.row].forEach((cell) {
       Map<int, List<int>> newCellsToFillIn = {};
-      cellsToFillIn.forEach((row, columns) => newCellsToFillIn[row] = [cell.column]);
+      cellsToFillIn.forEach((row, columns) {
+        if (layerViewModel.shapes.containsKey(row)) {
+          if (cell != sourceCell) return;
+          newCellsToFillIn[row] = [cell.column];
+          return;
+        }
+        newCellsToFillIn[row] = [cell.column];
+      });
       super.fillInCellsWithCell(newCellsToFillIn, cell);
     });
-    cellsToFillIn.forEach((row, _) => layerViewModel.addShapeFromRow(row));
+    cellsToFillIn.forEach((row, _) {
+      if (layerViewModel.shapes.containsKey(row)) return;
+      layerViewModel.addShapeFromRow(row);
+    });
   }
 }
 

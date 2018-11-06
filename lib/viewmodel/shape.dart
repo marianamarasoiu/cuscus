@@ -77,7 +77,7 @@ class RectViewModel extends RectShapeViewModel {
       num column = columns.indexOf(rectPropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
       engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
-      // properties[property] = node.computedValue.value;
+      properties[property] = node.computedValue.value;
 
       setupListenersForCell(property, cell);
     });
@@ -216,7 +216,7 @@ class LineViewModel extends LineShapeViewModel {
       num column = columns.indexOf(linePropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
       engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
-      // properties[property] = node.computedValue.value;
+      properties[property] = node.computedValue.value;
 
       setupListenersForCell(property, cell);
     });
