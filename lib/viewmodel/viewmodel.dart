@@ -679,6 +679,7 @@ loadEmptySession() {
     state = UIState.idle;
     view.sheetbooksContainer.innerHtml = "";
     view.visCanvas.querySelectorAll('g[data-layerbook-id]').forEach((g) => g.remove());
+    view.sheetbooksBox.clear();
   }
 
   loadCuscusWorkspace(cuscusWorkspace) {

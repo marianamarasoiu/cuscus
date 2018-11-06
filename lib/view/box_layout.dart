@@ -62,6 +62,11 @@ class Box {
     });
   }
 
+  clear() {
+    innerBoxes.clear();
+    splitters.clear();
+  }
+
   /// Creates a new inner box.
   /// [index] is given relative to the number of inner boxes, not including splitters.
   /// If [index] is negative, it creates a new box it at the beginning.
