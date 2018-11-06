@@ -148,6 +148,7 @@ class CellViewModel {
     if (sheetViewModel is GraphicsSheetViewModel) {
       (sheetViewModel as GraphicsSheetViewModel).layerViewModel.shapes[row]?.select();
     }
+    CellInputFormulaBarViewModel.contents = this.formula;
   }
   void deselect() {
     _selectedCell = null;

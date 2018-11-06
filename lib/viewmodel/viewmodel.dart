@@ -305,7 +305,9 @@ class AppController {
             break;
 
           case UIAction.clickOnCell:
-            (data as CellViewModel).select();
+            CellViewModel cell = data;
+            cell.sheetViewModel.focus();
+            cell.select();
             state = UIState.idle;
             break;
 
