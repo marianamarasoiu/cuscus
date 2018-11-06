@@ -472,7 +472,7 @@ class AppController {
           case UIAction.startRenameSheet:
             state = UIState.renamingSheet;
             break;
-
+          
           case UIAction.mouseDownOnCanvas:
             MouseEvent mouseDown = data;
             utils.stopDefaultBehaviour(mouseDown);
@@ -678,12 +678,15 @@ loadEmptySession() {
 
     state = UIState.idle;
     view.sheetbooksContainer.innerHtml = "";
-    view.visCanvas.innerHtml = "";
+    view.visCanvas.querySelectorAll('g[data-layerbook-id]').forEach((g) => g.remove());
   }
+
   loadCuscusWorkspace(cuscusWorkspace) {
     cuscusWorkspace["sheetbooks"].forEach((sheetbookInfo) {
       sheetbooks.add(new SheetbookViewModel.load(sheetbookInfo));
     });
+
+    sheetbooks.first.sheets.first.cells.first.first.select();
 
     SpreadsheetEngineViewModel.spreadsheet.updateDependencyGraph();
   }

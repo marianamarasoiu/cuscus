@@ -117,7 +117,6 @@ class RectViewModel extends RectShapeViewModel {
 
     // This is when the node has been changed due to value propagation in the engine.
     node.onChange.listen((_) {
-      print('onchange');
       properties[property] = node.computedValue.value;
 
       shapeView.element.classes.add('animate');
@@ -217,7 +216,7 @@ class LineViewModel extends LineShapeViewModel {
       num column = columns.indexOf(linePropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
       engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
-      properties[property] = node.computedValue.value;
+      // properties[property] = node.computedValue.value;
 
       setupListenersForCell(property, cell);
     });
@@ -263,7 +262,6 @@ class LineViewModel extends LineShapeViewModel {
       new Timer(new Duration(seconds: 1), () => shapeView.element.classes.remove('animate'));
 
       shapeView.setAttribute(linePropertyToSvgProperty[property], node.computedValue.toString());
-      showBoundingBox();
     });
 
     // This is when the node has been edited directly, which results in a replacement in the engine.
@@ -280,8 +278,6 @@ class LineViewModel extends LineShapeViewModel {
       }
 
       shapeView.setAttribute(linePropertyToSvgProperty[property], node.computedValue.toString());
-      showBoundingBox();
-
     });
   }
 

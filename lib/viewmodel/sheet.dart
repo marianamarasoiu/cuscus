@@ -16,7 +16,7 @@ abstract class SheetViewModel extends ObjectWithId {
 
   static void clear() {
     sheets.clear();
-    _sheetNumber =
+    _sheetNumber = 1;
     _activeSheet = null;
   }
 
@@ -50,6 +50,7 @@ abstract class SheetViewModel extends ObjectWithId {
         break;
     }
     sheets.add(sheet);
+    sheetbook.sheets.add(sheet);
 
     if (sheet is GraphicsSheetViewModel) {
       LayerViewModel layerViewModel = new LayerViewModel(sheetbook.layerbook, type);
@@ -95,12 +96,13 @@ abstract class SheetViewModel extends ObjectWithId {
         break;
     }
     sheets.add(sheet);
+    sheetbook.sheets.add(sheet);
     for (Map cell in sheetInfo['cells']) {
       sheet.cells[cell['row']][cell['column']].setContentsString(cell['formula']);
     }
 
     if (sheet is GraphicsSheetViewModel) {
-      LayerViewModel layerViewModel = new LayerViewModel(sheetbook.layerbook, GraphicMarkType.line);
+      LayerViewModel layerViewModel = new LayerViewModel(sheetbook.layerbook, type);
       layerViewModel.graphicsSheetViewModel = sheet;
       sheet.layerViewModel = layerViewModel;
       layerViewModel.update();

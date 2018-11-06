@@ -32,23 +32,22 @@ class SheetbookViewModel extends ObjectWithId {
 
     sheetbookInfo["sheets"].forEach((sheetInfo) {
       SheetViewModel sheet = new SheetViewModel.load(sheetInfo, this);
-      sheets.add(sheet);
       sheet.focus();
     });
   }
 
   SheetViewModel addSheet([GraphicMarkType type]) {
     SheetViewModel sheet = new SheetViewModel(this, type);
-    sheets.add(sheet);
     sheet.focus();
     return sheet;
   }
 
   Map save() {
+    List<Map> listSheets = sheets.map((sheet) => sheet.save()).toList();
     return {
       "sheetbook-id": id,
       "type": type.toString(),
-      "sheets": sheets.map((sheet) => sheet.save()).toList(),
+      "sheets": listSheets,
     };
   }
 }

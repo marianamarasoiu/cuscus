@@ -1,0 +1,115 @@
+{
+  "sheetbooks": [
+    {
+      "sheetbook-id": 0,
+      "type": "SheetbookType.data",
+      "sheets": [
+        {
+          "sheet-id": 1,
+          "name": "InputData",
+          "row-count": 100,
+          "column-count": 10,
+          "cells": [
+            {
+              "row": 0,
+              "column": 2,
+              "formula": "Price"
+            },
+            {
+              "row": 1,
+              "column": 2,
+              "formula": "34"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sheetbook-id": 1000,
+      "type": "SheetbookType.data",
+      "sheets": [
+        {
+          "sheet-id": 1001,
+          "name": "OtherData",
+          "row-count": 100,
+          "column-count": 10,
+          "cells": []
+        }
+      ]
+    },
+    {
+      "sheetbook-id": 4000,
+      "type": "SheetbookType.graphics",
+      "sheets": [
+        {
+          "sheet-id": 4001,
+          "type": "GraphicMarkType.rect",
+          "name": "RectSheet",
+          "row-count": 100,
+          "cells": [
+            {
+              "row": 0,
+              "column": 0,
+              "formula": "47"
+            },
+            {
+              "row": 0,
+              "column": 1,
+              "formula": "189"
+            },
+            {
+              "row": 0,
+              "column": 2,
+              "formula": "409"
+            },
+            {
+              "row": 0,
+              "column": 3,
+              "formula": "31"
+            },
+            {
+              "row": 0,
+              "column": 4,
+              "formula": "0"
+            },
+            {
+              "row": 0,
+              "column": 5,
+              "formula": "0"
+            },
+            {
+              "row": 0,
+              "column": 6,
+              "formula": "#fff"
+            },
+            {
+              "row": 0,
+              "column": 7,
+              "formula": "1"
+            },
+            {
+              "row": 0,
+              "column": 8,
+              "formula": "#444"
+            },
+            {
+              "row": 0,
+              "column": 9,
+              "formula": "1"
+            },
+            {
+              "row": 0,
+              "column": 10,
+              "formula": "1"
+            },
+            {
+              "row": 0,
+              "column": 11,
+              "formula": "1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
