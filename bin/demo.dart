@@ -10,7 +10,7 @@ main() {
   ss.setNode(new CellCoordinates(0, 1, 0), new SpreadsheetDepNode(ss, new LiteralDoubleValue(1.0)));
 
   {
-    FormulaValue formula = new FormulaValue(new FunctionCall("gt", [new CellRange.cell(new CellCoordinates(0, 0, 0)), new CellRange.cell(new CellCoordinates(0, 1, 0))]));
+    FormulaValue formula = new FormulaValue(new FunctionCall("gt", [new CellRange.cell(new CellCoordinates(0, 0, 0), false, false), new CellRange.cell(new CellCoordinates(0, 1, 0), false, false)]));
     var ssDep = new SpreadsheetDepNode(ss, formula);
     ssDep.dependants.addAll(formula.dependants.map((location) => ss.cells[location]));
     ss.setNode(new CellCoordinates(1, 0, 0), ssDep);
@@ -25,8 +25,8 @@ main() {
   {
     FormulaValue formula = new FormulaValue(
       new FunctionCall("sub", [
-        new FunctionCall("add", [new CellRange.cell(new CellCoordinates(0, 0, 0)), new CellRange.cell(new CellCoordinates(0, 1, 0))]),
-        new CellRange.cell(new CellCoordinates(0, 2, 0))])
+        new FunctionCall("add", [new CellRange.cell(new CellCoordinates(0, 0, 0), false, false), new CellRange.cell(new CellCoordinates(0, 1, 0), false, false)]),
+        new CellRange.cell(new CellCoordinates(0, 2, 0), false, false)])
     );
     var ssDep = new SpreadsheetDepNode(ss, formula);
     ssDep.dependants.addAll(formula.dependants.map((location) => ss.cells[location]));
@@ -55,9 +55,9 @@ main() {
   {
     FormulaValue formula = new FormulaValue(
       new FunctionCall("sum", [
-        new CellRange.cell(new CellCoordinates(0, 0, 0)),
-        new CellRange.cell(new CellCoordinates(0, 1, 0)),
-        new CellRange.cell(new CellCoordinates(0, 2, 0))])
+        new CellRange.cell(new CellCoordinates(0, 0, 0), false, false),
+        new CellRange.cell(new CellCoordinates(0, 1, 0), false, false),
+        new CellRange.cell(new CellCoordinates(0, 2, 0), false, false)])
     );
     var ssDep = new SpreadsheetDepNode(ss, formula);
     ssDep.dependants.addAll(formula.dependants.map((location) => ss.cells[location]));

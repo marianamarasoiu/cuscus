@@ -213,22 +213,40 @@ class EmptyValue extends LiteralValue {
 
 class CellRange extends CellContents {
   CellCoordinates topLeftCell;
+  bool topLeftCellAnchoredRow;
+  bool topLeftCellAnchoredCol;
   CellCoordinates bottomRightCell;
+  bool bottomRightCellAnchoredRow;
+  bool bottomRightCellAnchoredCol;
 
-  CellRange.cell(CellCoordinates cell) {
-    topLeftCell = cell;
-    bottomRightCell = cell;
+  CellRange.cell(CellCoordinates cell, bool anchoredRow, bool anchoredCol) {
+    topLeftCell = bottomRightCell = cell;
+    topLeftCellAnchoredRow = bottomRightCellAnchoredRow = anchoredRow;
+    topLeftCellAnchoredCol = bottomRightCellAnchoredCol = anchoredCol;
   }
 
-  CellRange.range(CellCoordinates corner1, CellCoordinates corner2) {
+  CellRange.range(CellCoordinates corner1, CellCoordinates corner2,
+                  bool corner1AnchoredRow, bool corner1AnchoredCol,
+                  bool corner2AnchoredRow, bool corner2AnchoredCol) {
     if (corner1.sheetId != corner2.sheetId) {
       throw "Ranges over multiple sheets unsupported!";
     }
-    topLeftCell = new CellCoordinates(math.min(corner1.row, corner2.row), math.min(corner1.col, corner2.col), corner1.sheetId);
-    bottomRightCell = new CellCoordinates(math.max(corner1.row, corner2.row), math.max(corner1.col, corner2.col), corner1.sheetId);
+    int topLeftRow = math.min(corner1.row, corner2.row);
+    int topLeftCol = math.min(corner1.col, corner2.col);
+    topLeftCell = new CellCoordinates(topLeftRow, topLeftCol, corner1.sheetId);
+    topLeftCellAnchoredRow = topLeftRow == corner1.row ? corner1AnchoredRow : corner2AnchoredRow;
+    topLeftCellAnchoredCol = topLeftCol == corner1.col ? corner1AnchoredCol : corner2AnchoredCol;
+
+    int bottomRightRow = math.max(corner1.row, corner2.row);
+    int bottomRightCol = math.max(corner1.col, corner2.col);
+    bottomRightCell = new CellCoordinates(bottomRightRow, bottomRightCol, corner1.sheetId);
+    bottomRightCellAnchoredRow = bottomRightRow == corner1.row ? corner1AnchoredRow : corner2AnchoredRow;
+    bottomRightCellAnchoredCol = bottomRightCol == corner1.col ? corner1AnchoredCol : corner2AnchoredCol;
   }
 
-  clone() => new CellRange.range(topLeftCell, bottomRightCell);
+  clone() => new CellRange.range(topLeftCell, bottomRightCell,
+                                 topLeftCellAnchoredRow, topLeftCellAnchoredCol,
+                                 bottomRightCellAnchoredRow, bottomRightCellAnchoredCol);
 
   int get sheetId => topLeftCell.sheetId;
   bool get isCell => topLeftCell == bottomRightCell;

@@ -96,7 +96,7 @@ class SpreadsheetEngineViewModel {
       case "functionCall":
         String functionName = expressionContent["functionName"];
         List jsonArgs = expressionContent["args"];
-        List args = [];
+        List<engine.CellContents> args = <engine.CellContents>[];
         jsonArgs.forEach((arg) {
           var elementsResolvedTree = resolveSymbolsRecursive(arg, baseSheetId);
           args.add(elementsResolvedTree);
@@ -110,31 +110,66 @@ class SpreadsheetEngineViewModel {
         } else {
           sheet = SheetViewModel.sheetWithName(expressionContent["sheetName"]);
         }
+
         // Get the columns
         int columnStart;
-        if (expressionContent["columnStart"] == "") {
+        String columnStartName = expressionContent["columnStart"];
+        bool anchoredColumnStart = false;
+        if (columnStartName == "") {
           columnStart = -1;
         } else {
-          columnStart = sheet.activeColumnNames.indexOf(expressionContent["columnStart"]);
+          if (columnStartName.startsWith('\$')) {
+            anchoredColumnStart = true;
+            columnStartName = columnStartName.substring(1);
+          }
+          columnStart = sheet.activeColumnNames.indexOf(columnStartName);
         }
         int columnEnd;
-        if (expressionContent["columnEnd"] == "") {
+        String columnEndName = expressionContent["columnEnd"];
+        bool anchoredColumnEnd = false;
+        if (columnEndName == "") {
           columnEnd = -1;
         } else {
-          columnEnd = sheet.activeColumnNames.indexOf(expressionContent["columnEnd"]);
+          if (columnEndName.startsWith('\$')) {
+            anchoredColumnEnd = true;
+            columnEndName = columnEndName.substring(1);
+          }
+          columnEnd = sheet.activeColumnNames.indexOf(columnEndName);
         }
+
         // Get the rows
-        int rowStart = expressionContent["rowStart"] == "" ? -1 : int.parse(expressionContent["rowStart"]) - 1; // -1 because in the UI, index is from 1, internally index is from 0
-        int rowEnd = expressionContent["rowEnd"] == "" ? -1 : int.parse(expressionContent["rowEnd"]) - 1; // -1 because in the UI, index is from 1, internally index is from 0
+        int rowStart;
+        String rowStartNumber = expressionContent["rowStart"];
+        bool anchoredRowStart = false;
+        if (rowStartNumber == "") {
+          rowStart = -1;
+        } else {
+          if (rowStartNumber.startsWith('\$')) {
+            anchoredRowStart = true;
+            rowStartNumber = rowStartNumber.substring(1);
+          }
+          rowStart = int.parse(rowStartNumber) - 1; // -1 because in the UI, index is from 1, internally index is from 0
+        }
+        int rowEnd;
+        String rowEndNumber = expressionContent["rowEnd"];
+        bool anchoredRowEnd = false;
+        if (rowEndNumber == "") {
+          rowEnd = -1;
+        } else {
+          if (rowEndNumber.startsWith('\$')) {
+            anchoredRowEnd = true;
+            rowEndNumber = rowEndNumber.substring(1);
+          }
+          rowEnd = int.parse(rowEndNumber) - 1; // -1 because in the UI, index is from 1, internally index is from 0
+        }
 
         if (columnEnd == -1 && rowEnd == -1) { // it's a single cell
           engine.CellCoordinates startCell = new engine.CellCoordinates(rowStart, columnStart, sheet.id);
-          return new engine.CellRange.cell(startCell);
-
+          return new engine.CellRange.cell(startCell, anchoredRowStart, anchoredColumnStart);
         } else if (columnStart != -1 && rowStart != -1 && columnEnd != -1 && rowEnd != -1) { // rectangular range
           engine.CellCoordinates startCell = new engine.CellCoordinates(rowStart, columnStart, sheet.id);
           engine.CellCoordinates endCell = new engine.CellCoordinates(rowEnd, columnEnd, sheet.id);
-          return new engine.CellRange.range(startCell, endCell);
+          return new engine.CellRange.range(startCell, endCell, anchoredRowStart, anchoredColumnStart, anchoredRowEnd, anchoredColumnEnd);
 
         } else { // TODO: all other ranges (column ranges and row ranges)
           throw "TODO: range type not supported yet";
@@ -182,13 +217,16 @@ class SpreadsheetEngineViewModel {
     }
     if (contents is engine.CellRange) {
       int sheetId = contents.sheetId == cellFrom.sheetId ? cellTo.sheetId : contents.sheetId;
+
       return new engine.CellRange.range(
-        new engine.CellCoordinates(contents.topLeftCell.row + cellTo.row - cellFrom.row,
-                                    contents.topLeftCell.col + cellTo.col - cellFrom.col,
-                                    sheetId),
-        new engine.CellCoordinates(contents.bottomRightCell.row + cellTo.row - cellFrom.row,
-                                    contents.bottomRightCell.col + cellTo.col - cellFrom.col,
-                                    sheetId));
+        new engine.CellCoordinates(contents.topLeftCellAnchoredRow ? contents.topLeftCell.row : contents.topLeftCell.row + cellTo.row - cellFrom.row,
+                                   contents.topLeftCellAnchoredCol ? contents.topLeftCell.col : contents.topLeftCell.col + cellTo.col - cellFrom.col,
+                                   sheetId),
+        new engine.CellCoordinates(contents.bottomRightCellAnchoredRow ? contents.bottomRightCell.row : contents.bottomRightCell.row + cellTo.row - cellFrom.row,
+                                   contents.bottomRightCellAnchoredCol ? contents.bottomRightCell.col : contents.bottomRightCell.col + cellTo.col - cellFrom.col,
+                                   sheetId),
+        contents.topLeftCellAnchoredRow, contents.topLeftCellAnchoredCol,
+        contents.bottomRightCellAnchoredRow, contents.bottomRightCellAnchoredCol);
     }
     throw "Unexpected cell contents type, got ${contents.runtimeType}";
   }
@@ -253,12 +291,19 @@ class SpreadsheetEngineViewModel {
 
       if (contents.isCell) {
         String columnName = refSheet.activeColumnNames[contents.topLeftCell.col];
-        return '$sheetRef$columnName${contents.topLeftCell.row + 1}';
+        String columnAnchor = contents.topLeftCellAnchoredCol ? '\$' : '';
+        String rowAnchor = contents.topLeftCellAnchoredRow ? '\$' : '';
+        return '$sheetRef$columnAnchor$columnName$rowAnchor${contents.topLeftCell.row + 1}';
 
       } else {
         String columnNameTopLeft = refSheet.activeColumnNames[contents.topLeftCell.col];
-        String columnNameBottomRight = refSheet.activeColumnNames[contents.bottomRightCell.col];
-        return '$sheetRef$columnNameTopLeft${contents.topLeftCell.row + 1}:$columnNameBottomRight${contents.bottomRightCell.row + 1}';
+        String columnAnchorTopLeft = contents.topLeftCellAnchoredCol ? '\$' : '';
+        String rowAnchorTopLeft = contents.topLeftCellAnchoredRow ? '\$' : '';
+        String columnNameBtmRight = refSheet.activeColumnNames[contents.bottomRightCell.col];
+        String columnAnchorBtmRight = contents.bottomRightCellAnchoredCol ? '\$' : '';
+        String rowAnchorBtmRight = contents.bottomRightCellAnchoredRow ? '\$' : '';
+        return '$sheetRef$columnAnchorTopLeft$columnNameTopLeft$rowAnchorTopLeft${contents.topLeftCell.row + 1}:'
+                        '$columnAnchorBtmRight$columnNameBtmRight$rowAnchorBtmRight${contents.bottomRightCell.row + 1}';
       }
     }
     throw "Unknown type of formula, got ${contents.runtimeType}";
