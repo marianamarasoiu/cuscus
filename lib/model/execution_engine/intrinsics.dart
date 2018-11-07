@@ -200,7 +200,16 @@ LiteralDoubleValue i_acot(LiteralValue x) {
   _checkType(x, LiteralDoubleValue);
   return new LiteralDoubleValue(math.atan(1/x.value));
 }
-
+LiteralDoubleValue i_deg(LiteralValue x) {
+  if (x is EmptyValue) x = new LiteralDoubleValue(0.0);
+  _checkType(x, LiteralDoubleValue);
+  return new LiteralDoubleValue(x.value * 180.0 / math.pi);
+}
+LiteralDoubleValue i_rad(LiteralValue x) {
+  if (x is EmptyValue) x = new LiteralDoubleValue(0.0);
+  _checkType(x, LiteralDoubleValue);
+  return new LiteralDoubleValue(x.value * math.pi / 180.0);
+}
 LiteralDoubleValue i_abs(LiteralValue x) {
   if (x is EmptyValue) x = new LiteralDoubleValue(0.0);
   _checkType(x, LiteralDoubleValue);

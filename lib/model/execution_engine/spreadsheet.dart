@@ -446,6 +446,10 @@ LiteralValue evalSimpleFunctionCall(String functionName, List<LiteralValue> valu
       return i_atan2(values[0], values[1]);
     case "acot":
       return i_acot(values[0]);
+    case "rad":
+      return i_rad(values[0]);
+    case "deg":
+      return i_deg(values[0]);
     case "abs":
       return i_abs(values[0]);
     case "ceiling":
