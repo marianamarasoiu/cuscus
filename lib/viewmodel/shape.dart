@@ -122,7 +122,11 @@ class RectViewModel extends RectShapeViewModel {
       properties[property] = node.computedValue.value;
 
       shapeView.element.classes.add('animate');
-      new Timer(new Duration(seconds: 1), () => shapeView.element.classes.remove('animate'));
+      if (ShapeViewModel.selectedShape == this) hideBoundingBox();
+      new Timer(new Duration(seconds: 1), () {
+        shapeView.element.classes.remove('animate');
+        if (ShapeViewModel.selectedShape == this) showBoundingBox();
+      });
 
       shapeView.setAttribute(rectPropertyToSvgProperty[property], node.computedValue.toString());
     });
@@ -136,7 +140,11 @@ class RectViewModel extends RectShapeViewModel {
         updatedFromDirectEdit[property] = false;
       } else {
         shapeView.element.classes.add('animate');
-        new Timer(new Duration(seconds: 1), () => shapeView.element.classes.remove('animate'));
+        if (ShapeViewModel.selectedShape == this) hideBoundingBox();
+        new Timer(new Duration(seconds: 1), () {
+          shapeView.element.classes.remove('animate');
+          if (ShapeViewModel.selectedShape == this) showBoundingBox();
+        });
         setupListenersForCell(property, cell);
       }
 
@@ -186,6 +194,9 @@ class RectViewModel extends RectShapeViewModel {
         rect.height = height;
       }
     };
+  }
+  void hideBoundingBox() {
+    RectShapeBoundingBoxViewModel.hide();
   }
 }
 
@@ -262,7 +273,11 @@ class LineViewModel extends LineShapeViewModel {
       properties[property] = node.computedValue.value;
 
       shapeView.element.classes.add('animate');
-      new Timer(new Duration(seconds: 1), () => shapeView.element.classes.remove('animate'));
+      if (ShapeViewModel.selectedShape == this) hideBoundingBox();
+      new Timer(new Duration(seconds: 1), () {
+        shapeView.element.classes.remove('animate');
+        if (ShapeViewModel.selectedShape == this) showBoundingBox();
+      });
 
       shapeView.setAttribute(linePropertyToSvgProperty[property], node.computedValue.toString());
     });
@@ -276,7 +291,11 @@ class LineViewModel extends LineShapeViewModel {
         updatedFromDirectEdit[property] = false;
       } else {
         shapeView.element.classes.add('animate');
-        new Timer(new Duration(seconds: 1), () => shapeView.element.classes.remove('animate'));
+        if (ShapeViewModel.selectedShape == this) hideBoundingBox();
+        new Timer(new Duration(seconds: 1), () {
+          shapeView.element.classes.remove('animate');
+          if (ShapeViewModel.selectedShape == this) showBoundingBox();
+        });
         setupListenersForCell(property, cell);
       }
 
@@ -326,5 +345,8 @@ class LineViewModel extends LineShapeViewModel {
         line.y2 = y2;
       }
     };
+  }
+  void hideBoundingBox() {
+    LineShapeBoundingBoxViewModel.hide();
   }
 }
