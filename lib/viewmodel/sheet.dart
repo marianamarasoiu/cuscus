@@ -78,18 +78,23 @@ abstract class SheetViewModel extends ObjectWithId {
 
     switch (type) {
       case GraphicMarkType.line:
+        name = name == null ? createName('Line') : name;
         sheet = new LineSheetViewModel(sheetbook, name, sheetInfo['row-count'], sheetInfo['sheet-id']);
         break;
       case GraphicMarkType.rect:
+      name = name == null ? createName('Rect') : name;
         sheet = new RectSheetViewModel(sheetbook, name, sheetInfo['row-count'], sheetInfo['sheet-id']);
         break;
       case GraphicMarkType.ellipse:
+        name = name == null ? createName('Ellipse') : name;
         sheet = new EllipseSheetViewModel(sheetbook, name, sheetInfo['row-count'], sheetInfo['sheet-id']);
         break;
       case GraphicMarkType.text:
+        name = name == null ? createName('Text') : name;
         sheet = new TextSheetViewModel(sheetbook, name, sheetInfo['row-count'], sheetInfo['sheet-id']);
         break;
       default:
+        name = name == null ? createName('Data') : name;
         sheet = new DataSheet(sheetbook, name, sheetInfo['row-count'], sheetInfo['column-count'], sheetInfo['sheet-id']);
         break;
     }
