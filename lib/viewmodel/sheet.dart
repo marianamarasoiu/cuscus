@@ -34,19 +34,19 @@ abstract class SheetViewModel extends ObjectWithId {
     SheetViewModel sheet;
     switch (type) {
       case GraphicMarkType.line:
-        sheet = new LineSheetViewModel(sheetbook, 'Line${_sheetCounter}', _defaultRowCount); // Rows and columns should come in by default, no need to pass them to the constructor. Loading from a .cus file or from a .csv file should add rows automatically
+        sheet = new LineSheetViewModel(sheetbook, createName('Line'), _defaultRowCount); // Rows and columns should come in by default, no need to pass them to the constructor. Loading from a .cus file or from a .csv file should add rows automatically
         break;
       case GraphicMarkType.rect:
-        sheet = new RectSheetViewModel(sheetbook, 'Rect${_sheetCounter}', _defaultRowCount);
+        sheet = new RectSheetViewModel(sheetbook, createName('Rect'), _defaultRowCount);
         break;
       case GraphicMarkType.ellipse:
-        sheet = new EllipseSheetViewModel(sheetbook, 'Ellipse${_sheetCounter}', _defaultRowCount);
+        sheet = new EllipseSheetViewModel(sheetbook, createName('Ellipse'), _defaultRowCount);
         break;
       case GraphicMarkType.text:
-        sheet = new TextSheetViewModel(sheetbook, 'Text${_sheetCounter}', _defaultRowCount);
+        sheet = new TextSheetViewModel(sheetbook, createName('Text'), _defaultRowCount);
         break;
       default:
-        sheet = new DataSheet(sheetbook, 'Data${_sheetCounter}', _defaultRowCount, _defaultColumnCount);
+        sheet = new DataSheet(sheetbook, createName('Data'), _defaultRowCount, _defaultColumnCount);
         break;
     }
     sheets.add(sheet);
@@ -70,12 +70,10 @@ abstract class SheetViewModel extends ObjectWithId {
       type = getGraphicMarkType(sheetInfo['type']);
     }
     String name = sheetInfo['name'];
-    if (name != null) {
+    if (name != null) { // Check that the name if it exists is unique
       if (sheets.where((sheet) => sheet.name == name).isNotEmpty) {
         throw "Cannot add sheet with the same name as existing sheet: $name";
       }
-    } else {
-      name = '${type}_${_sheetCounter}';
     }
 
     switch (type) {
@@ -109,6 +107,20 @@ abstract class SheetViewModel extends ObjectWithId {
     }
 
     return sheet;
+  }
+
+  static String createName(String prefix) {
+    String name = '$prefix${_sheetCounter}';
+    bool nameFound = false;
+    for (int i = 0; i < 10000; i++) {
+      if (sheets.where((sheet) => sheet.name == name).isEmpty) {
+        nameFound = true;
+        continue;
+      }
+      name = '$prefix${_sheetCounter}';
+    }
+    if (nameFound) return name;
+    throw "Couldn't find a name for the new sheet, attempted 10000 names";
   }
 
   _initCells(int rowCount, int columnCount) {
