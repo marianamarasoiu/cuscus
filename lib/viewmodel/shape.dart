@@ -77,7 +77,9 @@ class RectViewModel extends RectShapeViewModel {
       num column = columns.indexOf(rectPropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
       engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
-      // properties[property] = node.computedValue.value;
+      if (node.computedValue != null) {
+        properties[property] = node.computedValue.value;
+      }
 
       setupListenersForCell(property, cell);
     });
@@ -127,7 +129,6 @@ class RectViewModel extends RectShapeViewModel {
 
     // This is when the node has been edited directly, which results in a replacement in the engine.
     node.whenDone.then((_) {
-      print('when done');
       engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
       properties[property] = node.computedValue.value;
 
@@ -216,7 +217,9 @@ class LineViewModel extends LineShapeViewModel {
       num column = columns.indexOf(linePropertyToColumnName[property]);
       engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
       engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
-      // properties[property] = node.computedValue.value;
+      if (node.computedValue != null) {
+        properties[property] = node.computedValue.value;
+      }
 
       setupListenersForCell(property, cell);
     });
