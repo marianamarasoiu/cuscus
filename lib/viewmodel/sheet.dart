@@ -244,17 +244,18 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
   }
 
   void fillInCellsWithCell(Map<int, List<int>> cellsToFillIn, CellViewModel sourceCell) {
-    cells[sourceCell.row].forEach((cell) {
+    cells[sourceCell.row].forEach((cellFromSourceRow) {
       Map<int, List<int>> newCellsToFillIn = {};
       cellsToFillIn.forEach((row, columns) {
         if (layerViewModel.shapes.containsKey(row)) {
-          if (cell != sourceCell) return;
-          newCellsToFillIn[row] = [cell.column];
+          if (cellFromSourceRow != sourceCell) return;
+          newCellsToFillIn[row] = [cellFromSourceRow.column];
           return;
         }
-        newCellsToFillIn[row] = [cell.column];
+        newCellsToFillIn[row] = [cellFromSourceRow.column];
       });
-      super.fillInCellsWithCell(newCellsToFillIn, cell);
+      print(newCellsToFillIn);
+      super.fillInCellsWithCell(newCellsToFillIn, cellFromSourceRow);
     });
     cellsToFillIn.forEach((row, _) {
       if (layerViewModel.shapes.containsKey(row)) return;

@@ -421,49 +421,114 @@ class AppController {
 
             DivElement fillHandle = mouseDown.target;
             DivElement selectionBorder = fillHandle.nextElementSibling;
+            int startPositionX = mouseDown.client.x;
             int startPositionY = mouseDown.client.y;
-            int cellWidth = CellViewModel.selectedCell.cellView.uiElement.client.width;
-            int cellHeight = CellViewModel.selectedCell.cellView.uiElement.client.height;
-
+            int cellWidth = CellViewModel.selectedCell.cellView.uiElement.client.width + 1; // +1 for border
+            int cellHeight = CellViewModel.selectedCell.cellView.uiElement.client.height + 1; // +1 for border
+            int selectionBorderTop = CellViewModel.selectedCell.cellView.uiElement.offset.top + 21;
+            int selectionBorderLeft = CellViewModel.selectedCell.cellView.uiElement.offset.left + 31;
+            int rowsOffset = 0;
+            int colsOffset = 0;
             selectionBorder.style
               ..visibility = 'visible'
-              ..top = '${CellViewModel.selectedCell.cellView.uiElement.offset.top + 21}px'
-              ..left = '${CellViewModel.selectedCell.cellView.uiElement.offset.left + 31}px'
-              ..width = '${cellWidth}px';
+              ..top = '${selectionBorderTop}px'
+              ..left = '${selectionBorderLeft}px'
+              ..width = '${cellWidth - 1}px'
+              ..height = '${cellHeight - 1}px';
 
             StreamSubscription dragMoveSub;
             StreamSubscription dragEndSub;
 
             dragMoveSub = document.onMouseMove.listen((MouseEvent mouseMove) {
+              int xDelta = mouseMove.client.x - startPositionX;
               int yDelta = mouseMove.client.y - startPositionY;
-              if (yDelta < 0) {
-                selectionBorder.style.height = '${cellHeight}px';
-                return;
+
+              switch(xDelta.abs() > yDelta.abs()) {
+                case true:
+                  rowsOffset = 0;
+                  colsOffset = ((xDelta.toDouble() - cellWidth.toDouble() / 2) / cellWidth.toDouble()).floor() + 2;
+
+                  int selectionBorderWidth = cellWidth * colsOffset.abs() - 1;
+                  if (colsOffset > 0) {
+                    selectionBorder.style
+                      ..top = '${selectionBorderTop}px'
+                      ..left = '${selectionBorderLeft}px'
+                      ..width = '${selectionBorderWidth}px'
+                      ..height = '${cellHeight - 1}px';
+                  } else {
+                    selectionBorder.style
+                      ..top = '${selectionBorderTop}px'
+                      ..left = '${selectionBorderLeft - selectionBorderWidth}px'
+                      ..width = '${selectionBorderWidth}px'
+                      ..height = '${cellHeight - 1}px';
+                  }
+                  break;
+                case false:
+                  rowsOffset = ((yDelta.toDouble() - cellHeight.toDouble() / 2) / cellHeight.toDouble()).floor() + 2;
+                  colsOffset = 0;
+
+                  int selectionBorderHeight = cellHeight * rowsOffset.abs() - 1;
+                  if (rowsOffset > 0) {
+                    selectionBorder.style
+                      ..top = '${selectionBorderTop}px'
+                      ..left = '${selectionBorderLeft}px'
+                      ..width = '${cellWidth - 1}px'
+                      ..height = '${selectionBorderHeight}px';
+                  } else {
+                    selectionBorder.style
+                      ..top = '${selectionBorderTop - selectionBorderHeight}px'
+                      ..left = '${selectionBorderLeft}px'
+                      ..width = '${cellWidth - 1}px'
+                      ..height = '${selectionBorderHeight}px';
+                  }
+                  break;
               }
-
-              int rowsDown = (yDelta.toDouble() / cellHeight.toDouble()).floor() + 2;
-
-              selectionBorder.style.height = '${(cellHeight + 1) * rowsDown - 1}px';
             });
 
             dragEndSub = document.onMouseUp.listen((MouseEvent mouseUp) {
-              int yDelta = mouseUp.client.y - startPositionY;
               selectionBorder.style.visibility = 'hidden';
 
-              if (yDelta < 0) {
-                return;
-              }
-
-              int rowsDown = (yDelta.toDouble() / cellHeight.toDouble()).floor() + 2;
               Map<int, List<int>> cellsToFillIn = {};
-              for (int row = CellViewModel.selectedCell.row + 1; row < CellViewModel.selectedCell.row + rowsDown; row++) {
-                cellsToFillIn[row] = [CellViewModel.selectedCell.column];
+              int newActiveCellRow = CellViewModel.selectedCell.row;
+              int newActiveCellCol = CellViewModel.selectedCell.column;
+              switch(rowsOffset != 0) {
+                case true:
+                  int startRow, endRow;
+                  if (rowsOffset.isNegative) {
+                    startRow = CellViewModel.selectedCell.row + rowsOffset;
+                    endRow = CellViewModel.selectedCell.row;
+                    newActiveCellRow = CellViewModel.selectedCell.row + rowsOffset;
+                  } else {
+                    startRow = CellViewModel.selectedCell.row;
+                    endRow = CellViewModel.selectedCell.row + rowsOffset;
+                    newActiveCellRow = CellViewModel.selectedCell.row + rowsOffset - 1;
+                  }
+                  for (int row = startRow; row < endRow; row++) {
+                    if (row == CellViewModel.selectedCell.row) continue;
+                    cellsToFillIn[row] = [CellViewModel.selectedCell.column];
+                  }
+                  break;
+                case false:
+                  int startCol, endCol;
+                  if (colsOffset.isNegative) {
+                    startCol = CellViewModel.selectedCell.column + colsOffset;
+                    endCol = CellViewModel.selectedCell.column;
+                    newActiveCellCol = CellViewModel.selectedCell.column + colsOffset;
+                  } else {
+                    startCol = CellViewModel.selectedCell.column;
+                    endCol = CellViewModel.selectedCell.column + colsOffset;
+                    newActiveCellCol = CellViewModel.selectedCell.column + colsOffset - 1;
+                  }
+                  cellsToFillIn[CellViewModel.selectedCell.row] = [];
+                  for (int col = startCol; col < endCol; col++) {
+                    if (col == CellViewModel.selectedCell.column) continue;
+                    cellsToFillIn[CellViewModel.selectedCell.row].add(col);
+                  }
+                  break;
               }
-
-              selectionBorder.style.height = '0px';
 
               SheetViewModel.activeSheet.fillInCellsWithCell(cellsToFillIn, CellViewModel.selectedCell);
-              SheetViewModel.activeSheet.cells[CellViewModel.selectedCell.row + rowsDown - 1][CellViewModel.selectedCell.column].select();
+              SheetViewModel.activeSheet.cells[newActiveCellRow][newActiveCellCol].select();
 
               dragMoveSub.cancel();
               dragEndSub.cancel();
