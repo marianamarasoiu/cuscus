@@ -42,6 +42,7 @@ enum UIState {
   drawing,
   cellEditing,
   renamingSheet,
+  sheetContextMenuVisible
 }
 
 enum UIAction {
@@ -57,7 +58,9 @@ enum UIAction {
   selectSheet,
   startRenameSheet,
   endRenameSheet,
+  openSheetContextMenu,
   deleteSheet,
+  duplicateSheet,
 
   // actions on spreadsheet cells
   clickOnCell,
@@ -207,7 +210,6 @@ class AppController {
     });
 
     view.visSvgContainer.onMouseDown.listen((mouseDown) {
-      print(state);
       command(UIAction.mouseDownOnCanvas, mouseDown);
     });
     view.visSvgContainer.onMouseWheel.listen(view.startZooming);
@@ -547,6 +549,11 @@ class AppController {
             state = UIState.idle;
             break;
 
+          case UIAction.openSheetContextMenu:
+            view.SheetbookView.showContextMenuForTab(data);
+            state = UIState.sheetContextMenuVisible;
+            break;
+
           default:
             break;
         }
@@ -673,6 +680,9 @@ class AppController {
         }
         break;
 
+      /**
+       * State: renamingSheet
+       */
       case UIState.renamingSheet:
         switch (action) {
           case UIAction.endRenameSheet:
@@ -688,15 +698,44 @@ class AppController {
             break;
         }
         break;
+      
+      /**
+       * State: sheetContextMenuVisible
+       */
+      case UIState.sheetContextMenuVisible:
+        switch (action) {
+          case UIAction.clickOnCanvas:
+          case UIAction.clickOnCell:
+          case UIAction.clickOnFormulaBar:
+          case UIAction.clickOnShape:
+          case UIAction.escape:
+          case UIAction.doubleClickOnCell:
+            view.SheetbookView.hideContextMenu();
+            state = UIState.idle;
+            break;
+          case UIAction.duplicateSheet:
+            SheetViewModel sheet = data;
+            var newSheetInfo = sheet.save();
+            newSheetInfo.remove('sheet-id');
+            newSheetInfo.remove('name');
+            new SheetViewModel.load(newSheetInfo, sheet.sheetbook);
+            view.SheetbookView.hideContextMenu();
+            state = UIState.idle;
+            break;
+          case UIAction.deleteSheet:
+            SheetViewModel sheet = data;
+            // TODO: implement sheet deletion
+            view.SheetbookView.hideContextMenu();
+            state = UIState.idle;
+            break;
+          default:
+        }
     }
   }
 
   LayerViewModel _getLayerOfElement(Element element) {
-    print('asa');
     svg.GElement layerContainer = _getAncestors(element).firstWhere((ancestor) => ancestor.classes.contains('layer'));
-    print(layerContainer);
     int layerId = int.parse(layerContainer.getAttribute('data-layer-id'));
-    print(layerId);
     return LayerViewModel.layers.singleWhere((layer) => layer.id == layerId);
   }
 

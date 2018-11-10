@@ -40,6 +40,8 @@ class SheetbookView {
          ..value = 'sheetbook${sheetbookViewModel.id}-tab${sheetViewModel.id}'
          ..checked = true;
 
+    SpanElement labelWrapper = new SpanElement();
+    labelWrapper.classes.add('label-wrapper');
     LabelElement label = new LabelElement();
     label..id = 'sheetbook${sheetbookViewModel.id}-label${sheetViewModel.id}'
          ..setAttribute('for', input.id)
@@ -74,16 +76,30 @@ class SheetbookView {
         }
       });
     });
-    label.onClick.listen((_) => sheetViewModel.focus());
+    label.onClick.listen((_) => sheetViewModel.focus());    
+    labelWrapper.append(label);
 
-    // MenuElement contextMenu = new MenuElement();
-    // DivElement deleteItem = new DivElement();
-    // deleteItem.text = 'Delete sheet';
-    // deleteItem.onClick.listen((_) => viewmodel.appController.command(viewmodel.UIAction.deleteSheet, sheetViewModel));
-    // contextMenu.append(deleteItem);
-    // label.contextMenu = contextMenu;
+    MenuElement contextMenu = new MenuElement();
+    contextMenu.id = 'contextmenu-${sheetbookViewModel.id}';
+    contextMenu.classes.add('context-menu');
 
-    tabContainer.insertAllBefore([input, label], addSheetButton);
+    contextMenu.append(new DivElement()
+      ..text = 'Duplicate sheet'
+      ..classes.add('context-menu-item')
+      ..onClick.listen((_) => viewmodel.appController.command(viewmodel.UIAction.duplicateSheet, sheetViewModel)));
+
+    contextMenu.append(new DivElement()
+      ..text = 'Delete sheet'
+      ..classes.add('context-menu-item')
+      ..onClick.listen((_) => viewmodel.appController.command(viewmodel.UIAction.deleteSheet, sheetViewModel)));
+    labelWrapper.append(contextMenu);
+
+    labelWrapper.append(
+      new SpanElement()
+        ..classes.add('context-menu-arrow')
+        ..onClick.listen((click) => viewmodel.appController.command(viewmodel.UIAction.openSheetContextMenu, contextMenu)));
+
+    tabContainer.insertAllBefore([input, labelWrapper], addSheetButton);
 
     DivElement sheetElementWrapper = new DivElement();
     sheetElementWrapper..classes.add('sheet')
@@ -109,5 +125,16 @@ class SheetbookView {
     SheetView sheetView = sheetViews.singleWhere((sheetView) => sheetView.sheetViewModel == sheet);
     sheetView.remove();
     sheetViews.remove(sheetView);
+  }
+
+  static MenuElement _visibleContextMenu;
+
+  static showContextMenuForTab(MenuElement contextMenu) {
+    _visibleContextMenu = contextMenu;
+    _visibleContextMenu.style.visibility = 'visible';
+  }
+  static hideContextMenu() {
+    _visibleContextMenu.style.visibility = 'hidden';
+    _visibleContextMenu = null;
   }
 }

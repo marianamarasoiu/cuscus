@@ -94,7 +94,7 @@ html, body{
   display: none;
 }
 
-.tab-container label {
+.tab-container .label-wrapper {
   display: inline-block;
   margin: 0 0 -1px;
   padding: 2px 12px;
@@ -105,12 +105,12 @@ html, body{
   border-radius: 3px 3px 0 0;
 }
 
-.tab-container label:hover {
+.tab-container .label-wrapper:hover {
   color: #555;
   cursor: pointer;
 }
 
-.tab-container input:checked + label {
+.tab-container input:checked + .label-wrapper {
   color: #555;
   border: 1px solid #aaaaaa;
   background: #FFF;
@@ -127,6 +127,43 @@ html, body{
 
 .tab-container .add-sheet-btn:hover {
   color: #555;
+  cursor: pointer;
+}
+
+.tab-container .context-menu {
+  position: absolute;
+  background: white;
+  border: 1px solid #aaaaaa;
+  border-radius: 3px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  visibility: hidden;
+  z-index: 50;
+  font-weight: 400;
+  text-align: left;
+}
+
+.tab-container .context-menu-item {
+  padding: 3px 6px;
+}
+
+.tab-container .context-menu-item:hover {
+  padding: 3px 6px;
+  background: #eeeeee;
+}
+
+.tab-container .context-menu-arrow {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  display: inline-block;
+  margin-left: 5px;
+  margin-bottom: 1px;
+  border-width: 5px 5px 0 5px;
+  border-color: #888 transparent transparent transparent;
+}
+
+.tab-container .context-menu-arrow:hover {
+  border-color: #555 transparent transparent transparent;
   cursor: pointer;
 }
 
