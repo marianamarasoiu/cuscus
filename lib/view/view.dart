@@ -5,6 +5,8 @@ import 'dart:html';
 import 'dart:math' as math;
 import 'dart:svg' as svg;
 
+import 'package:csv/csv.dart' as csv;
+
 // Import the viewmodel
 import 'package:cuscus/viewmodel/viewmodel.dart' as viewmodel;
 

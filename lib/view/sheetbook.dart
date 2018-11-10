@@ -4,6 +4,7 @@ class SheetbookView {
   DivElement sheetbookElement;
   DivElement tabContainer;
   DivElement addSheetButton;
+  DivElement importCsvButton;
   DivElement sheetContainer;
 
   viewmodel.SheetbookViewModel sheetbookViewModel;
@@ -16,9 +17,39 @@ class SheetbookView {
     addSheetButton = new DivElement()
       ..classes.add('add-sheet-btn')
       ..text = '+'
-      ..onClick.listen(((_) => viewmodel.appController.command(viewmodel.UIAction.createNewSheet, sheetbookViewModel)));
-    tabContainer = new DivElement()..classes.add('tab-container');
-    tabContainer.append(addSheetButton);
+      ..title = 'Add empty sheet'
+      ..onClick.listen((_) => viewmodel.appController.command(viewmodel.UIAction.createNewSheet, sheetbookViewModel));
+    
+    importCsvButton = new DivElement()
+      ..classes.add('import-csv-btn')
+      ..title = 'Add sheet from .csv file';
+    
+    InputElement importCsvInput = new InputElement(type: 'file');
+    importCsvInput
+      ..classes.add('import-csv-input')
+      ..accept = '.csv'
+      ..onChange.listen((event) {
+        utils.stopDefaultBehaviour(event);
+        var fileReader = new FileReader();
+        fileReader.onLoadEnd.listen((event) {
+          List<List<dynamic>> rowsAsListOfValues = const csv.CsvToListConverter().convert(fileReader.result, eol: '\n');
+          String sheetName = importCsvInput.value.split('\\').last.replaceAll('.csv', '').replaceAll('-', '');
+          viewmodel.SheetViewModel sheet = viewmodel.SheetViewModel.loadFromCsv(rowsAsListOfValues, sheetName, sheetbookViewModel);
+          sheet.focus();
+          importCsvInput.value = "";
+          viewmodel.SpreadsheetEngineViewModel.spreadsheet.updateDependencyGraph();
+        });
+        fileReader.readAsText(importCsvInput.files.first);
+      });
+    importCsvButton.append(new AnchorElement()
+      ..text = '⤓'
+      ..append(importCsvInput)
+    );
+    
+    tabContainer = new DivElement()
+      ..classes.add('tab-container')
+      ..append(addSheetButton)
+      ..append(importCsvButton);
 
     sheetContainer = new DivElement()..classes.add('sheet-container');
 

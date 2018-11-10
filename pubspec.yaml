@@ -8,6 +8,7 @@ environment:
 dependencies:
   petitparser: any
   js: any
+  csv: any
   possum:
     git: git://github.com/lukechurch/possum.git
 

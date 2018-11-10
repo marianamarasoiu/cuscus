@@ -116,7 +116,8 @@ html, body{
   background: #FFF;
 }
 
-.tab-container .add-sheet-btn {
+.tab-container .add-sheet-btn,
+.tab-container .import-csv-btn {
   display: inline-block;
   padding: 0px 6px;
   font-weight: 600;
@@ -125,7 +126,14 @@ html, body{
   color: #888;
 }
 
-.tab-container .add-sheet-btn:hover {
+.tab-container .import-csv-btn {
+  position: relative;
+  font-size: 10px;
+  vertical-align: text-bottom;
+}
+
+.tab-container .add-sheet-btn:hover,
+.tab-container .import-csv-btn:hover {
   color: #555;
   cursor: pointer;
 }
@@ -358,7 +366,8 @@ td.index {
   position: relative;
 }
 
-.file-tool.button input {
+.file-tool.button input,
+.import-csv-btn input {
   position: absolute;
   left: 0;
   top: 0;

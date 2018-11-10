@@ -114,15 +114,42 @@ abstract class SheetViewModel extends ObjectWithId {
     return sheet;
   }
 
-  static String createName(String prefix) {
-    String name = '$prefix${_sheetCounter}';
+  factory SheetViewModel.loadFromCsv(List<List<dynamic>> rowsAsListOfValues, String name, SheetbookViewModel sheetbook) {
+    SheetViewModel sheet;
+
+    // If the name is not unique, add a numeric prefix to it to make it unique
+    if (name != null) { // Check that the name if it exists is unique
+      if (sheets.where((sheet) => sheet.name == name).isNotEmpty) {
+        name = createName('${name}_');
+      }
+    } else {
+      name = createName('Data');
+    }
+
+    int rows = rowsAsListOfValues.length + 20;
+    int cols = rowsAsListOfValues.isEmpty ? 10 : rowsAsListOfValues.first.isEmpty ? 10 : rowsAsListOfValues.first.length + 3;
+    sheet = new DataSheet(sheetbook, name, rows, cols);
+
+    sheets.add(sheet);
+    sheetbook.sheets.add(sheet);
+    for (int row = 0; row < rowsAsListOfValues.length; row++) {
+      if (rowsAsListOfValues[row].isEmpty) continue;
+      for (int col = 0; col < rowsAsListOfValues.first.length; col++) {
+        sheet.cells[row][col].setContentsString(rowsAsListOfValues[row][col].toString());
+      }
+    }
+    return sheet;
+  }
+
+  static String createName(String prefix, [String suffix = '']) {
+    String name = '$prefix${_sheetCounter}$suffix';
     bool nameFound = false;
     for (int i = 0; i < 10000; i++) {
       if (sheets.where((sheet) => sheet.name == name).isEmpty) {
         nameFound = true;
         continue;
       }
-      name = '$prefix${_sheetCounter}';
+      name = '$prefix${_sheetCounter}$suffix';
     }
     if (nameFound) return name;
     throw "Couldn't find a name for the new sheet, attempted 10000 names";
@@ -361,14 +388,14 @@ final List<String> _letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
 List<String> generateColumnNameLetters(int columnCount) {
   if (columnCount <= _letters.length) {
     return _letters.getRange(0, columnCount).toList();
-  } else {
-    List<String> resultLetters = new List.from(_letters);
-    _letters.forEach((String firstLetter) {
-      resultLetters.addAll(_letters.map((String secondLetter) => '$firstLetter$secondLetter'));
-      if (resultLetters.length > columnCount) {
-        return resultLetters.getRange(0, columnCount).toList();
-      }
-    });
-    throw "Too many columns requested, max is ${resultLetters.length}";
   }
+  List<String> resultLetters = new List.from(_letters);
+  for (int i = 0; i < _letters.length; i++) {
+    String firstLetter = _letters[i];
+    resultLetters.addAll(_letters.map((String secondLetter) => '$firstLetter$secondLetter'));
+    if (resultLetters.length > columnCount) {
+      return resultLetters.getRange(0, columnCount).toList();
+    }
+  }
+  throw "Too many columns requested ($columnCount), max is ${resultLetters.length}";
 }
