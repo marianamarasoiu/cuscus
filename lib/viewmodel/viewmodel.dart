@@ -167,6 +167,8 @@ class AppController {
   UIState get state => _state;
   set state(UIState newState) => _state = newState;
 
+  CellViewModel clipboardCell;
+
   AppController() {
     setupListeners();
     loadEmptySession();
@@ -404,6 +406,20 @@ class AppController {
                 }
                 if (keyboardEvent.key == 'i') {
                   CellViewModel.selectedCell.cellView.uiElement.classes.toggle('italic');
+                }
+                if (keyboardEvent.key == 'c') {
+                  clipboardCell = CellViewModel.selectedCell;
+                }
+                if (keyboardEvent.key == 'v') {
+                  engine.CellContents newCellContents = SpreadsheetEngineViewModel.spreadsheet.makeRelativeCellContents(
+                    clipboardCell.cellContents,
+                    new engine.CellCoordinates(clipboardCell.row, clipboardCell.column, clipboardCell.sheetViewModel.id),
+                    new engine.CellCoordinates(CellViewModel.selectedCell.row, CellViewModel.selectedCell.column, CellViewModel.selectedCell.sheetViewModel.id));
+
+                  CellViewModel.selectedCell.setContents(newCellContents);
+                  CellViewModel.selectedCell.commitContents();
+                  CellViewModel.selectedCell.update();
+                  CellInputFormulaBarViewModel.contents = CellViewModel.selectedCell.formula;
                 }
               }
               return;
