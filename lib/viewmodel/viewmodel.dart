@@ -557,7 +557,10 @@ class AppController {
           case UIAction.startRenameSheet:
             state = UIState.renamingSheet;
             break;
-          
+          case UIAction.createNewSheet:
+            SheetbookViewModel sheetbook = data;
+            sheetbook.addSheet();
+            break;
           case UIAction.mouseDownOnCanvas:
             MouseEvent mouseDown = data;
             utils.stopDefaultBehaviour(mouseDown);
