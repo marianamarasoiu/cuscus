@@ -652,6 +652,7 @@ class RectShapeBoundingBoxView {
     _setHandlesAtCoords(x, y, width, height);
     handleGroup.attributes["visibility"] = "visible";
     _setBoundingBoxsAtCoords(x, y, width, height);
+    _setTentativeShapeAtCoords(x, y, width, height);
     group.attributes["visibility"] = "visible";
   }
 
@@ -984,6 +985,7 @@ class LineShapeBoundingBoxView {
     _setBoundingBoxsAtCoords(x1, y1, x2, y2);
     handleGroup.attributes["visibility"] = "visible";
     _setLineAtCoords(x1, y1, x2, y2);
+    _setTentativeShapeAtCoords(x1, y1, x2, y2);
     group.attributes["visibility"] = "visible";
   }
 
