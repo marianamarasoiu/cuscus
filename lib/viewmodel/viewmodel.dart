@@ -734,7 +734,10 @@ class AppController {
             var newSheetInfo = sheet.save();
             newSheetInfo.remove('sheet-id');
             newSheetInfo.remove('name');
-            new SheetViewModel.load(newSheetInfo, sheet.sheetbook);
+            SheetViewModel newSheet = new SheetViewModel.load(newSheetInfo, sheet.sheetbook);
+            newSheet.focus();
+            SpreadsheetEngineViewModel.spreadsheet.updateDependencyGraph();
+
             view.SheetbookView.hideContextMenu();
             state = UIState.idle;
             break;
