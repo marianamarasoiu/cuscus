@@ -13,7 +13,18 @@ class SheetbookView {
   List<SheetView> sheetViews = [];
 
   SheetbookView(this.sheetbookViewModel) {
-    // Create the sheetbook
+    tabContainer = new DivElement()..classes.add('tab-container');
+    sheetContainer = new DivElement()..classes.add('sheet-container');
+    sheetbookElement = new DivElement()..classes.add('sheetbook');
+    sheetbookElement.attributes['data-sheetbook-id'] = '${sheetbookViewModel.id}';
+    sheetbookElement.append(tabContainer);
+    sheetbookElement.append(sheetContainer);
+
+    DivElement container = sheetbooksBox.createNewInnerBox();
+    container.append(sheetbookElement);
+
+    if (sheetbookViewModel.type == viewmodel.SheetbookType.graphics) return;
+    // Data sheetbooks have Add new sheet and Import csv buttons
     addSheetButton = new DivElement()
       ..classes.add('add-sheet-btn')
       ..text = '+'
@@ -45,22 +56,10 @@ class SheetbookView {
       ..text = '⤓'
       ..append(importCsvInput)
     );
-    
-    tabContainer = new DivElement()
-      ..classes.add('tab-container')
+
+    tabContainer
       ..append(addSheetButton)
       ..append(importCsvButton);
-
-    sheetContainer = new DivElement()..classes.add('sheet-container');
-
-    sheetbookElement = new DivElement()..classes.add('sheetbook');
-    sheetbookElement.attributes['data-sheetbook-id'] = '${sheetbookViewModel.id}';
-    sheetbookElement.append(tabContainer);
-    sheetbookElement.append(sheetContainer);
-
-    // Add the sheetbook to the UI
-    DivElement container = sheetbooksBox.createNewInnerBox();
-    container.append(sheetbookElement);
   }
 
   addSheet(SheetView sheet) {
