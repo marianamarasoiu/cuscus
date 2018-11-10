@@ -289,7 +289,6 @@ class RectShapeBoundingBoxView {
       dragMoveSub = document.onMouseMove.listen((MouseEvent dragMove) {
         utils.stopDefaultBehaviour(dragMove);
         svg.Point mousePoint = getRelativePoint(getSvgPoint(dragMove.client.x, dragMove.client.y));
-        print(mousePoint.x);
         num movementX = mousePoint.x - startPoint.x;
         num newX = x;
         num newWidth = width + movementX;
