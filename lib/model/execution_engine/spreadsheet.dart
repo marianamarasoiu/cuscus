@@ -150,10 +150,10 @@ class SpreadsheetDepNode extends DepNode<CellContents> {
       functionName = functionCallOrOperation.functionName;
     } else if (functionCallOrOperation is BinaryOperation) {
       arguments = [functionCallOrOperation.lhsOperand, functionCallOrOperation.rhsOperand];
-      functionName = operationToFunctionName(functionCallOrOperation.operation);
+      functionName = binaryOperationToFunctionName(functionCallOrOperation.operation);
     } else if (functionCallOrOperation is UnaryOperation) {
       arguments = [functionCallOrOperation.operand];
-      functionName = operationToFunctionName(functionCallOrOperation.operation);
+      functionName = unaryOperationToFunctionName(functionCallOrOperation.operation);
     } else {
       throw "Function type not supported: ${functionCallOrOperation.runtimeType}";
     }
@@ -360,7 +360,7 @@ class CellCoordinates {
   }
 }
 
-String operationToFunctionName(String operation) {
+String binaryOperationToFunctionName(String operation) {
   switch (operation) {
     case "=":
       return "eq";
@@ -388,12 +388,18 @@ String operationToFunctionName(String operation) {
       return "pow";
     case "%":
       return "percent";
+  }
+  throw "Operation unsupported, got $operation";
+}
+
+String unaryOperationToFunctionName(String operation) {
+  switch (operation) {
     case "-":
       return "umin";
     case "+":
       return "uplus";
   }
-  throw "Operation unsupported, got $operation";
+  throw 'Unary operation unsupported, got $operation';
 }
 
 LiteralValue evalSimpleFunctionCall(String functionName, List<LiteralValue> values) {
