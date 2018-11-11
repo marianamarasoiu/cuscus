@@ -43,7 +43,7 @@ class SheetbookView {
         utils.stopDefaultBehaviour(event);
         var fileReader = new FileReader();
         fileReader.onLoadEnd.listen((event) {
-          List<List<dynamic>> rowsAsListOfValues = const csv.CsvToListConverter().convert(fileReader.result, eol: '\n');
+          List<List<dynamic>> rowsAsListOfValues = const csv.CsvToListConverter().convert(fileReader.result);
           String sheetName = importCsvInput.value.split('\\').last.replaceAll('.csv', '').replaceAll('-', '');
           viewmodel.SheetViewModel sheet = viewmodel.SheetViewModel.loadFromCsv(rowsAsListOfValues, sheetName, sheetbookViewModel);
           sheet.focus();
