@@ -399,7 +399,7 @@ class AppController {
           case UIAction.otherKey:
             KeyboardEvent keyboardEvent = data;
 
-            if (keyboardEvent.ctrlKey || keyboardEvent.metaKey) {
+            if (keyboardEvent.ctrlKey || keyboardEvent.metaKey || keyboardEvent.altKey || keyboardEvent.key == 'CapsLock') {
               if (keyboardEvent.metaKey) {
                 if (keyboardEvent.key == 'b') {
                   CellViewModel.selectedCell.cellView.uiElement.classes.toggle('bold');
@@ -749,7 +749,7 @@ class AppController {
             break;
           case UIAction.deleteSheet:
             SheetViewModel sheet = data;
-            // TODO: implement sheet deletion
+            sheet.delete();
             view.SheetbookView.hideContextMenu();
             state = UIState.idle;
             break;
