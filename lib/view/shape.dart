@@ -39,6 +39,53 @@ class RectView extends RectShapeView {
   num get height => shapeViewModel.properties[viewmodel.Rect.height];
 }
 
+class TextView extends RectShapeView {
+  TextView(viewmodel.TextViewModel shapeViewModel) {
+    this.shapeViewModel = shapeViewModel;
+    element = new svg.TextElement();
+    element.attributes['data-index'] = '${shapeViewModel.index}';
+    element.classes.add('shape');
+
+    shapeViewModel.properties.forEach(
+      (property, value) => element.attributes[viewmodel.textPropertyToSvgProperty[property]] = value.toString());
+    element.text = shapeViewModel.properties[viewmodel.Text.content];
+  }
+
+  num get x => shapeViewModel.properties[viewmodel.Text.x];
+  num get y => shapeViewModel.properties[viewmodel.Text.y] - renderedTextSize()['height'];
+  num get width => renderedTextSize()['width'];
+  num get height => renderedTextSize()['height'];
+  String get content => shapeViewModel.properties[viewmodel.Text.content];
+
+  setAttribute(String name, String value) {
+    if (name == viewmodel.textPropertyToSvgProperty[viewmodel.Text.content]) {
+      element.text = value;
+      return;
+    }
+    element.setAttribute(name, value);
+  }
+
+  Map<String, num> renderedTextSize() {
+    svg.SvgSvgElement hiddenCanvas = new svg.SvgSvgElement();
+    hiddenCanvas.style.visibility = 'hidden';
+    document.body.append(hiddenCanvas);
+    
+    svg.TextElement text = new svg.TextElement();
+    text
+      ..style.visibility = 'hidden'
+      ..text = element.text;
+    hiddenCanvas.append(text);
+
+    var bRect = text.getBoundingClientRect();
+    hiddenCanvas.remove();
+
+    return {
+      'width': bRect.width,
+      'height': bRect.height
+    };
+  }
+}
+
 class LineView extends LineShapeView {
   LineView(viewmodel.LineShapeViewModel shapeViewModel) {
     this.shapeViewModel = shapeViewModel;

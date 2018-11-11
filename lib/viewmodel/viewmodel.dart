@@ -630,6 +630,9 @@ class AppController {
               case GraphicMarkType.line:
                 sheet.layerViewModel.addShape(0, {Line.x1: shapeData['x1'], Line.y1: shapeData['y1'], Line.x2: shapeData['x2'], Line.y2: shapeData['y2']});
                 break;
+              case GraphicMarkType.text:
+                sheet.layerViewModel.addShape(0, {Text.x: shapeData['x'], Text.y: shapeData['y']});
+                break;
               default:
                 break;
             }

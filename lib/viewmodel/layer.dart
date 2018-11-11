@@ -28,9 +28,9 @@ abstract class LayerViewModel extends ObjectWithId {
       // case GraphicMarkType.ellipse:
       //   layer = new EllipseLayerViewModel._(layerbook);
       //   break;
-      // case GraphicMarkType.text:
-      //   layer = new TextLayerViewModel._(layerbook);
-      //   break;
+      case GraphicMarkType.text:
+        layer = new TextLayerViewModel._(layerbook);
+        break;
       default:
         throw "Unsupported type $type.";
     }
@@ -86,47 +86,31 @@ class RectLayerViewModel extends LayerViewModel {
   }
 }
 
+class TextLayerViewModel extends LayerViewModel {
+
+  TextLayerViewModel._(LayerbookViewModel layerbook, [int id]) : super._(layerbook, id);
+
+  ShapeViewModel addShape(int index, Map properties) {
+    TextViewModel textViewModel = new TextViewModel(this, index, properties);
+    textViewModel.commit();
+
+    shapes[index] = textViewModel;
+    layerView.addShape(textViewModel.shapeView);
+    return textViewModel;
+  }
+
+  ShapeViewModel addShapeFromRow(int index) {
+    TextViewModel textViewModel = new TextViewModel.fromCellRow(this, index);
+
+    shapes[index] = textViewModel;
+    layerView.addShape(textViewModel.shapeView);
+    return textViewModel;
+  }
+}
+
 class LineLayerViewModel extends LayerViewModel {
 
   LineLayerViewModel._(LayerbookViewModel layerbook, [int id]) : super._(layerbook, id);
-
-  void selectShapeAtIndex(int index) {
-    deselectShape();
-
-    selectedShape = shapes[index];
-    if (selectedShape == null) {
-      print("Trying to select shape at row $index that doesn't exist yet.");
-      LineShapeBoundingBoxViewModel.hide();
-      return;
-    }
-
-    LineShapeBoundingBoxViewModel.show(selectedShape);
-    LineShapeBoundingBoxViewModel.onUpdate = ({num x1, num y1, num x2, num y2}) {
-      LineShapeViewModel line = selectedShape;
-      if (x1 != null) {
-        line.x1 = x1;
-      }
-      if (y1 != null) {
-        line.y1 = y1;
-      }
-      if (x2 != null) {
-        line.x2 = x2;
-      }
-      if (y2 != null) {
-        line.y2 = y2;
-      }
-    };
-
-    graphicsSheetViewModel.selectRow(index);
-  }
-
-  void deselectShape() {
-    if (selectedShape != null) {
-      LineShapeBoundingBoxViewModel.hide();
-      graphicsSheetViewModel.deselectRow(selectedShape.index);
-      selectedShape = null;
-    }
-  }
 
   ShapeViewModel addShape(int index, Map properties) {
     LineViewModel lineViewModel = new LineViewModel(this, index, properties);

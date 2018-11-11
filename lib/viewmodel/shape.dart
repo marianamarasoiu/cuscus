@@ -200,6 +200,142 @@ class RectViewModel extends RectShapeViewModel {
   }
 }
 
+class TextViewModel extends RectShapeViewModel {
+  Map properties = <Text, dynamic>{
+    Text.content: 'label',
+    Text.x: 100,
+    Text.y: 100,
+    Text.fillColor: 'black',
+    Text.fillOpacity: 1.0,
+    Text.strokeColor: '',
+    Text.strokeWidth: '',
+    Text.strokeOpacity: '',
+    Text.opacity: 1.0
+  };
+
+  TextViewModel(LayerViewModel layer, num index, Map properties) {
+    this.layer = layer;
+    this.index = index;
+    properties.forEach((property, value) => this.properties[property as Text] = value);
+
+    shapeView = new view.TextView(this);
+  }
+
+  TextViewModel.fromCellRow(LayerViewModel layer, num index) {
+    this.layer = layer;
+    this.index = index;
+
+    properties.forEach((property, value) {
+      List<String> columns = layer.graphicsSheetViewModel.activeColumnNames;
+      num column = columns.indexOf(textPropertyToColumnName[property]);
+      engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
+      engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
+      if (node.computedValue != null) {
+        properties[property] = node.computedValue.value;
+      }
+
+      setupListenersForCell(property, cell);
+    });
+
+    shapeView = new view.TextView(this);
+  }
+
+  commit() {
+    properties.forEach((property, value) => commitProperty(property, value));
+  }
+
+  /// When the shape is changed directly, the node in the engine is replaced. For this case,
+  /// we don't want to duplicate the number of listeners on the node by adding another listener on the node in the whenDone event.
+  Map updatedFromDirectEdit = {
+    Text.x: false,
+    Text.y: false
+  };
+
+  commitProperty(Text property, var value) {
+    List<String> columns = layer.graphicsSheetViewModel.activeColumnNames;
+    num column = columns.indexOf(textPropertyToColumnName[property]);
+    print(value);
+
+    engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
+    String jsonParseTree = parser.parseFormula(value.toString());
+    Map formulaParseTree = jsonDecode(jsonParseTree);
+    engine.CellContents cellContents = SpreadsheetEngineViewModel.spreadsheet.resolveSymbols(formulaParseTree, SheetViewModel.activeSheet.id);
+    SpreadsheetEngineViewModel.spreadsheet.setNode(cellContents, cell);
+    SpreadsheetEngineViewModel.spreadsheet.updateDependencyGraph();
+
+    setupListenersForCell(property, cell);
+  }
+
+  setupListenersForCell(Text property, engine.CellCoordinates cell) {
+    engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
+
+    // This is when the node has been changed due to value propagation in the engine.
+    node.onChange.listen((_) {
+      properties[property] = node.computedValue.value;
+
+      shapeView.element.classes.add('animate');
+      if (ShapeViewModel.selectedShape == this) hideBoundingBox();
+      new Timer(new Duration(seconds: 1), () {
+        shapeView.element.classes.remove('animate');
+        if (ShapeViewModel.selectedShape == this) showBoundingBox();
+      });
+
+      shapeView.setAttribute(textPropertyToSvgProperty[property], node.computedValue.toString());
+    });
+
+    // This is when the node has been edited directly, which results in a replacement in the engine.
+    node.whenDone.then((_) {
+      engine.SpreadsheetDepNode node = SpreadsheetEngineViewModel.spreadsheet.cells[cell];
+      properties[property] = node.computedValue.value;
+
+      if (updatedFromDirectEdit[property] == true) {
+        updatedFromDirectEdit[property] = false;
+      } else {
+        shapeView.element.classes.add('animate');
+        if (ShapeViewModel.selectedShape == this) hideBoundingBox();
+        new Timer(new Duration(seconds: 1), () {
+          shapeView.element.classes.remove('animate');
+          if (ShapeViewModel.selectedShape == this) showBoundingBox();
+        });
+        setupListenersForCell(property, cell);
+      }
+
+      shapeView.setAttribute(textPropertyToSvgProperty[property], node.computedValue.toString());
+    });
+  }
+
+  num get x => properties[Text.x];
+  set x (num value) {
+    properties[Text.x] = value;
+    updatedFromDirectEdit[Text.x] = true;
+    commitProperty(Text.x, value);
+  }
+  num get y => properties[Text.y];
+  set y (num value) {
+    properties[Text.y] = value;
+    updatedFromDirectEdit[Text.y] = true;
+    commitProperty(Text.y, value);
+  }
+  num get width => (shapeView as view.TextView).width;
+  num get height => (shapeView as view.TextView).height;
+
+  void showBoundingBox() {
+    RectShapeBoundingBoxViewModel.show(this, showHandles:  false);
+    RectShapeBoundingBoxViewModel.onUpdate = ({num x, num y, num width, num height}) {
+      TextViewModel text = this;
+      if (x != null) {
+        text.x = x;
+      }
+      if (y != null) {
+        text.y = y + this.height;
+      }
+    };
+  }
+  void hideBoundingBox() {
+    RectShapeBoundingBoxViewModel.hide();
+  }
+}
+
 class LineViewModel extends LineShapeViewModel {
   Map properties = <Line, dynamic>{
     Line.x1: 100,

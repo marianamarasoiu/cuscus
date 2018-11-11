@@ -184,8 +184,6 @@ enum Text {
   content,
   x,
   y,
-  rx,
-  ry,
   fillColor,
   fillOpacity,
   strokeColor,
@@ -198,8 +196,6 @@ const Map<Text, String> textPropertyToColumnName = const {
   Text.content: 'Content',
   Text.x: 'X',
   Text.y: 'Y',
-  Text.rx: 'RadiusX',
-  Text.ry: 'RadiusY',
   Text.fillColor: 'FillColor',
   Text.fillOpacity: 'FillOpacity',
   Text.strokeColor: 'BorderColor',
@@ -217,11 +213,9 @@ Map<String, Text> get columnNameToTextProperty {
 }
 
 const Map<Text, String> textPropertyToSvgProperty = const {
-  // Text.content: 'Content', -- this is special!
+  Text.content: 'text',
   Text.x: 'x',
   Text.y: 'y',
-  Text.rx: 'rx',
-  Text.ry: 'ry',
   Text.fillColor: 'fill',
   Text.fillOpacity: 'fill-opacity',
   Text.strokeColor: 'stroke',

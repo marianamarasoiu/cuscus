@@ -15,7 +15,7 @@ class RectShapeBoundingBoxViewModel {
 
   static set onUpdate(view.RectUpdateFunction updateFunction) => boundingBoxView.updateFunction = updateFunction;
 
-  static show(ShapeViewModel shape) => boundingBoxView.showAroundShape(shape.shapeView);
+  static show(ShapeViewModel shape, {bool showHandles = true}) => boundingBoxView.showAroundShape(shape.shapeView, showHandles);
 
   static hide() => boundingBoxView.hide();
 }

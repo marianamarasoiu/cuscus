@@ -187,6 +187,14 @@ startDrawing(MouseEvent mouseDown) {
           'y2': startPoint.y + tentativeHeight
           });
         break;
+      case viewmodel.DrawingTool.textTool:
+        viewmodel.appController.command(viewmodel.UIAction.endDrawing, {
+          'x': tentativeAbsX,
+          'y': tentativeAbsY,
+          'width': tentativeAbsWidth,
+          'height': tentativeAbsHeight
+          });
+          break;
       default:
         throw "unsupported drawing tool, got $selectedTool";
     }

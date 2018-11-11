@@ -639,18 +639,22 @@ class RectShapeBoundingBoxView {
     });
   }
 
-  showAroundShape(RectShapeView shape) {
+  bool showHandles;
+  showAroundShape(RectShapeView shape, bool showHandles) {
     x = shape.x;
     y = shape.y;
     width = shape.width;
     height = shape.height;
+    this.showHandles = showHandles;
 
     _showHandlesAndBox();
   }
 
   _showHandlesAndBox() {
-    _setHandlesAtCoords(x, y, width, height);
-    handleGroup.attributes["visibility"] = "visible";
+    if (showHandles) {
+      _setHandlesAtCoords(x, y, width, height);
+      handleGroup.attributes["visibility"] = "visible";
+    }
     _setBoundingBoxsAtCoords(x, y, width, height);
     _setTentativeShapeAtCoords(x, y, width, height);
     group.attributes["visibility"] = "visible";
