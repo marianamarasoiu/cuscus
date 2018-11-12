@@ -216,6 +216,9 @@ class AppController {
     });
     view.visSvgContainer.onMouseWheel.listen(view.startZooming);
 
+    view.resetZoomElement.onClick.listen((_) => view.resetZoom());
+    view.fitAllZoomElement.onClick.listen((_) => view.fitAllZoom());
+
     document.onClick.listen((MouseEvent click) {
       EventTarget mouseTarget = click.target;
 

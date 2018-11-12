@@ -83,3 +83,36 @@ svg.Point getSvgPoint(num x, num y) {
     ..x = x
     ..y = y;
 }
+
+void resetZoom() {
+  _group.transform.baseVal.initialize(_canvas.createSvgTransform());
+  zoomCallbacks.forEach((callback) => callback(0));
+}
+
+void fitAllZoom() {
+  _group.transform.baseVal.initialize(_canvas.createSvgTransform());
+
+  // Scale
+  Rectangle<num> viewportBoundingBox = _canvas.getBoundingClientRect();
+  Rectangle<num> contentsBoundingBox = _group.getBoundingClientRect();
+
+  if (contentsBoundingBox.width == 0.0 || contentsBoundingBox.height == 0.0)  return;
+
+  var scale = math.min(viewportBoundingBox.width / contentsBoundingBox.width,
+                       viewportBoundingBox.height / contentsBoundingBox.height);
+  
+  var oldMatrix = _group.transform.baseVal.consolidate().matrix;
+  var modifier = _canvas.createSvgMatrix().scale(scale);
+  _group.transform.baseVal.initialize(_canvas.createSvgTransformFromMatrix(oldMatrix.multiply(modifier)));
+
+  // Pan
+  var startMatrix = _group.transform.baseVal.consolidate().matrix;
+  contentsBoundingBox = _group.getBoundingClientRect();
+  var offsetX = -contentsBoundingBox.left / scale;
+  var offsetY = -contentsBoundingBox.top / scale;
+
+  _group.transform.baseVal.initialize(_canvas.createSvgTransformFromMatrix(startMatrix.translate(offsetX, offsetY)));
+  contentsBoundingBox = _group.getBoundingClientRect();
+
+  zoomCallbacks.forEach((callback) => callback(scale));
+}

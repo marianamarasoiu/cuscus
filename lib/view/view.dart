@@ -45,6 +45,9 @@ DivElement get sheetbooksContainer => querySelector('#sheetbooks-container');
 InputElement get loadWorkspaceButton => querySelector('#load-workspace');
 DivElement get saveWorkspaceButton => querySelector('#save-workspace-button');
 
+DivElement get fitAllZoomElement => querySelector('#fit-all-zoom-btn');
+DivElement get resetZoomElement => querySelector('#reset-zoom-btn');
+
 box_layout.Box sheetbooksBox;
 
 init() {

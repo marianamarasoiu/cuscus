@@ -380,6 +380,32 @@ td.index {
   display: block;
 }
 
+/**** Zoom controls */
+
+#zoom-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  border: 1px solid #cccccc;
+  border-radius: 16px;
+}
+
+#zoom-controls #reset-zoom-btn,
+#zoom-controls #fit-all-zoom-btn {
+  padding: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+  color: #aaa;
+}
+
+#zoom-controls #reset-zoom-btn:hover,
+#zoom-controls #fit-all-zoom-btn:hover {
+  color: #555;
+  cursor: pointer;
+}
+
+/***** Shapes */
 
 .tentative-shape {
   fill: none;
