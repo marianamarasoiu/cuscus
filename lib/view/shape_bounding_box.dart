@@ -1056,6 +1056,7 @@ class LineShapeBoundingBoxView {
       ..attributes["height"] = "$handleSize"
       ..attributes["fill"] = "#FFFFFF"
       ..attributes["stroke-width"] = "1"
-      ..attributes["stroke"] = "dodgerblue";
+      ..attributes["stroke"] = "dodgerblue"
+      ..attributes["vector-effect"] = "non-scaling-stroke";;
   }
 }
