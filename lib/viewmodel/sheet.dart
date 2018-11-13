@@ -219,6 +219,15 @@ abstract class SheetViewModel extends ObjectWithId {
   void blur() {
     _activeSheet = null;
   }
+
+  void delete() {
+    cells.forEach((row) {
+      row.forEach((cell) {
+        // cell.
+      });
+    });
+    sheetView.remove();
+  }
 }
 
 class DataSheet extends SheetViewModel {

@@ -107,7 +107,7 @@ class SheetbookView {
         }
       });
     });
-    label.onClick.listen((_) => sheetViewModel.focus());    
+    label.onClick.listen((_) => sheetViewModel.focus());
     labelWrapper.append(label);
 
     MenuElement contextMenu = new MenuElement();
@@ -119,10 +119,10 @@ class SheetbookView {
       ..classes.add('context-menu-item')
       ..onClick.listen((_) => viewmodel.appController.command(viewmodel.UIAction.duplicateSheet, sheetViewModel)));
 
-    contextMenu.append(new DivElement()
-      ..text = 'Delete sheet'
-      ..classes.add('context-menu-item')
-      ..onClick.listen((_) => viewmodel.appController.command(viewmodel.UIAction.deleteSheet, sheetViewModel)));
+    // contextMenu.append(new DivElement()
+    //   ..text = 'Delete sheet'
+    //   ..classes.add('context-menu-item')
+    //   ..onClick.listen((_) => viewmodel.appController.command(viewmodel.UIAction.deleteSheet, sheetViewModel)));
     labelWrapper.append(contextMenu);
 
     labelWrapper.append(

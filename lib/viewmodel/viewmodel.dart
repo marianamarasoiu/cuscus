@@ -752,7 +752,7 @@ class AppController {
             break;
           case UIAction.deleteSheet:
             SheetViewModel sheet = data;
-            sheet.delete();
+            // sheet.delete();
             view.SheetbookView.hideContextMenu();
             state = UIState.idle;
             break;
