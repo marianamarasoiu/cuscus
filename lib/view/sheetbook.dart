@@ -80,6 +80,7 @@ class SheetbookView {
       label.contentEditable = 'true';
       String initialName = label.text;
       String newName = label.text;
+      label.focus();
 
       viewmodel.appController.command(viewmodel.UIAction.startRenameSheet, sheetViewModel);
 
