@@ -122,10 +122,8 @@ class CellViewModel {
 
     // This is when the node has been edited directly, which results in a replacement in the engine.
     node.whenDone.then((_) {
-      print('when done cell before if');
       if (!updatedFromDirectEdit) {
         setupListenersForCell();
-        print('when done cell');
         cellView.uiElement.classes.add('flash');
         new Timer(new Duration(seconds: 1), () => cellView.uiElement.classes.remove('flash'));
       } else {
