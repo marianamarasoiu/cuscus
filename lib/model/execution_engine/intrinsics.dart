@@ -95,9 +95,10 @@ LiteralBoolValue i_ge(LiteralValue x, LiteralValue y) {
 LiteralStringValue i_concat(LiteralValue x, LiteralValue y) {
   if (x is EmptyValue) x = new LiteralStringValue('');
   if (y is EmptyValue) y = new LiteralStringValue('');
-  _checkType(x, LiteralStringValue);
-  _checkType(y, LiteralStringValue);
-  return new LiteralStringValue(x.value + y.value);
+  if (x is! LiteralStringValue && y is! LiteralStringValue) {
+    throw "Cannot concatenate two non-string objects";
+  }
+  return new LiteralStringValue(x.value.toString() + y.value.toString());
 }
 
 LiteralDoubleValue i_add(LiteralValue x, LiteralValue y) {
