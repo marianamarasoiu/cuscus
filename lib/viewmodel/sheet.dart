@@ -214,7 +214,6 @@ abstract class SheetViewModel extends ObjectWithId {
     _activeSheet = this;
     sheetbook.sheetbookView.selectedSheet = sheetView;
     sheetbook.sheetbookView.focusOnSelectedSheet();
-    cells[0][0].select();
   }
 
   void blur() {
