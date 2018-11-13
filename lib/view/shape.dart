@@ -48,14 +48,14 @@ class TextView extends RectShapeView {
 
     shapeViewModel.properties.forEach(
       (property, value) => element.attributes[viewmodel.textPropertyToSvgProperty[property]] = value.toString());
-    element.text = shapeViewModel.properties[viewmodel.Text.content];
+    element.text = shapeViewModel.properties[viewmodel.Text.content].toString();
   }
 
   num get x => shapeViewModel.properties[viewmodel.Text.x];
   num get y => shapeViewModel.properties[viewmodel.Text.y] - renderedTextSize()['height'];
   num get width => renderedTextSize()['width'];
   num get height => renderedTextSize()['height'];
-  String get content => shapeViewModel.properties[viewmodel.Text.content];
+  String get content => shapeViewModel.properties[viewmodel.Text.content].toString();
 
   setAttribute(String name, String value) {
     if (name == viewmodel.textPropertyToSvgProperty[viewmodel.Text.content]) {
