@@ -330,9 +330,10 @@ LiteralDoubleValue i_average(List<LiteralValue> args) {
     throw "Wrong number of arguments to AVERAGE. Expected at least 1 argument, but received 0 arguments.";
   }
   double result = 0.0;
+  // Ignore any cells that don't have doubles in them
+  args.removeWhere((LiteralValue elem) => elem is! LiteralDoubleValue);
+
   for (LiteralValue arg in args) {
-    if (arg is EmptyValue) arg = new LiteralDoubleValue(0.0);
-    _checkType(arg, LiteralDoubleValue);
     result += arg.value;
   }
   return new LiteralDoubleValue(result / args.length);
@@ -341,12 +342,11 @@ LiteralDoubleValue i_max(List<LiteralValue> args) {
   if (args.length == 0) {
     throw "Wrong number of arguments to MAX. Expected at least 1 argument, but received 0 arguments.";
   }
-  if (args[0] is EmptyValue) args[0] = new LiteralDoubleValue(0.0);
-  _checkType(args[0], LiteralDoubleValue);
+  // Ignore any cells that don't have doubles in them
+  args.removeWhere((LiteralValue elem) => elem is! LiteralDoubleValue);
+
   double maximum = args[0].value;
   for (LiteralValue arg in args) {
-    if (arg is EmptyValue) arg = new LiteralDoubleValue(0.0);
-    _checkType(arg, LiteralDoubleValue);
     maximum = math.max(maximum, arg.value);
   }
   return new LiteralDoubleValue(maximum);
@@ -355,12 +355,11 @@ LiteralDoubleValue i_min(List<LiteralValue> args) {
   if (args.length == 0) {
     throw "Wrong number of arguments to MIN. Expected at least 1 argument, but received 0 arguments.";
   }
-  if (args[0] is EmptyValue) args[0] = new LiteralDoubleValue(0.0);
-  _checkType(args[0], LiteralDoubleValue);
+  // Ignore any cells that don't have doubles in them
+  args.removeWhere((LiteralValue elem) => elem is! LiteralDoubleValue);
+
   double minimum = args[0].value;
   for (LiteralValue arg in args) {
-    if (arg is EmptyValue) arg = new LiteralDoubleValue(0.0);
-    _checkType(arg, LiteralDoubleValue);
     minimum = math.min(minimum, arg.value);
   }
   return new LiteralDoubleValue(minimum);
@@ -369,10 +368,11 @@ LiteralDoubleValue i_sum(List<LiteralValue> args) {
   if (args.length == 0) {
     throw "Wrong number of arguments to SUM. Expected at least 1 argument, but received 0 arguments.";
   }
+  // Ignore any cells that don't have doubles in them
+  args.removeWhere((LiteralValue elem) => elem is! LiteralDoubleValue);
+
   double result = 0.0;
   for (LiteralValue arg in args) {
-    if (arg is EmptyValue) arg = new LiteralDoubleValue(0.0);
-    _checkType(arg, LiteralDoubleValue);
     result += arg.value;
   }
   return new LiteralDoubleValue(result);
@@ -381,10 +381,11 @@ LiteralDoubleValue i_product(List<LiteralValue> args) {
   if (args.length == 0) {
     throw "Wrong number of arguments to PRODUCT. Expected at least 1 argument, but received 0 arguments.";
   }
+  // Ignore any cells that don't have doubles in them
+  args.removeWhere((LiteralValue elem) => elem is! LiteralDoubleValue);
+
   double result = 1.0;
   for (LiteralValue arg in args) {
-    if (arg is EmptyValue) arg = new LiteralDoubleValue(0.0);
-    _checkType(arg, LiteralDoubleValue);
     result *= arg.value;
   }
   return new LiteralDoubleValue(result);
@@ -404,33 +405,39 @@ LiteralDoubleValue i_random() {
   return new LiteralDoubleValue(new math.Random().nextDouble());
 }
 
-LiteralValue i_median(List<LiteralDoubleValue> list) {
-  list.removeWhere((LiteralValue elem) => elem is EmptyValue);
-  list.removeWhere((LiteralValue elem) => elem is LiteralStringValue);
-  list.sort((LiteralDoubleValue double1, LiteralDoubleValue double2) => double1.value.compareTo(double2.value));
+LiteralValue i_median(List<LiteralValue> list) {
+  // Ignore any cells that don't have doubles in them
+  list.removeWhere((LiteralValue elem) => elem is! LiteralDoubleValue);
+
+  list.sort((LiteralValue double1, LiteralValue double2) => double1.value.compareTo(double2.value));
   var length = list.length;
   if (length % 2 == 1) {
-    return list[(length/2 + 0.5).toInt()];
+    return list[length~/2];
   } else {
-    return new LiteralDoubleValue((list[length~/2].value + list[length~/2 + 1].value) / 2);
+    return new LiteralDoubleValue((list[length~/2 - 1].value + list[length~/2].value) / 2);
   }
 }
 
-// TODO: this is a bit hacky and simplified, check and fix.
-LiteralValue i_quartile(List<LiteralDoubleValue> list) {
-  LiteralDoubleValue quartile = list.removeLast();
-  list.removeWhere((LiteralValue elem) => elem is EmptyValue);
-  list.removeWhere((LiteralValue elem) => elem is LiteralStringValue);
-  list.sort((LiteralDoubleValue double1, LiteralDoubleValue double2) => double1.value.compareTo(double2.value));
+LiteralValue i_quartile(List<LiteralValue> list) {
+  LiteralValue quartile = list.removeLast();
+  _checkType(quartile, LiteralDoubleValue);
+
+  // Ignore any cells that don't have doubles in them
+  list.removeWhere((LiteralValue elem) => elem is! LiteralDoubleValue);
+
+  list.sort((LiteralValue double1, LiteralValue double2) => double1.value.compareTo(double2.value));
   switch (quartile.value.toInt()) {
     case 1:
-      return i_median(list.sublist(0, list.length ~/ 2));
+      return i_median(list.sublist(0, list.length ~/ 2 + 1));
     case 2:
       return i_median(list);
     case 3:
+      if (list.length % 2 == 1) {
+        return i_median(list.sublist(list.length ~/ 2 + 1));
+      }
       return i_median(list.sublist(list.length ~/ 2));
     default:
-      throw "Median can only be 1, 2 or 3, got ${quartile.value}";
+      throw "Quartile can only be 1, 2 or 3, got ${quartile.value}";
   }
 }
 
