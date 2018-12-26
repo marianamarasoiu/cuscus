@@ -364,7 +364,7 @@ String binaryOperationToFunctionName(String operation) {
   switch (operation) {
     case "=":
       return "eq";
-    case "<>>":
+    case "<>":
       return "neq";
     case "<":
       return "lt";
