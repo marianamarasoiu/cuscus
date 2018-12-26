@@ -74,7 +74,6 @@ class CellViewModel {
   }
 
   void commitFormula(engine.CellContents cellContents, {bool updatedFromDirectEdit = true}) {
-    print ("commit formula");
     if (this.cellContents == null) {
       this.updatedFromDirectEdit = false;
     } else {
@@ -115,7 +114,6 @@ class CellViewModel {
 
       _text = node.computedValue.toString();
 
-      print('on change');
       cellView.uiElement.classes.add('flash');
       new Timer(new Duration(seconds: 1), () => cellView.uiElement.classes.remove('flash'));
     });

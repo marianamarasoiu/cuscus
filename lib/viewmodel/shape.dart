@@ -254,7 +254,6 @@ class TextViewModel extends RectShapeViewModel {
   commitProperty(Text property, var value) {
     List<String> columns = layer.graphicsSheetViewModel.activeColumnNames;
     num column = columns.indexOf(textPropertyToColumnName[property]);
-    print(value);
 
     engine.CellCoordinates cell = new engine.CellCoordinates(index, column, layer.graphicsSheetViewModel.id);
     String jsonParseTree = parser.parseFormula(value.toString());

@@ -259,7 +259,6 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
   }
 
   void fillInRowWithAlreadyFilledInCells(int row, List<int> alreadyFilledInCollumns) {
-    print ('fillInRowWithAlreadyFilledInCells $row $alreadyFilledInCollumns');
     List<CellViewModel> firstRowOfCells = cells[0];
     List<CellViewModel> newRowOfCells = cells[row];
     newRowOfCells.where((c) => !alreadyFilledInCollumns.contains(c.column)).forEach((emptyCell) {
@@ -289,7 +288,6 @@ abstract class GraphicsSheetViewModel extends SheetViewModel {
         }
         newCellsToFillIn[row] = [cellFromSourceRow.column];
       });
-      print(newCellsToFillIn);
       super.fillInCellsWithCell(newCellsToFillIn, cellFromSourceRow);
     });
     cellsToFillIn.forEach((row, _) {
