@@ -388,6 +388,7 @@ td.index {
   left: 24px;
   border: 1px solid #cccccc;
   border-radius: 16px;
+  background: rgba(255,255,255,0.75);
 }
 
 #zoom-controls #reset-zoom-btn,
