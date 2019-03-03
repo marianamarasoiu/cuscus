@@ -581,9 +581,7 @@ class AppController {
         }
         break;
 
-      /*
-      * State: readyToDraw
-      */
+      // State: readyToDraw
       case UIState.readyToDraw:
         switch (action) {
           case UIAction.selectGraphicsTool:
@@ -607,9 +605,7 @@ class AppController {
         }
         break;
 
-      /*
-      * State: drawing
-      */
+      // State: drawing
       case UIState.drawing:
         switch (action) {
           case UIAction.endDrawing:
@@ -660,9 +656,7 @@ class AppController {
         }
         break;
 
-      /*
-      * State: cellEditing
-      */
+      // State: cellEditing
       case UIState.cellEditing:
         switch (action) {
           case UIAction.enter:
@@ -705,9 +699,7 @@ class AppController {
         }
         break;
 
-      /**
-       * State: renamingSheet
-       */
+      // State: renamingSheet
       case UIState.renamingSheet:
         switch (action) {
           case UIAction.endRenameSheet:
@@ -724,9 +716,7 @@ class AppController {
         }
         break;
       
-      /**
-       * State: sheetContextMenuVisible
-       */
+      // State: sheetContextMenuVisible
       case UIState.sheetContextMenuVisible:
         switch (action) {
           case UIAction.clickOnCanvas:
