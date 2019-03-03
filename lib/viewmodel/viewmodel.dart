@@ -448,6 +448,8 @@ class AppController {
             int cellHeight = CellViewModel.selectedCell.cellView.uiElement.client.height + 1; // +1 for border
             int selectionBorderTop = CellViewModel.selectedCell.cellView.uiElement.offset.top + 21;
             int selectionBorderLeft = CellViewModel.selectedCell.cellView.uiElement.offset.left + 31;
+            int scrollTop = SheetViewModel.activeSheet.sheetView.sheetElement.scrollTop;
+            int scrollLeft = SheetViewModel.activeSheet.sheetView.sheetElement.scrollLeft;
             int rowsOffset = 0;
             int colsOffset = 0;
             selectionBorder.style
@@ -460,9 +462,15 @@ class AppController {
             StreamSubscription dragMoveSub;
             StreamSubscription dragEndSub;
 
+            // Starting listener for scrolling when the mouse gets close to the edge of a spreadsheet
+            setupSpreadsheetScrolling(mouseDown);
+
             dragMoveSub = document.onMouseMove.listen((MouseEvent mouseMove) {
               int xDelta = mouseMove.client.x - startPositionX;
               int yDelta = mouseMove.client.y - startPositionY;
+
+              xDelta = xDelta + (SheetViewModel.activeSheet.sheetView.sheetElement.scrollLeft - scrollLeft);
+              yDelta = yDelta + (SheetViewModel.activeSheet.sheetView.sheetElement.scrollTop - scrollTop);
 
               switch(xDelta.abs() > yDelta.abs()) {
                 case true:
@@ -504,6 +512,8 @@ class AppController {
                   }
                   break;
               }
+
+              updateSpreadsheetScrolling(mouseMove);
             });
 
             dragEndSub = document.onMouseUp.listen((MouseEvent mouseUp) {
@@ -547,6 +557,8 @@ class AppController {
                   }
                   break;
               }
+
+              stopSpreadsheetScrolling();
 
               SheetViewModel.activeSheet.fillInCellsWithCell(cellsToFillIn, CellViewModel.selectedCell);
               SheetViewModel.activeSheet.cells[newActiveCellRow][newActiveCellCol].select();
@@ -715,7 +727,7 @@ class AppController {
             break;
         }
         break;
-      
+
       // State: sheetContextMenuVisible
       case UIState.sheetContextMenuVisible:
         switch (action) {
@@ -822,5 +834,71 @@ loadEmptySession() {
       workspace["sheetbooks"].add(sheetbook.save());
     });
     return workspace;
+  }
+
+  bool scrollSpreadsheetOnFillDown(MouseEvent mouseMove) {
+    // Scroll if mouse is towards the edge
+    var sheetElement = SheetViewModel.activeSheet.sheetView.sheetElement;
+    var sheetBoundingRect = sheetElement.getBoundingClientRect();
+    var scrollableEdgeTopLeft = 50;
+    var scrollableEdgeBottomRight = 25;
+    bool hasScrolled = false;
+    // bottom
+    if (mouseMove.client.y + scrollableEdgeBottomRight > sheetBoundingRect.top + sheetBoundingRect.height &&
+        sheetElement.scrollTop + sheetElement.clientHeight - sheetElement.querySelector('.table-header').clientHeight < sheetElement.querySelector('.table-data').clientHeight) {
+      SheetViewModel.activeSheet.sheetView.sheetElement.scrollBy(0, 3);
+      hasScrolled = true;
+    }
+    // top
+    if (mouseMove.client.y - scrollableEdgeTopLeft < sheetBoundingRect.top &&
+        sheetElement.scrollTop > 0) {
+      SheetViewModel.activeSheet.sheetView.sheetElement.scrollBy(0, -3);
+      hasScrolled = true;
+    }
+    // right
+    if (mouseMove.client.x + scrollableEdgeBottomRight > sheetBoundingRect.left + sheetBoundingRect.width &&
+        sheetElement.scrollLeft + sheetElement.clientWidth - sheetElement.querySelector('.table-index').clientWidth < sheetElement.querySelector('.table-data tbody').clientWidth) {
+      SheetViewModel.activeSheet.sheetView.sheetElement.scrollBy(3, 0);
+      hasScrolled = true;
+    }
+    // left
+    if (mouseMove.client.x - scrollableEdgeTopLeft < sheetBoundingRect.left &&
+        sheetElement.scrollLeft > 0) {
+      SheetViewModel.activeSheet.sheetView.sheetElement.scrollBy(-3, 0);
+      hasScrolled = true;
+    }
+
+    return hasScrolled;
+  }
+
+  bool stopScroll = false;
+  bool autoScroll = false;
+  MouseEvent mouseEventForScroll;
+
+  setupSpreadsheetScrolling(MouseEvent mouseDown) {
+    mouseEventForScroll = mouseDown;
+    stopScroll = false;
+    autoScroll = scrollSpreadsheetOnFillDown(mouseEventForScroll);
+    var onAnimationFrame;
+    onAnimationFrame = (_) {
+      if (stopScroll) {
+        return;
+      }
+      if (autoScroll) {
+        scrollSpreadsheetOnFillDown(mouseEventForScroll);
+      }
+      window.animationFrame.then(onAnimationFrame);
+    };
+    window.animationFrame.then(onAnimationFrame);
+  }
+
+  updateSpreadsheetScrolling(MouseEvent mouseMove) {
+    mouseEventForScroll = mouseMove;
+    autoScroll = scrollSpreadsheetOnFillDown(mouseMove);
+  }
+
+  stopSpreadsheetScrolling() {
+    mouseEventForScroll = null;
+    stopScroll = true;
   }
 }
